@@ -156,6 +156,51 @@ impl approx::AbsDiffEq for Time {
     }
 }
 
+// TT = TAI + 32.184 s exactly (by SI definition of TT).
+#[cfg(feature = "hifitime")]
+const TT_TAI_OFFSET_DAYS: f64 = 32.184 / 86_400.0;
+
+#[cfg(feature = "hifitime")]
+impl Time {
+    /// Convert to a hifitime [`Epoch`], preserving the full TT Julian date.
+    ///
+    /// The mapping is lossless to `f64` precision (~0.1 ms). The resulting
+    /// `Epoch` carries no `dut1` information (hifitime doesn't model UT1−UTC),
+    /// so round-tripping through [`From<hifitime::Epoch>`] will lose the
+    /// original `dut1`.
+    pub fn to_epoch(self) -> hifitime::Epoch {
+        let (ijd, fjd) = self.tt_split_jd();
+        // TT JDE → TAI JDE: subtract the fixed TT−TAI offset
+        hifitime::Epoch::from_jde_tai(ijd as f64 + fjd - TT_TAI_OFFSET_DAYS)
+    }
+
+    /// Convert from a hifitime [`Epoch`] with an explicit UT1−UTC offset.
+    ///
+    /// The leap-second count (`TAI − UTC`) is derived from hifitime's built-in
+    /// IERS table. Use [`From<hifitime::Epoch>`] when `dut1` is unavailable —
+    /// it defaults to `0.0`, which introduces at most ~0.9 s of error in
+    /// UT1-dependent quantities (negligible for az/el at arcsecond accuracy).
+    pub fn from_epoch_with_dut1(epoch: hifitime::Epoch, dut1: f64) -> Result<Self> {
+        let tt_jd = epoch.to_jde_tt_days();
+        let leap_seconds = epoch.leap_seconds_iers();
+        Self::from_tt_jd(tt_jd, leap_seconds, dut1)
+    }
+}
+
+#[cfg(feature = "hifitime")]
+impl From<hifitime::Epoch> for Time {
+    /// Convert from a hifitime [`Epoch`], assuming `dut1 = 0`.
+    ///
+    /// The leap-second count is derived from hifitime's built-in IERS table.
+    /// Use [`Time::from_epoch_with_dut1`] when you have a precise UT1−UTC value.
+    fn from(epoch: hifitime::Epoch) -> Self {
+        let tt_jd = epoch.to_jde_tt_days();
+        let leap_seconds = epoch.leap_seconds_iers();
+        Time::from_tt_jd(tt_jd, leap_seconds, 0.0)
+            .expect("hifitime Epoch always yields a finite TT JDE")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use approx::assert_abs_diff_eq;
@@ -214,5 +259,37 @@ mod tests {
         // TT = UTC + 32.184 (no leap seconds before 1972), so TT_jd ≈ 2440587.5 + 32.184/86400
         let expected_tt = 2_440_587.5 + 32.184 / 86_400.0;
         assert_abs_diff_eq!(t.tt_jd(), expected_tt, epsilon = 1e-9);
+    }
+}
+
+#[cfg(all(test, feature = "hifitime"))]
+mod hifitime_tests {
+    use super::*;
+
+    #[test]
+    fn round_trips_through_hifitime() {
+        // A modern epoch with leap seconds.
+        let t = Time::from_tt_jd(2_451_545.0, 37, 0.3).unwrap();
+        let t2 = Time::from(t.to_epoch());
+        // TT JDs match; dut1 is not preserved (hifitime doesn't carry it).
+        assert!((t.tt_jd() - t2.tt_jd()).abs() < 1e-9);
+    }
+
+    #[test]
+    fn tt_tai_offset_correct() {
+        // J2000.0 TT (JDE 2451545.0) should sit 32.184 s before
+        // 2000-01-01 12:00:00 TAI in hifitime's timeline.
+        // Tolerance of 100 µs accounts for f64 rounding at the ~2.4e6 JDE scale.
+        let t = Time::from_tt_jd(2_451_545.0, 32, 0.0).unwrap();
+        let j2000_tai = hifitime::Epoch::from_gregorian_tai_at_noon(2000, 1, 1);
+        let diff_s = (j2000_tai - t.to_epoch()).to_seconds();
+        assert!((diff_s - 32.184).abs() < 1e-4, "TT−TAI offset: {diff_s}");
+    }
+
+    #[test]
+    fn from_epoch_with_dut1_round_trips() {
+        let t = Time::from_tt_jd(2_451_545.0, 37, 0.5).unwrap();
+        let t2 = Time::from_epoch_with_dut1(t.to_epoch(), 0.5).unwrap();
+        assert!((t.tt_jd() - t2.tt_jd()).abs() < 1e-9);
     }
 }

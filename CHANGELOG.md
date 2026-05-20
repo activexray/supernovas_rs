@@ -7,6 +7,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-05-20
+
+### Added
+
+- `supernovas`: optional `hifitime` feature — adds `From<hifitime::Epoch> for Time`,
+  `Time::to_epoch() -> hifitime::Epoch`, and `Time::from_epoch_with_dut1(epoch, dut1)`
+  for interoperability with the [hifitime](https://crates.io/crates/hifitime) time library.
+  Enabling both `hifitime` and `std` automatically propagates `std` to hifitime.
+
 ## [0.2.0] — 2026-05-20
 
 ### Breaking
@@ -64,7 +73,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
   `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
-[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/kiranshila/supernovas_rs/releases/tag/v0.1.0
