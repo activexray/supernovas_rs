@@ -24,15 +24,14 @@
         };
         inherit (pkgs) lib;
 
-        # Nightly toolchain: required for the unstable rustfmt features in
-        # rustfmt.toml (imports_granularity, group_imports).
-        toolchain = pkgs.fenix.complete.withComponents [
-          "cargo"
-          "clippy"
-          "rust-src"
-          "rustc"
-          "rustfmt"
-        ];
+        # Nightly toolchain derived from rust-toolchain.toml. The sha256 covers
+        # the channel manifest fetched from static.rust-lang.org; it changes
+        # with each nightly so we use lib.fakeSha256 here and let the magic-nix
+        # cache keep builds reproducible in CI.
+        toolchain = pkgs.fenix.fromToolchainFile {
+          file = ./rust-toolchain.toml;
+          sha256 = lib.fakeSha256;
+        };
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
