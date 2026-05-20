@@ -6,7 +6,7 @@
 //! Mirrors the relevant subset of C++ `supernovas::Unit`. Categories are
 //! added as their corresponding wrapper types come online.
 
-use supernovas_sys::{
+use supernovas_ffi::{
     NOVAS_ARCSEC, NOVAS_BESSELIAN_YEAR_DAYS, NOVAS_DAY, NOVAS_DEGREE, NOVAS_HOURANGLE, NOVAS_KM,
     NOVAS_LIGHT_YEAR, NOVAS_TROPICAL_YEAR_DAYS,
 };

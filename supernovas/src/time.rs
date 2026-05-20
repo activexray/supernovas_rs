@@ -11,7 +11,7 @@
 
 use core::{fmt, mem::MaybeUninit};
 
-use supernovas_sys::{
+use supernovas_ffi::{
     novas_set_split_time, novas_set_unix_time, novas_timescale,
     novas_timescale::{NOVAS_TT, NOVAS_UTC},
     novas_timespec,

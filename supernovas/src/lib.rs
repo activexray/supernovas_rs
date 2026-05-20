@@ -4,7 +4,7 @@
 
 extern crate alloc;
 
-pub use supernovas_sys as sys;
+pub use supernovas_ffi as sys;
 
 pub mod error;
 pub mod frame;

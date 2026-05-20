@@ -5,7 +5,7 @@
 
 use core::fmt;
 
-use supernovas_sys::novas_on_surface;
+use supernovas_ffi::novas_on_surface;
 
 use super::Weather;
 use crate::{Angle, Coordinate, error::Result};

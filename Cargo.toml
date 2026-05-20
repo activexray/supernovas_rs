@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["supernovas-sys", "supernovas"]
+members = ["supernovas-ffi", "supernovas"]
 
 [workspace.package]
 version = "0.1.0"
@@ -10,4 +10,4 @@ repository = "https://github.com/kiranshila/supernovas_rs"
 authors = ["Kiran Shila"]
 
 [workspace.dependencies]
-supernovas-sys = { path = "supernovas-sys", version = "0.1.0" }
+supernovas-ffi = { path = "supernovas-ffi", version = "0.1.0" }

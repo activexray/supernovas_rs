@@ -7,7 +7,7 @@
 
 use core::mem::MaybeUninit;
 
-use supernovas_sys::{
+use supernovas_ffi::{
     novas_accuracy::{NOVAS_FULL_ACCURACY, NOVAS_REDUCED_ACCURACY},
     novas_app_to_hor, novas_frame, novas_make_frame,
     novas_reference_system::NOVAS_CIRS,
@@ -32,7 +32,7 @@ pub enum Accuracy {
 }
 
 impl Accuracy {
-    fn to_sys(self) -> supernovas_sys::novas_accuracy {
+    fn to_sys(self) -> supernovas_ffi::novas_accuracy {
         match self {
             Accuracy::Full => NOVAS_FULL_ACCURACY,
             Accuracy::Reduced => NOVAS_REDUCED_ACCURACY,
@@ -147,7 +147,7 @@ impl Frame {
 
 #[cfg(test)]
 mod tests {
-    use supernovas_sys::novas_timescale::NOVAS_TT;
+    use supernovas_ffi::novas_timescale::NOVAS_TT;
 
     use super::*;
 

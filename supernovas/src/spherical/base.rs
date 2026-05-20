@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use supernovas_sys::novas_sep;
+use supernovas_ffi::novas_sep;
 
 use crate::{Angle, Coordinate, Position, error::Result, unit};
 

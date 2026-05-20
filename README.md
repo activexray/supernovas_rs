@@ -6,7 +6,7 @@ SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observat
 
 | Crate | Description |
 |---|---|
-| [`supernovas-sys`](supernovas-sys/) | Raw FFI bindings (auto-generated via bindgen) |
+| [`supernovas-ffi`](supernovas-ffi/) | Raw FFI bindings (auto-generated via bindgen) |
 | [`supernovas`](supernovas/) | Safe, idiomatic Rust wrapper |
 
 ## Features
@@ -75,7 +75,7 @@ cargo test
 ## Workspace layout
 
 ```
-supernovas-sys/       # -sys crate (bindgen + optional cmake build)
+supernovas-ffi/       # -sys crate (bindgen + optional cmake build)
   vendor/supernovas/  # git submodule: upstream SuperNOVAS C source
   build.rs
   wrapper.h
@@ -88,11 +88,11 @@ supernovas/           # safe wrapper crate
 
 This project wraps [SuperNOVAS](https://github.com/sigmyne/supernovas), a C astrometry library authored by **Attila Kovács** ([@sigmyne](https://github.com/sigmyne)), itself derived from the original NOVAS library by the U.S. Naval Observatory.
 
-SuperNOVAS is released into the **public domain** under [The Unlicense](https://unlicense.org). The vendored copy in `supernovas-sys/vendor/supernovas` is pinned to upstream v1.6.0 and its full license text is in `supernovas-sys/vendor/supernovas/LICENSE`.
+SuperNOVAS is released into the **public domain** under [The Unlicense](https://unlicense.org). The vendored copy in `supernovas-ffi/vendor/supernovas` is pinned to upstream v1.6.0 and its full license text is in `supernovas-ffi/vendor/supernovas/LICENSE`.
 
 ## License
 
-The Rust source code in this repository (`supernovas-sys` and `supernovas` crates, excluding the vendored C library) is licensed under either of
+The Rust source code in this repository (`supernovas-ffi` and `supernovas` crates, excluding the vendored C library) is licensed under either of
 
 - [MIT License](LICENSE-MIT)
 - [Apache License, Version 2.0](LICENSE-APACHE)

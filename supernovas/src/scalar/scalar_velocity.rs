@@ -9,7 +9,7 @@ use core::{
     ops::{Add, Neg, Sub},
 };
 
-use supernovas_sys::{NOVAS_C, novas_v2z, novas_z2v};
+use supernovas_ffi::{NOVAS_C, novas_v2z, novas_z2v};
 
 use crate::{
     error::{Error, Result},

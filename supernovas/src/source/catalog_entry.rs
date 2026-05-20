@@ -4,7 +4,7 @@
 use alloc::ffi::CString;
 use core::{fmt, mem::MaybeUninit};
 
-use supernovas_sys::{cat_entry, make_cat_entry, make_cat_object, object};
+use supernovas_ffi::{cat_entry, make_cat_entry, make_cat_object, object};
 
 use crate::{
     Angle, ScalarVelocity, TimeAngle,

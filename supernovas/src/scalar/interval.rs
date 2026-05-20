@@ -5,7 +5,7 @@ use core::{
     ops::{Add, Neg, Sub},
 };
 
-use supernovas_sys::{novas_timescale, novas_timescale::NOVAS_TT};
+use supernovas_ffi::{novas_timescale, novas_timescale::NOVAS_TT};
 
 use crate::{
     error::{Error, Result},

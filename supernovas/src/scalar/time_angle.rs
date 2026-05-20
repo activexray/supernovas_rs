@@ -9,7 +9,7 @@ use core::{
     str::FromStr,
 };
 
-use supernovas_sys::{
+use supernovas_ffi::{
     novas_print_hms, novas_separator_type::NOVAS_SEP_UNITS_AND_SPACES, novas_str_hours,
 };
 

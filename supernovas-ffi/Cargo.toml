@@ -1,5 +1,5 @@
 [package]
-name = "supernovas-sys"
+name = "supernovas-ffi"
 description = "Raw FFI bindings to the SuperNOVAS C library"
 links = "supernovas"
 version.workspace = true

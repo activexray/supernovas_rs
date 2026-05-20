@@ -198,7 +198,7 @@ impl approx::AbsDiffEq for Velocity {
 #[cfg(test)]
 mod tests {
     use approx::assert_abs_diff_eq;
-    use supernovas_sys::novas_timescale::NOVAS_TT;
+    use supernovas_ffi::novas_timescale::NOVAS_TT;
 
     use super::*;
 

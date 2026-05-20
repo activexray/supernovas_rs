@@ -7,7 +7,7 @@
 
 use core::{fmt, mem::MaybeUninit};
 
-use supernovas_sys::{make_observer_at_geocenter, make_observer_on_surface, observer};
+use supernovas_ffi::{make_observer_at_geocenter, make_observer_on_surface, observer};
 
 use crate::error::{Error, Result};
 
