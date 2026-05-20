@@ -24,13 +24,12 @@
         };
         inherit (pkgs) lib;
 
-        # Nightly toolchain derived from rust-toolchain.toml. The sha256 covers
-        # the channel manifest fetched from static.rust-lang.org; it changes
-        # with each nightly so we use lib.fakeSha256 here and let the magic-nix
-        # cache keep builds reproducible in CI.
+        # Nightly toolchain derived from rust-toolchain.toml. The sha256 is the
+        # hash of the channel manifest for the pinned date; update it whenever
+        # rust-toolchain.toml is bumped to a new nightly.
         toolchain = pkgs.fenix.fromToolchainFile {
           file = ./rust-toolchain.toml;
-          sha256 = lib.fakeSha256;
+          sha256 = "sha256-T9bAi9MXgNomhnt7+2UwSQY9YWyYFZx6ZsxnU3KLEjI=";
         };
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
