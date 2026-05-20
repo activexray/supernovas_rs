@@ -105,6 +105,11 @@ These are known gaps that will be addressed in future releases:
 - **Error type**: FFI call failures and parse errors both map to the unit variant `Error::Parse`. A richer error type (with context strings) is deferred until the `std` feature is a reasonable default for the target use cases.
 - **`Interval` timescale**: `Interval::from_seconds` takes a raw `novas_timescale` FFI enum directly; this will be replaced by a safe `Timescale` newtype.
 
+## Note on AI Usage
+
+Generative AI was used in the production of some portions of this crate, mainly in the generation of unit tests and getting `build.rs` correct for the ffi layer.
+All code in this crate was at the very least validated manually by the author, if not written by them.
+
 ## Upstream attribution
 
 This project wraps [SuperNOVAS](https://github.com/sigmyne/supernovas), a C astrometry library authored by **Attila Kovács** ([@sigmyne](https://github.com/sigmyne)), itself derived from the original NOVAS library by the U.S. Naval Observatory.
