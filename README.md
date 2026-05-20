@@ -25,22 +25,22 @@ SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observat
 - `CatalogEntry` with proper motion, parallax, and radial velocity
 - Full and reduced accuracy modes (reduced requires no external ephemeris)
 - `no_std` compatible
-- Vendored SuperNOVAS v1.6.0 by default (no system library required)
+- Optional `vendored` feature: bundles SuperNOVAS v1.6.0 statically (no system library required)
 
 ## Quick start
 
-Add the wrapper crate to your `Cargo.toml`:
-
-```toml
-[dependencies]
-supernovas = "0.1"
-```
-
-To build against the bundled SuperNOVAS v1.6.0 instead of a system library, enable the `vendored` feature:
+Add the wrapper crate to your `Cargo.toml`. Enable the `vendored` feature to build the bundled SuperNOVAS v1.6.0 statically — no system library required:
 
 ```toml
 [dependencies]
 supernovas = { version = "0.1", features = ["vendored"] }
+```
+
+If you already have SuperNOVAS ≥ 1.6.0 installed system-wide (e.g. via Nix or a distro package), omit the feature and it will be found via `pkg-config`:
+
+```toml
+[dependencies]
+supernovas = "0.1"
 ```
 
 ### Example — ICRS to horizontal

@@ -34,9 +34,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 #### `supernovas-ffi`
 
 - Raw bindgen FFI bindings to SuperNOVAS v1.6.0.
-- `vendored` feature (default): builds the bundled C library statically via CMake.
+- `vendored` feature: builds the bundled C library statically via CMake (opt-in).
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
-  `SUPERNOVAS_LIB_DIR` env vars when `vendored` is disabled.
+  `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
 [Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/kiranshila/supernovas_rs/releases/tag/v0.1.0

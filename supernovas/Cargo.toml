@@ -11,6 +11,9 @@ repository.workspace = true
 authors.workspace = true
 readme.workspace = true
 
+[package.metadata.docs.rs]
+features = ["vendored"]
+
 [features]
 default = []
 vendored = ["supernovas-ffi/vendored"]
