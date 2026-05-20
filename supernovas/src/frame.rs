@@ -107,9 +107,17 @@ impl Frame {
     /// Compute the apparent horizontal (azimuth, elevation) of a catalog
     /// source as seen from this frame's observer at this frame's time.
     ///
-    /// This pipeline currently applies **no refraction correction** — the
-    /// result is the *astrometric* horizontal direction. Refraction-aware
-    /// variants land alongside the full `Apparent` / `Refraction` layer.
+    /// No refraction correction is applied — the result is the geometric
+    /// (unrefracted) direction.
+    ///
+    /// # Known limitations
+    ///
+    /// - No atmospheric refraction. Pass a custom `novas_refraction_model`
+    ///   callback via the raw FFI (`novas_app_to_hor`) if you need it.
+    // FIXME: return a richer type once Equatorial / GCRS coordinate types land,
+    //        so callers can request non-horizontal output frames.
+    // FIXME: expose a refraction-enabled variant once the Weather → refraction
+    //        plumbing is wired up in this layer.
     pub fn observe(&self, source: &CatalogEntry) -> Result<Horizontal> {
         use core::mem::MaybeUninit;
 

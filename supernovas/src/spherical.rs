@@ -5,9 +5,9 @@
 //! typed variants — [`Galactic`], [`Horizontal`] — add domain accessors and
 //! prevent accidental mixing of reference systems.
 //!
-//! `Equatorial` and `Ecliptic` arrive once the `Equinox` machinery lands;
-//! refraction- and frame-aware conversions on `Horizontal` (and the
-//! `Apparent` round-trip) follow once `Frame` lands.
+//! `Equatorial` and `Ecliptic` coordinate types are not yet implemented.
+//! Refraction-corrected and frame-converted variants of [`Horizontal`] are
+//! also pending.
 
 mod base;
 mod galactic;

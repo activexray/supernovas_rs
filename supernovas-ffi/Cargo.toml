@@ -2,11 +2,14 @@
 name = "supernovas-ffi"
 description = "Raw FFI bindings to the SuperNOVAS C library"
 links = "supernovas"
+keywords = ["astronomy", "astrometry", "novas", "ffi", "bindings"]
+categories = ["external-ffi-bindings", "science"]
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme.workspace = true
 
 [features]
 # Vendored is the default while nixpkgs (and other distros) catch up to

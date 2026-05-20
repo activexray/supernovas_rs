@@ -74,7 +74,6 @@ impl Site {
     ///
     /// Unset weather fields become `NAN`, matching the SuperNOVAS convention
     /// of "skip the refraction component that depends on this value".
-    #[allow(dead_code)] // consumed by the Frame layer (next iteration)
     pub(crate) fn as_on_surface(self) -> novas_on_surface {
         novas_on_surface {
             latitude: self.latitude.deg(),

@@ -10,9 +10,8 @@ use crate::{Angle, Coordinate, Position, error::Result, unit};
 /// Azimuth is measured eastward from north along the horizon. Elevation is
 /// measured upward from the horizon (positive above, negative below).
 ///
-/// Refraction-aware conversions (`to_refracted`, `to_unrefracted`) and the
-/// transformation to/from astrometric positions live in the `Frame` layer
-/// once it lands.
+/// Obtain a `Horizontal` from a catalog source via [`crate::Frame::observe`].
+/// Refraction-corrected variants are not yet implemented.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Horizontal(Spherical);
 

@@ -1,9 +1,8 @@
 //! Observers: who or where the observation is taken from.
 //!
-//! Currently this layer exposes ground-based ([`Observer::Geodetic`])
-//! observers, which is enough for the ICRS → az/el pipeline. The
-//! geocentric, airborne, and solar-system variants will arrive once we
-//! need them.
+//! Currently exposes ground-based ([`Observer::Geodetic`]) and geocentric
+//! ([`Observer::Geocenter`]) observers. Airborne and near-Earth (satellite)
+//! variants are not yet implemented.
 
 use core::{fmt, mem::MaybeUninit};
 
@@ -47,7 +46,6 @@ impl Observer {
     /// Build the C-side `observer` representation, ready to pass to
     /// `novas_make_frame`. Returns an error if the C side reports a
     /// problem (e.g. malformed coordinates).
-    #[allow(dead_code)] // consumed by the Frame layer (next iteration)
     pub(crate) fn as_novas_observer(&self) -> Result<observer> {
         let mut obs = MaybeUninit::<observer>::zeroed();
         let rc = match self {

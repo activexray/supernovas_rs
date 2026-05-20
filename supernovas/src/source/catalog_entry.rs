@@ -106,7 +106,6 @@ impl CatalogEntry {
 
     /// Borrow the underlying C `object`, for passing to FFI functions that
     /// take a `*const object`.
-    #[allow(dead_code)] // consumed by the sky_pos / Apparent layer (next iteration)
     pub(crate) fn as_object(&self) -> &object {
         &self.object
     }

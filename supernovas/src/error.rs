@@ -3,6 +3,15 @@
 use alloc::string::String;
 
 /// Errors produced by safe-wrapper constructors and parsers.
+///
+/// # Known limitations
+///
+/// FFI call failures are currently reported as `Parse(message)` rather than a
+/// dedicated variant. A proper `FfiError(String)` variant will be added before
+/// the API stabilises; callers should not match on `Parse` to detect FFI
+/// failures.
+// FIXME: add FfiError(String) variant; update all Error::Parse("… failed") call
+//        sites in frame.rs, observer.rs, source/catalog_entry.rs to use it.
 #[derive(Debug, Clone, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {

@@ -16,6 +16,13 @@ use crate::{
 /// timescale.
 ///
 /// Constructors reject non-finite inputs.
+///
+/// # Known limitations
+///
+/// [`Self::from_seconds`] and [`Self::timescale`] expose [`novas_timescale`]
+/// directly, leaking the FFI type into the public API. These will be replaced
+/// by a newtype wrapper before the API stabilises.
+// FIXME: wrap novas_timescale in a safe Timescale enum and use it here.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {
     seconds: f64,

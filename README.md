@@ -11,11 +11,15 @@ SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observat
 
 ## Features
 
-- Convert celestial coordinates across reference frames (ICRS, GCRS, horizontal az/el, and more)
-- Build observers from geodetic site coordinates with optional atmospheric refraction
-- Handle time in UTC/TT/TDB Julian dates with leap-second correction
-- Full/reduced accuracy modes — reduced accuracy works without an external ephemeris
-- `no_std` compatible (`supernovas` crate)
+- ICRS catalog source → apparent horizontal (az/el) via `Frame::observe`
+- Dimensioned scalar types: `Angle`, `TimeAngle`, `Coordinate`, `Interval`, `Pressure`, `Temperature`, `ScalarVelocity`
+- 3-D vector types: `Position`, `Velocity`, with cross-type arithmetic
+- Spherical coordinate types: `Horizontal`, `Galactic`
+- `Time` from UTC/TT Julian dates and Unix epoch
+- Geodetic and geocentric `Observer`; `Site` + `Weather`
+- `CatalogEntry` with proper motion, parallax, and radial velocity
+- Full and reduced accuracy modes (reduced requires no external ephemeris)
+- `no_std` compatible
 - Vendored SuperNOVAS v1.6.0 by default (no system library required)
 
 ## Quick start
@@ -83,6 +87,18 @@ supernovas/           # safe wrapper crate
   src/
   examples/
 ```
+
+## Remaining work
+
+These are known gaps that will be addressed in future releases:
+
+- **Coordinate types**: `Equatorial` (ICRS / GCRS / J2000) and `Ecliptic` — the `Equinox` machinery and associated frame conversions are not yet implemented.
+- **Refraction correction**: `Frame::observe` currently returns the unrefracted geometric direction. A refraction-enabled path (feeding `Site::weather` into SuperNOVAS's built-in refraction model) is the next planned addition.
+- **Observer variants**: airborne and near-Earth (satellite) observers are not yet wrapped.
+- **Source types**: planets, solar-system bodies, and ephemeris-driven targets (requires a configured ephemeris provider via `novas_use_calceph` or equivalent).
+- **Full-accuracy mode**: `Accuracy::Full` needs an external ephemeris provider configured before use. The reduced path works out of the box.
+- **Error type**: FFI call failures are currently reported via `Error::Parse`; a dedicated `Error::FfiError` variant will be added before the API stabilises.
+- **`Interval` timescale**: `Interval::from_seconds` takes a raw `novas_timescale` FFI enum directly; this will be replaced by a safe `Timescale` newtype.
 
 ## Upstream attribution
 

@@ -1,11 +1,14 @@
 [package]
 name = "supernovas"
 description = "Safe Rust wrapper around the SuperNOVAS astrometry library"
+keywords = ["astronomy", "astrometry", "coordinates", "novas"]
+categories = ["science", "no-std"]
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
+readme.workspace = true
 
 [dependencies]
 supernovas-ffi.workspace = true

@@ -8,6 +8,7 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/kiranshila/supernovas_rs"
 authors = ["Kiran Shila"]
+readme = "README.md"
 
 [workspace.dependencies]
 supernovas-ffi = { path = "supernovas-ffi", version = "0.1.0" }
