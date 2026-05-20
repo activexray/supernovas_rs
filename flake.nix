@@ -43,6 +43,7 @@
         # non-Nix users; in Nix we take the pkg-config path.
         commonArgs = {
           inherit src;
+          pname = "supernovas";
           strictDeps = true;
           cargoExtraArgs = "--workspace --no-default-features";
           nativeBuildInputs = [
@@ -56,11 +57,11 @@
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
         # Pinned MSRV toolchain (1.88.0 — established by `cargo msrv`).
-        # If this hash ever needs updating: temporarily set sha256 = lib.fakeSha256,
-        # run `nix flake check`, and replace with the hash in the error output.
+        # To update: set sha256 = lib.fakeSha256, run `nix flake check`, replace
+        # with the hash reported in the error.
         msrvToolchain = (pkgs.fenix.toolchainOf {
           channel = "1.88.0";
-          sha256 = lib.fakeSha256;
+          sha256 = "sha256-Qxt8XAuaUR2OMdKbN4u8dBJOhSHxS+uS06Wl9+flVEk=";
         }).minimalToolchain;
 
         craneLibMsrv = (crane.mkLib pkgs).overrideToolchain msrvToolchain;
@@ -85,7 +86,10 @@
             });
 
           # cargo fmt --check  (nightly, for rustfmt.toml unstable features)
-          fmt = craneLib.cargoFmt {inherit src;};
+          fmt = craneLib.cargoFmt {
+            inherit src;
+            pname = "supernovas";
+          };
 
           # cargo doc --workspace --no-default-features --no-deps
           doc = craneLib.cargoDoc (commonArgs
@@ -95,8 +99,8 @@
               RUSTDOCFLAGS = "-D warnings";
             });
 
-          # Build check against the declared MSRV (1.88.0).
-          msrv = craneLibMsrv.cargoCheck (commonArgs
+          # Compile check against the declared MSRV (1.88.0).
+          msrv = craneLibMsrv.cargoBuild (commonArgs
             // {
               cargoArtifacts = craneLibMsrv.buildDepsOnly commonArgs;
             });
