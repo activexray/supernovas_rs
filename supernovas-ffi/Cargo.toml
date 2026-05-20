@@ -6,6 +6,7 @@ keywords = ["astronomy", "astrometry", "novas", "ffi", "bindings"]
 categories = ["external-ffi-bindings", "science"]
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true

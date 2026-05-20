@@ -6,6 +6,7 @@
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs = {
@@ -13,40 +14,113 @@
     nixpkgs,
     flake-utils,
     fenix,
+    crane,
   }:
     flake-utils.lib.eachDefaultSystem (
       system: let
-        overlays = [fenix.overlays.default];
         pkgs = import nixpkgs {
-          inherit system overlays;
+          inherit system;
+          overlays = [fenix.overlays.default];
         };
-        rust = pkgs.fenix.complete.withComponents [
+        inherit (pkgs) lib;
+
+        # Nightly toolchain: required for the unstable rustfmt features in
+        # rustfmt.toml (imports_granularity, group_imports).
+        toolchain = pkgs.fenix.complete.withComponents [
           "cargo"
           "clippy"
           "rust-src"
           "rustc"
           "rustfmt"
         ];
-      in
-        with pkgs; {
-          devShells.default = mkShell {
-            buildInputs = [
-              pkg-config
-              cmake
-              rust
-              rustPlatform.bindgenHook
-              rust-analyzer-nightly
-              supernovas
-              cargo-nextest
-	      cargo-msrv
-            ];
 
-            # Test binaries linked against shared libsupernovas need the
-            # runtime loader to find it; Nix doesn't set RPATH for cargo
-            # outputs, so expose the lib dir on LD_LIBRARY_PATH.
-            LD_LIBRARY_PATH = lib.makeLibraryPath [supernovas];
-            RUST_BACKTRACE = 1;
-          };
-        }
+        craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
+
+        # Crane source filter: vendor/ is excluded automatically (C files);
+        # that's fine because we use --no-default-features below.
+        src = craneLib.cleanCargoSource ./.;
+
+        # All crane builds use the nixpkgs supernovas library so cmake is not
+        # needed in the sandbox. The vendored feature remains the default for
+        # non-Nix users; in Nix we take the pkg-config path.
+        commonArgs = {
+          inherit src;
+          strictDeps = true;
+          cargoExtraArgs = "--workspace --no-default-features";
+          nativeBuildInputs = [
+            pkgs.pkg-config
+            pkgs.rustPlatform.bindgenHook
+          ];
+          buildInputs = [pkgs.supernovas];
+        };
+
+        # Shared pre-built dependency artifacts; amortises compile time across checks.
+        cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+        # Pinned MSRV toolchain (1.88.0 — established by `cargo msrv`).
+        # If this hash ever needs updating: temporarily set sha256 = lib.fakeSha256,
+        # run `nix flake check`, and replace with the hash in the error output.
+        msrvToolchain = (pkgs.fenix.toolchainOf {
+          channel = "1.88.0";
+          sha256 = lib.fakeSha256;
+        }).minimalToolchain;
+
+        craneLibMsrv = (crane.mkLib pkgs).overrideToolchain msrvToolchain;
+      in {
+        checks = {
+          # cargo test --workspace --no-default-features
+          test = craneLib.cargoTest (commonArgs
+            // {
+              inherit cargoArtifacts;
+              # libsupernovas is a shared library; tell the dynamic linker where
+              # to find it when the test binaries run inside the Nix sandbox.
+              preCheck = ''
+                export LD_LIBRARY_PATH=${lib.makeLibraryPath [pkgs.supernovas]}
+              '';
+            });
+
+          # cargo clippy --workspace --no-default-features -- -D warnings
+          clippy = craneLib.cargoClippy (commonArgs
+            // {
+              inherit cargoArtifacts;
+              cargoClippyExtraArgs = "-- -D warnings";
+            });
+
+          # cargo fmt --check  (nightly, for rustfmt.toml unstable features)
+          fmt = craneLib.cargoFmt {inherit src;};
+
+          # cargo doc --workspace --no-default-features --no-deps
+          doc = craneLib.cargoDoc (commonArgs
+            // {
+              inherit cargoArtifacts;
+              cargoDocExtraArgs = "--no-deps";
+              RUSTDOCFLAGS = "-D warnings";
+            });
+
+          # Build check against the declared MSRV (1.88.0).
+          msrv = craneLibMsrv.cargoCheck (commonArgs
+            // {
+              cargoArtifacts = craneLibMsrv.buildDepsOnly commonArgs;
+            });
+        };
+
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            pkgs.pkg-config
+            pkgs.cmake # for local vendored builds (cargo build default)
+            toolchain
+            pkgs.rustPlatform.bindgenHook
+            pkgs.rust-analyzer-nightly
+            pkgs.supernovas
+            pkgs.cargo-nextest
+            pkgs.cargo-msrv
+          ];
+
+          # Test binaries link against shared libsupernovas; Nix doesn't set
+          # RPATH on cargo outputs so expose the lib dir explicitly.
+          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.supernovas];
+          RUST_BACKTRACE = 1;
+        };
+      }
     );
 }
