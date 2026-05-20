@@ -32,11 +32,13 @@
           devShells.default = mkShell {
             buildInputs = [
               pkg-config
+              cmake
               rust
               rustPlatform.bindgenHook
               rust-analyzer-nightly
               supernovas
               cargo-nextest
+	      cargo-msrv
             ];
 
             # Test binaries linked against shared libsupernovas need the

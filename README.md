@@ -1,5 +1,10 @@
 # SuperNOVAS (Rust)
 
+[![CI](https://github.com/kiranshila/supernovas_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/kiranshila/supernovas_rs/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/supernovas.svg)](https://crates.io/crates/supernovas)
+[![docs.rs](https://docs.rs/supernovas/badge.svg)](https://docs.rs/supernovas)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
+
 Safe Rust bindings to the [SuperNOVAS](https://github.com/sigmyne/supernovas) astrometry C library.
 
 SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observatory Vector Astrometry Software). This workspace provides two crates:
