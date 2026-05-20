@@ -7,11 +7,10 @@
 //!
 //! # Feature flags
 //!
-//! - **`vendored`** *(default)* — build the bundled SuperNOVAS v1.6.0 static
-//!   library from the git submodule at `vendor/supernovas`. Requires a C
-//!   compiler and CMake.
-//! - *(no `vendored`)* — link against a system-installed SuperNOVAS located
-//!   via `pkg-config` (`>= 1.6.0`). Override the search with
+//! - **`vendored`** — build the bundled SuperNOVAS v1.6.0 static library from
+//!   the git submodule at `vendor/supernovas`. Requires a C compiler and CMake.
+//! - *(default, no `vendored`)* — link against a system-installed SuperNOVAS
+//!   located via `pkg-config` (`>= 1.6.0`). Override with
 //!   `SUPERNOVAS_INCLUDE_DIR` / `SUPERNOVAS_LIB_DIR` env vars.
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
