@@ -67,10 +67,11 @@
         craneLibMsrv = (crane.mkLib pkgs).overrideToolchain msrvToolchain;
       in {
         checks = {
-          # cargo test --workspace --no-default-features
-          test = craneLib.cargoTest (commonArgs
+          # cargo nextest run --workspace --no-default-features
+          test = craneLib.cargoNextest (commonArgs
             // {
               inherit cargoArtifacts;
+              nativeBuildInputs = commonArgs.nativeBuildInputs ++ [pkgs.cargo-nextest];
               # libsupernovas is a shared library; tell the dynamic linker where
               # to find it when the test binaries run inside the Nix sandbox.
               preCheck = ''
