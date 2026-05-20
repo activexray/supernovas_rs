@@ -1,4 +1,4 @@
-# supernovas
+# SuperNOVAS (Rust)
 
 Safe Rust bindings to the [SuperNOVAS](https://github.com/sigmyne/supernovas) astrometry C library.
 
