@@ -64,11 +64,13 @@
           pname = "supernovas";
           strictDeps = true;
           cargoExtraArgs = "--workspace --no-default-features";
-          nativeBuildInputs = [
-            pkgs.pkg-config
-            pkgs.rustPlatform.bindgenHook
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            rustPlatform.bindgenHook
           ];
-          buildInputs = [pkgs.supernovas];
+          buildInputs = with pkgs; [
+            supernovas
+          ];
         };
 
         # Shared pre-built dependency artifacts; amortises compile time across checks.
@@ -125,16 +127,12 @@
             });
         };
 
-        devShells.default = pkgs.mkShell {
-          buildInputs = [
-            pkgs.pkg-config
-            pkgs.cmake # for local vendored builds (cargo build default)
-            toolchain
-            pkgs.rustPlatform.bindgenHook
-            pkgs.rust-analyzer-nightly
-            pkgs.supernovas
-            pkgs.cargo-nextest
-            pkgs.cargo-msrv
+        devShells.default = craneLib.devShell {
+          checks = self.checks.${system};
+          packages = with pkgs; [
+            cmake # for local vendored builds
+            rust-analyzer-nightly
+            cargo-msrv
           ];
 
           # Test binaries link against shared libsupernovas; Nix doesn't set
