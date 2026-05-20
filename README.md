@@ -24,7 +24,7 @@ SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observat
 - Geodetic and geocentric `Observer`; `Site` + `Weather`
 - `CatalogEntry` with proper motion, parallax, and radial velocity
 - Full and reduced accuracy modes (reduced requires no external ephemeris)
-- `no_std` compatible
+- `no_std` + alloc-free by default; opt-in `std` feature available
 - Optional `vendored` feature: bundles SuperNOVAS v1.6.0 statically (no system library required)
 
 ## Quick start
@@ -33,14 +33,14 @@ Add the wrapper crate to your `Cargo.toml`. Enable the `vendored` feature to bui
 
 ```toml
 [dependencies]
-supernovas = { version = "0.1", features = ["vendored"] }
+supernovas = { version = "0.2", features = ["vendored"] }
 ```
 
 If you already have SuperNOVAS ≥ 1.6.0 installed system-wide (e.g. via Nix or a distro package), omit the feature and it will be found via `pkg-config`:
 
 ```toml
 [dependencies]
-supernovas = "0.1"
+supernovas = "0.2"
 ```
 
 ### Example — ICRS to horizontal
@@ -102,7 +102,7 @@ These are known gaps that will be addressed in future releases:
 - **Observer variants**: airborne and near-Earth (satellite) observers are not yet wrapped.
 - **Source types**: planets, solar-system bodies, and ephemeris-driven targets (requires a configured ephemeris provider via `novas_use_calceph` or equivalent).
 - **Full-accuracy mode**: `Accuracy::Full` needs an external ephemeris provider configured before use. The reduced path works out of the box.
-- **Error type**: FFI call failures are currently reported via `Error::Parse`; a dedicated `Error::FfiError` variant will be added before the API stabilises.
+- **Error type**: FFI call failures and parse errors both map to the unit variant `Error::Parse`. A richer error type (with context strings) is deferred until the `std` feature is a reasonable default for the target use cases.
 - **`Interval` timescale**: `Interval::from_seconds` takes a raw `novas_timescale` FFI enum directly; this will be replaced by a safe `Timescale` newtype.
 
 ## Upstream attribution

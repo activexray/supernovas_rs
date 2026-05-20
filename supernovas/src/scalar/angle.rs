@@ -1,6 +1,5 @@
 //! Angular quantity in radians, normalized to (-π, π].
 
-use alloc::ffi::CString;
 use core::{
     f64::consts::TAU,
     ffi::{CStr, c_char, c_int},
@@ -141,10 +140,16 @@ impl FromStr for Angle {
     /// decimal degrees. See the C-side `novas_str_degrees()` for the full
     /// accepted grammar.
     fn from_str(s: &str) -> Result<Self> {
-        let cs = CString::new(s).map_err(|_| Error::Parse(s.into()))?;
+        let bytes = s.as_bytes();
+        if bytes.contains(&0) || bytes.len() >= 64 {
+            return Err(Error::Parse);
+        }
+        let mut buf = [0u8; 64];
+        buf[..bytes.len()].copy_from_slice(bytes);
+        let cs = CStr::from_bytes_with_nul(&buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
         let deg = unsafe { novas_str_degrees(cs.as_ptr()) };
         if !deg.is_finite() {
-            return Err(Error::Parse(s.into()));
+            return Err(Error::Parse);
         }
         Self::from_degrees(deg)
     }
@@ -194,7 +199,8 @@ pub(super) fn wrapped_diff(a: f64, b: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use alloc::format;
+    #[cfg(not(feature = "std"))]
+    use std::format;
 
     use super::*;
 

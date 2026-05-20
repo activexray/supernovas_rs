@@ -16,6 +16,7 @@ features = ["vendored"]
 
 [features]
 default = []
+std = []
 vendored = ["supernovas-ffi/vendored"]
 
 [dependencies]

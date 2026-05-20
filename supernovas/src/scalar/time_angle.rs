@@ -1,6 +1,5 @@
 //! Angle expressed as time on the 24-hour circle.
 
-use alloc::ffi::CString;
 use core::{
     f64::consts::TAU,
     ffi::{CStr, c_char, c_int},
@@ -162,10 +161,16 @@ impl FromStr for TimeAngle {
     /// or decimal hours. See the C-side `novas_str_hours()` for the full
     /// accepted grammar.
     fn from_str(s: &str) -> Result<Self> {
-        let cs = CString::new(s).map_err(|_| Error::Parse(s.into()))?;
+        let bytes = s.as_bytes();
+        if bytes.contains(&0) || bytes.len() >= 64 {
+            return Err(Error::Parse);
+        }
+        let mut buf = [0u8; 64];
+        buf[..bytes.len()].copy_from_slice(bytes);
+        let cs = CStr::from_bytes_with_nul(&buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
         let hours = unsafe { novas_str_hours(cs.as_ptr()) };
         if !hours.is_finite() {
-            return Err(Error::Parse(s.into()));
+            return Err(Error::Parse);
         }
         Self::from_hours(hours)
     }
@@ -201,7 +206,8 @@ fn normalize(r: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use alloc::format;
+    #[cfg(not(feature = "std"))]
+    use std::format;
 
     use approx::assert_abs_diff_eq;
 

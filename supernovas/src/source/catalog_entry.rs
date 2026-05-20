@@ -1,8 +1,7 @@
 //! Catalog (sidereal) source: a fixed direction on the sky in ICRS, with
 //! optional proper motion, parallax, and radial velocity.
 
-use alloc::ffi::CString;
-use core::{fmt, mem::MaybeUninit};
+use core::{ffi::CStr, fmt, mem::MaybeUninit};
 
 use supernovas_ffi::{cat_entry, make_cat_entry, make_cat_object, object};
 
@@ -122,10 +121,13 @@ impl CatalogEntry {
         parallax_mas: f64,
         radial_v_km_per_s: f64,
     ) -> Result<Self> {
-        let name_cs = CString::new(name).map_err(|_| Error::Parse(name.into()))?;
-        if name_cs.as_bytes().len() >= 50 {
-            return Err(Error::Parse(name.into()));
+        let bytes = name.as_bytes();
+        if bytes.contains(&0) || bytes.len() >= 50 {
+            return Err(Error::Parse);
         }
+        let mut name_buf = [0u8; 50];
+        name_buf[..bytes.len()].copy_from_slice(bytes);
+        let name_cs = CStr::from_bytes_with_nul(&name_buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
 
         let mut entry = MaybeUninit::<cat_entry>::zeroed();
         // SAFETY: make_cat_entry initializes *entry on a zero return.
@@ -144,7 +146,7 @@ impl CatalogEntry {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse("make_cat_entry failed".into()));
+            return Err(Error::Parse);
         }
         let entry = unsafe { entry.assume_init() };
 
@@ -152,7 +154,7 @@ impl CatalogEntry {
         // SAFETY: make_cat_object copies entry into *obj on a zero return.
         let rc = unsafe { make_cat_object(&entry, obj.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Parse("make_cat_object failed".into()));
+            return Err(Error::Parse);
         }
         Ok(CatalogEntry {
             object: unsafe { obj.assume_init() },
@@ -205,7 +207,7 @@ mod tests {
         let dec = Angle::from_degrees(0.0).unwrap();
         assert!(matches!(
             CatalogEntry::icrs("bad\0name", ra, dec),
-            Err(Error::Parse(_))
+            Err(Error::Parse)
         ));
     }
 
@@ -216,7 +218,7 @@ mod tests {
         let long_name = "x".repeat(60);
         assert!(matches!(
             CatalogEntry::icrs(&long_name, ra, dec),
-            Err(Error::Parse(_))
+            Err(Error::Parse)
         ));
     }
 

@@ -68,19 +68,20 @@ impl Weather {
 impl fmt::Display for Weather {
     /// Renders fields that are set; "—" for fields that aren't.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let t = self.temperature.map_or_else(
-            || alloc::string::String::from("—"),
-            |t| alloc::format!("{t}"),
-        );
-        let p = self.pressure.map_or_else(
-            || alloc::string::String::from("—"),
-            |p| alloc::format!("{p}"),
-        );
-        let h = self.humidity_percent.map_or_else(
-            || alloc::string::String::from("—"),
-            |h| alloc::format!("{h:.0} %"),
-        );
-        write!(f, "T={t} P={p} RH={h}")
+        match self.temperature {
+            Some(t) => write!(f, "T={t}")?,
+            None => f.write_str("T=—")?,
+        }
+        f.write_str(" ")?;
+        match self.pressure {
+            Some(p) => write!(f, "P={p}")?,
+            None => f.write_str("P=—")?,
+        }
+        f.write_str(" ")?;
+        match self.humidity_percent {
+            Some(h) => write!(f, "RH={h:.0} %"),
+            None => f.write_str("RH=—"),
+        }
     }
 }
 

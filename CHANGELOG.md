@@ -7,6 +7,26 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-20
+
+### Breaking
+
+- `supernovas`: `Error::Parse(String)` is now a unit variant `Error::Parse` with no
+  payload. Callers matching `Error::Parse(_)` must be updated to `Error::Parse`.
+
+### Added
+
+- `supernovas`: `std` feature — opt-in to link the standard library. The crate is
+  `no_std` by default and no longer requires a global allocator.
+- `supernovas`: `Error` now derives `Copy`.
+
+### Changed
+
+- `supernovas`: removed the `alloc` dependency entirely. Stack-allocated
+  null-terminated buffers replace `CString` in `FromStr` for `Angle` /
+  `TimeAngle` and in `CatalogEntry::icrs`; `Weather`'s `Display` impl writes
+  directly to the formatter instead of building intermediate `String`s.
+
 ## [0.1.1] — 2026-05-20
 
 ### Fixed
@@ -44,6 +64,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
   `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
-[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/kiranshila/supernovas_rs/releases/tag/v0.1.0

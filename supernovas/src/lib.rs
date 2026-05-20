@@ -2,7 +2,7 @@
 //! high-precision astrometry library based on NOVAS (Naval Observatory Vector
 //! Astrometry Software).
 //!
-//! # What's implemented in v0.1
+//! # What's implemented
 //!
 //! - **Scalars**: [`Angle`], [`TimeAngle`], [`Coordinate`], [`Interval`],
 //!   [`Pressure`], [`Temperature`], [`ScalarVelocity`] — dimensioned newtypes
@@ -49,9 +49,11 @@
 //! The raw FFI bindings are re-exported as [`sys`] for callers that need to
 //! drop down to the C layer directly.
 
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-extern crate alloc;
+// Test binaries always link std; make it available in test code.
+#[cfg(all(test, not(feature = "std")))]
+extern crate std;
 
 pub use supernovas_ffi as sys;
 

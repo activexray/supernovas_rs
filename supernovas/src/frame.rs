@@ -91,7 +91,7 @@ impl Frame {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse("novas_make_frame failed".into()));
+            return Err(Error::Parse);
         }
         Ok(Frame(unsafe { frame.assume_init() }))
     }
@@ -126,7 +126,7 @@ impl Frame {
         let rc =
             unsafe { novas_sky_pos(source.as_object(), &self.0, NOVAS_CIRS, sky.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Parse("novas_sky_pos failed".into()));
+            return Err(Error::Parse);
         }
         let sky = unsafe { sky.assume_init() };
 
@@ -147,7 +147,7 @@ impl Frame {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse("novas_app_to_hor failed".into()));
+            return Err(Error::Parse);
         }
         Horizontal::from_degrees(az_deg, el_deg)
     }
