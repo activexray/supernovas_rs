@@ -1,0 +1,3 @@
+[submodule "supernovas-sys/vendor/supernovas"]
+	path = supernovas-sys/vendor/supernovas
+	url = https://github.com/sigmyne/supernovas

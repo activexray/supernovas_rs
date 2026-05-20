@@ -1,0 +1,23 @@
+[package]
+name = "supernovas-sys"
+description = "Raw FFI bindings to the SuperNOVAS C library"
+links = "supernovas"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+# Vendored is the default while nixpkgs (and other distros) catch up to
+# supernovas >= 1.6.0. Disable default features to use a system library
+# located via pkg-config instead.
+default = ["vendored"]
+
+# Build SuperNOVAS from the bundled git submodule (vendor/supernovas, pinned to v1.6.0).
+vendored = ["dep:cmake"]
+
+[build-dependencies]
+bindgen = "0.72"
+pkg-config = "0.3"
+cmake = { version = "0.1", optional = true }

@@ -1,0 +1,10 @@
+# Requires nightly rustfmt (provided by the flake's fenix.complete toolchain).
+unstable_features = true
+
+# Collapse `use core::X; use core::Y;` into `use core::{X, Y};` — no
+# wall of single-item imports.
+imports_granularity = "Crate"
+
+# std/core/alloc first, then external crates, then crate-local; blank
+# lines between groups.
+group_imports = "StdExternalCrate"
