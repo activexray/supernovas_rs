@@ -1,6 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     flake-utils.url = "github:numtide/flake-utils";
     fenix = {
       url = "github:nix-community/fenix";
@@ -12,6 +13,7 @@
   outputs = {
     self,
     nixpkgs,
+    nixpkgs-master,
     flake-utils,
     fenix,
     crane,
@@ -20,7 +22,19 @@
       system: let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [fenix.overlays.default];
+          overlays = [
+            fenix.overlays.default
+            # nixpkgs-unstable carries supernovas 1.5.1; master has 1.6.0.
+            # Take the master derivation without the optional C++ wrapper or
+            # calceph support — we only need the plain C library.
+            (_: _: {
+              supernovas =
+                (nixpkgs-master.legacyPackages.${system}.supernovas).override {
+                  cppSupport = false;
+                  withCalceph = false;
+                };
+            })
+          ];
         };
         inherit (pkgs) lib;
 
@@ -36,11 +50,15 @@
 
         # Crane source filter: vendor/ is excluded automatically (C files);
         # that's fine because we use --no-default-features below.
-        src = craneLib.cleanCargoSource ./.;
+        # wrapper.h is included so bindgen can generate the FFI bindings.
+        src = lib.cleanSourceWith {
+          src = ./.;
+          filter = path: type:
+            (lib.hasSuffix ".h" path) || (craneLib.filterCargoSources path type);
+        };
 
-        # All crane builds use the nixpkgs supernovas library so cmake is not
-        # needed in the sandbox. The vendored feature remains the default for
-        # non-Nix users; in Nix we take the pkg-config path.
+        # All crane builds use the nixpkgs supernovas library via pkg-config;
+        # cmake is not needed in the sandbox.
         commonArgs = {
           inherit src;
           pname = "supernovas";

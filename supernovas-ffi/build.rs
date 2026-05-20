@@ -109,7 +109,7 @@ fn find_library() -> Library {
             Err(e) => panic!(
                 "pkg-config could not locate supernovas >= 1.6.0: {e}\n\
                  Options:\n\
-                 - enable the `vendored` feature (default) to build the bundled v1.6.0 statically, or\n\
+                 - enable the `vendored` feature to build the bundled v1.6.0 statically, or\n\
                  - install supernovas >= 1.6.0 system-wide, or\n\
                  - set SUPERNOVAS_INCLUDE_DIR / SUPERNOVAS_LIB_DIR to point at a local install, or\n\
                  - set SUPERNOVAS_NO_PKG_CONFIG=1 with the above env vars to skip pkg-config entirely."

@@ -36,11 +36,11 @@ Add the wrapper crate to your `Cargo.toml`:
 supernovas = "0.1"
 ```
 
-To use a system-installed SuperNOVAS instead of the vendored copy, disable the default `vendored` feature on the `-sys` crate:
+To build against the bundled SuperNOVAS v1.6.0 instead of a system library, enable the `vendored` feature:
 
 ```toml
 [dependencies]
-supernovas = { version = "0.1", default-features = false }
+supernovas = { version = "0.1", features = ["vendored"] }
 ```
 
 ### Example — ICRS to horizontal

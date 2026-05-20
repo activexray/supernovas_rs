@@ -13,12 +13,10 @@ authors.workspace = true
 readme.workspace = true
 
 [features]
-# Vendored is the default while nixpkgs (and other distros) catch up to
-# supernovas >= 1.6.0. Disable default features to use a system library
-# located via pkg-config instead.
-default = ["vendored"]
+default = []
 
 # Build SuperNOVAS from the bundled git submodule (vendor/supernovas, pinned to v1.6.0).
+# Enable this if no system supernovas >= 1.6.0 is available via pkg-config.
 vendored = ["dep:cmake"]
 
 [build-dependencies]

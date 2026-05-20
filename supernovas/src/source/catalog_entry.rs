@@ -32,7 +32,10 @@ impl fmt::Debug for CatalogEntry {
     /// only the fields we know are initialised.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("CatalogEntry")
-            .field("name", &cstr_to_str(&self.object.star.starname).unwrap_or(""))
+            .field(
+                "name",
+                &cstr_to_str(&self.object.star.starname).unwrap_or(""),
+            )
             .field("ra", &self.ra())
             .field("dec", &self.dec())
             .finish_non_exhaustive()
