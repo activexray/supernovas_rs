@@ -127,7 +127,8 @@ impl CatalogEntry {
         }
         let mut name_buf = [0u8; 50];
         name_buf[..bytes.len()].copy_from_slice(bytes);
-        let name_cs = CStr::from_bytes_with_nul(&name_buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
+        let name_cs =
+            CStr::from_bytes_with_nul(&name_buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
 
         let mut entry = MaybeUninit::<cat_entry>::zeroed();
         // SAFETY: make_cat_entry initializes *entry on a zero return.
