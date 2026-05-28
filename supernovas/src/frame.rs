@@ -13,9 +13,10 @@ use supernovas_ffi::{
 };
 
 use crate::{
-    Angle, CatalogEntry, Horizontal, Observer, Time,
+    Angle, Horizontal, Observer, Time,
     apparent::ReferenceSystem,
     error::{Error, Result},
+    source::Source,
 };
 
 /// Calculation accuracy. SuperNOVAS distinguishes a full-precision path
@@ -119,8 +120,11 @@ impl Frame {
         &self.0
     }
 
-    /// Compute the apparent horizontal (azimuth, elevation) of a catalog
-    /// source as seen from this frame's observer at this frame's time.
+    /// Compute the apparent horizontal (azimuth, elevation) of a source as
+    /// seen from this frame's observer at this frame's time.
+    ///
+    /// Accepts any [`Source`]: [`crate::CatalogEntry`], [`crate::Planet`],
+    /// [`crate::EphemObject`], or [`crate::OrbitalObject`].
     ///
     /// This is the convenience shortcut for the full pipeline:
     ///
@@ -128,11 +132,10 @@ impl Frame {
     ///   source.apparent_in(frame, ReferenceSystem::Cirs)?.to_horizontal()
     /// ```
     ///
-    /// No atmospheric refraction is applied — the result is the geometric
-    /// direction. Build through [`crate::Apparent`] explicitly if you want
-    /// access to the intermediate RA/Dec, or to request a different
-    /// [`ReferenceSystem`].
-    pub fn observe(&self, source: &CatalogEntry) -> Result<Horizontal> {
+    /// No atmospheric refraction is applied. Use [`crate::Apparent`]
+    /// directly if you need intermediate RA/Dec, a different
+    /// [`ReferenceSystem`], or atmospheric refraction.
+    pub fn observe(&self, source: &impl Source) -> Result<Horizontal> {
         source
             .apparent_in(self, ReferenceSystem::Cirs)?
             .to_horizontal()

@@ -91,7 +91,7 @@ pub use frame::{Accuracy, Frame};
 pub use observer::{Observer, Site, Weather};
 pub use refraction::Refraction;
 pub use scalar::{Angle, Coordinate, Interval, Pressure, ScalarVelocity, Temperature, TimeAngle};
-pub use source::CatalogEntry;
+pub use source::{CatalogEntry, EphemObject, OrbitalElements, OrbitalObject, Planet, SolarBody, Source};
 pub use spherical::{Ecliptic, Equatorial, Galactic, Horizontal, Spherical};
 pub use time::Time;
 pub use vector::{Position, Velocity};

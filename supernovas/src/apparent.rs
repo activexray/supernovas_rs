@@ -17,9 +17,10 @@ use supernovas_ffi::{
 };
 
 use crate::{
-    Accuracy, Angle, CatalogEntry, Coordinate, Ecliptic, Equatorial, Equinox, Frame, Galactic,
+    Accuracy, Angle, Coordinate, Ecliptic, Equatorial, Equinox, Frame, Galactic,
     Horizontal, Refraction, ScalarVelocity, TimeAngle,
     error::{Error, Result},
+    source::Source,
 };
 
 /// An equatorial reference system for sky-position computations.
@@ -204,14 +205,12 @@ impl Apparent {
     }
 }
 
-/// Compute the apparent place of a catalog source for the given frame and
+/// Compute the apparent place of any [`Source`] for the given frame and
 /// reference system.
 ///
-/// Used internally by [`CatalogEntry::apparent_in`] and [`Frame::observe`];
-/// exposed here so other source kinds can share the implementation when
-/// they land.
-pub(crate) fn apparent_of_catalog_in(
-    source: &CatalogEntry,
+/// Used internally by [`Source::apparent_in`] and [`Frame::observe`].
+pub(crate) fn apparent_of_source_in(
+    source: &(impl Source + ?Sized),
     frame: &Frame,
     system: ReferenceSystem,
 ) -> Result<Apparent> {
@@ -238,7 +237,7 @@ pub(crate) fn apparent_of_catalog_in(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Accuracy, Observer, Time, Weather};
+    use crate::{Accuracy, CatalogEntry, Observer, Time, Weather};
 
     fn vega() -> CatalogEntry {
         CatalogEntry::icrs(

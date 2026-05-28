@@ -21,6 +21,13 @@ pub struct CatalogEntry {
     object: object,
 }
 
+impl super::sealed::Sealed for CatalogEntry {}
+impl super::Source for CatalogEntry {
+    fn as_object(&self) -> &object {
+        &self.object
+    }
+}
+
 impl fmt::Debug for CatalogEntry {
     /// Manual `Debug` impl — the underlying C `object` contains an `orbit`
     /// substructure that `make_cat_object` deliberately leaves
@@ -108,7 +115,8 @@ impl CatalogEntry {
 
     /// Borrow the underlying C `object`, for passing to FFI functions that
     /// take a `*const object`.
-    pub(crate) fn as_object(&self) -> &object {
+    #[allow(dead_code)]
+    pub(crate) fn as_object_inner(&self) -> &object {
         &self.object
     }
 
@@ -123,7 +131,7 @@ impl CatalogEntry {
         frame: &crate::Frame,
         system: crate::ReferenceSystem,
     ) -> Result<crate::Apparent> {
-        crate::apparent::apparent_of_catalog_in(self, frame, system)
+        crate::apparent::apparent_of_source_in(self, frame, system)
     }
 
     fn new(
