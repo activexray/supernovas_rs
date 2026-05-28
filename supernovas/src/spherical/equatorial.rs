@@ -121,7 +121,7 @@ impl Equatorial {
         // input is finite by Equatorial's construction invariants.
         let rc = unsafe { radec2vector(self.ra().hours(), self.dec().deg(), 1.0, v.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
 
         // src system → ICRS unit vector.
@@ -138,7 +138,7 @@ impl Equatorial {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
 
         // ICRS → target system unit vector.
@@ -154,7 +154,7 @@ impl Equatorial {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
 
         // Unit vector → RA/Dec in the target system.
@@ -164,7 +164,7 @@ impl Equatorial {
         // two output scalars on a 0 return.
         let rc = unsafe { vector2radec(out.as_ptr(), &mut ra_h, &mut dec_d) };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Self::from_hours_and_degrees(ra_h, dec_d, target)
     }
@@ -198,16 +198,20 @@ impl Equatorial {
     ///
     /// Uses `equ2ecl`, dispatching the equator type from the equinox.
     /// CIRS sources are auto-routed through TOD (CIRS has no direct
-    /// equator-type mapping); ITRS sources return [`Error::Parse`] since
-    /// they aren't a meaningful equatorial-to-ecliptic input.
+    /// equator-type mapping); ITRS sources return [`Error::UnsupportedSystem`]
+    /// since they aren't a valid equatorial-to-ecliptic input. Returns
+    /// [`Error::Ffi`] if the underlying C call fails.
     pub fn to_ecliptic(self, accuracy: Accuracy) -> Result<Ecliptic> {
         // CIRS → TOD as a preprocessing step.
         let eq = match self.system.system() {
             ReferenceSystem::Cirs => self.to_tod(self.system.jd(), accuracy)?,
-            ReferenceSystem::Itrs => return Err(Error::Parse),
+            ReferenceSystem::Itrs => return Err(Error::UnsupportedSystem),
             _ => self,
         };
-        let coord_sys = eq.system.equator_type_for_ecliptic().ok_or(Error::Parse)?;
+        let coord_sys = eq
+            .system
+            .equator_type_for_ecliptic()
+            .ok_or(Error::UnsupportedSystem)?;
         let mut elon = 0.0_f64;
         let mut elat = 0.0_f64;
         // SAFETY: equ2ecl writes the two output doubles on a 0 return.
@@ -223,7 +227,7 @@ impl Equatorial {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Ecliptic::from_degrees(elon, elat, eq.system)
     }
@@ -243,7 +247,7 @@ impl Equatorial {
         // SAFETY: equ2gal writes the two output doubles on a 0 return.
         let rc = unsafe { equ2gal(icrs.ra().hours(), icrs.dec().deg(), &mut glon, &mut glat) };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Galactic::from_degrees(glon, glat)
     }

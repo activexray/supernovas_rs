@@ -161,7 +161,7 @@ impl CatalogEntry {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         let entry = unsafe { entry.assume_init() };
 
@@ -169,7 +169,7 @@ impl CatalogEntry {
         // SAFETY: make_cat_object copies entry into *obj on a zero return.
         let rc = unsafe { make_cat_object(&entry, obj.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Ok(CatalogEntry {
             object: unsafe { obj.assume_init() },

@@ -67,7 +67,7 @@ impl Observer {
             Observer::Geocenter => unsafe { make_observer_at_geocenter(obs.as_mut_ptr()) },
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         // SAFETY: rc == 0 guarantees obs has been initialized.
         Ok(unsafe { obs.assume_init() })

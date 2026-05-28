@@ -74,7 +74,7 @@ impl Galactic {
         // SAFETY: gal2equ writes the two output doubles on a 0 return.
         let rc = unsafe { gal2equ(self.l().deg(), self.b().deg(), &mut ra_h, &mut dec_d) };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Equatorial::from_hours_and_degrees(ra_h, dec_d, Equinox::ICRS)
     }

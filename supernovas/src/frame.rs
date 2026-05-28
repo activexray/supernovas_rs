@@ -90,7 +90,7 @@ impl Frame {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Ok(Frame(unsafe { frame.assume_init() }))
     }

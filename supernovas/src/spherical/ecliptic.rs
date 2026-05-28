@@ -75,13 +75,13 @@ impl Ecliptic {
     /// Convert to equatorial coordinates at the same equinox.
     ///
     /// Uses `ecl2equ`, dispatching the equator type from the equinox.
-    /// Returns [`Error::Parse`] for equinoxes whose system has no
-    /// equator-type mapping (CIRS, ITRS).
+    /// Returns [`Error::UnsupportedSystem`] for equinoxes with no ecliptic
+    /// mapping (CIRS, ITRS), or [`Error::Ffi`] if the underlying C call fails.
     pub fn to_equatorial(self, accuracy: Accuracy) -> Result<Equatorial> {
         let coord_sys = self
             .system
             .equator_type_for_ecliptic()
-            .ok_or(Error::Parse)?;
+            .ok_or(Error::UnsupportedSystem)?;
         let mut ra_h = 0.0_f64;
         let mut dec_d = 0.0_f64;
         // SAFETY: ecl2equ writes the two output doubles on a 0 return.
@@ -97,7 +97,7 @@ impl Ecliptic {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Equatorial::from_hours_and_degrees(ra_h, dec_d, self.system)
     }

@@ -29,11 +29,10 @@
             # CALCEPH support, so libsolsys-calceph is available when the
             # `calceph` cargo feature is enabled.
             (_: _: {
-              supernovas =
-                (nixpkgs-master.legacyPackages.${system}.supernovas).override {
-                  cppSupport = false;
-                  withCalceph = true;
-                };
+              supernovas = (nixpkgs-master.legacyPackages.${system}.supernovas).override {
+                cppSupport = false;
+                withCalceph = true;
+              };
             })
           ];
         };
@@ -81,10 +80,11 @@
         # Pinned MSRV toolchain (1.88.0 — established by `cargo msrv`).
         # To update: set sha256 = lib.fakeSha256, run `nix flake check`, replace
         # with the hash reported in the error.
-        msrvToolchain = (pkgs.fenix.toolchainOf {
-          channel = "1.88.0";
-          sha256 = "sha256-Qxt8XAuaUR2OMdKbN4u8dBJOhSHxS+uS06Wl9+flVEk=";
-        }).minimalToolchain;
+        msrvToolchain =
+          (pkgs.fenix.toolchainOf {
+            channel = "1.88.0";
+            sha256 = "sha256-Qxt8XAuaUR2OMdKbN4u8dBJOhSHxS+uS06Wl9+flVEk=";
+          }).minimalToolchain;
 
         craneLibMsrv = (crane.mkLib pkgs).overrideToolchain msrvToolchain;
       in {
@@ -126,6 +126,15 @@
           msrv = craneLibMsrv.cargoBuild (commonArgs
             // {
               cargoArtifacts = craneLibMsrv.buildDepsOnly commonArgs;
+            });
+
+          cov = craneLib.cargoLlvmCov (commonArgs
+            // {
+              inherit cargoArtifacts;
+              # cargoLlvmCov runs cargo test during buildPhase, not checkPhase,
+              # so preCheck never fires. Set LD_LIBRARY_PATH as a derivation
+              # env var so libsupernovas.so.1 is visible to the test binary.
+              LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.supernovas];
             });
         };
 

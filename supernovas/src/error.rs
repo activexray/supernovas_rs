@@ -8,24 +8,18 @@ pub enum Error {
     #[error("value was not finite")]
     NotFinite,
 
-    /// A string or name could not be parsed into the requested type, **or**
-    /// an FFI call returned a non-zero status.
-    ///
-    /// # Cleanup wanted
-    ///
-    /// This variant is currently overloaded: most call sites that hit a C
-    /// failure code return `Error::Parse` for lack of a better fit. That
-    /// makes the name misleading. A future refactor should split this into:
-    ///
-    /// - `Error::Parse` — genuine string/name parse failures
-    /// - `Error::Ffi(&'static str)` (or similar) — FFI call returned non-zero,
-    ///   with the function name attached for diagnosability
-    ///
-    /// Keeping the unit-variant shape for now so the type remains `Copy`;
-    /// the split lands when we audit all the `return Err(Error::Parse)`
-    /// sites in one go.
-    #[error("parse or FFI error")]
+    /// A string or name could not be parsed into the requested type.
+    #[error("parse error")]
     Parse,
+
+    /// A SuperNOVAS or supporting C library call returned a non-zero status.
+    #[error("FFI call returned an error")]
+    Ffi,
+
+    /// The requested operation is not supported for the given coordinate
+    /// system (e.g. converting ITRS coordinates to ecliptic).
+    #[error("unsupported coordinate system for this operation")]
+    UnsupportedSystem,
 
     /// Loading or installing a planetary ephemeris failed.
     ///

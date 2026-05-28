@@ -149,7 +149,7 @@ impl Apparent {
     ///
     /// Routes through [`Self::equatorial`] then `Equatorial::to_ecliptic`.
     /// For sources in CIRS this transparently re-routes via TOD; ITRS
-    /// sources return [`Error::Parse`].
+    /// sources return [`Error::UnsupportedSystem`].
     pub fn ecliptic(self, accuracy: Accuracy) -> Result<Ecliptic> {
         self.equatorial().to_ecliptic(accuracy)
     }
@@ -198,7 +198,7 @@ impl Apparent {
             )
         };
         if rc != 0 {
-            return Err(Error::Parse);
+            return Err(Error::Ffi);
         }
         Horizontal::from_degrees(az_deg, el_deg)
     }
@@ -226,7 +226,7 @@ pub(crate) fn apparent_of_catalog_in(
         )
     };
     if rc != 0 {
-        return Err(Error::Parse);
+        return Err(Error::Ffi);
     }
     Ok(Apparent {
         frame: *frame,
