@@ -118,7 +118,14 @@ fn find_library() -> Library {
         .define("BUILD_TESTING", "OFF")
         .define("BUILD_EXAMPLES", "OFF")
         .define("BUILD_BENCHMARK", "OFF")
-        .define("BUILD_DOC", "OFF");
+        .define("BUILD_DOC", "OFF")
+        // Disable the optional libcurl dep added in v1.7 (EOP fetching from
+        // IERS); not needed for offline astrometry and avoids a C dependency.
+        .define("WITHOUT_CURL", "ON");
+    // Without the `libc` feature (implied by `std`), build a freestanding
+    // SuperNOVAS with no libc calls inside the C library.
+    #[cfg(not(feature = "libc"))]
+    config.define("WITHOUT_LIBC", "ON");
     #[cfg(feature = "calceph")]
     config.define("ENABLE_CALCEPH", "ON");
     let dst = config.build();
@@ -178,7 +185,7 @@ fn find_library() -> Library {
 
     if env::var_os("SUPERNOVAS_NO_PKG_CONFIG").is_none() {
         match pkg_config::Config::new()
-            .atleast_version("1.6.0")
+            .atleast_version("1.7.0")
             .probe("supernovas")
         {
             Ok(lib) => {
@@ -187,10 +194,10 @@ fn find_library() -> Library {
                 };
             }
             Err(e) => panic!(
-                "pkg-config could not locate supernovas >= 1.6.0: {e}\n\
+                "pkg-config could not locate supernovas >= 1.7.0: {e}\n\
                  Options:\n\
-                 - enable the `vendored` feature to build the bundled v1.6.0 statically, or\n\
-                 - install supernovas >= 1.6.0 system-wide, or\n\
+                 - enable the `vendored` feature to build the bundled v1.7 statically, or\n\
+                 - install supernovas >= 1.7.0 system-wide, or\n\
                  - set SUPERNOVAS_INCLUDE_DIR / SUPERNOVAS_LIB_DIR to point at a local install, or\n\
                  - set SUPERNOVAS_NO_PKG_CONFIG=1 with the above env vars to skip pkg-config entirely."
             ),

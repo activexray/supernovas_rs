@@ -7,6 +7,59 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Breaking
+
+- **`Error` is no longer `Copy`** — it now derives `Clone` only. The `Ffi` variant under `std`
+  carries a `String`, making `Copy` impossible. Code that relied on implicitly copying an `Error`
+  must be updated to `.clone()` explicitly.
+- **`Error::Ffi` shape changed** — previously `Ffi { code: i32, os_error: OsError }` (both
+  features), now `Ffi(String)` under `std` and `Ffi(i32)` under `no_std`. Match arms and
+  struct-update syntax referencing the old fields will fail. `OsError` is removed entirely.
+- **`supernovas-ffi` now requires SuperNOVAS ≥ 1.7.0** (up from ≥ 1.6.0) for system builds.
+  Vendored builds automatically use the bundled v1.7 submodule.
+
+### Added
+
+- **`Error::Ffi` now carries a human-readable description** (under `std`). The display text is
+  the captured error description rather than a bare numeric code; e.g.
+  `"ANISE could not translate NAIF -31: …"` instead of `"FFI call failed (code 83): no errno"`.
+  The description is captured automatically from two sources:
+  - Rust ephemeris callbacks (ANISE, CALCEPH) via `set_provider_error` — always available.
+  - The SuperNOVAS C library via the new `novas_set_error_handler` hook — available when
+    `enable_debug_mode(DebugMode::On)` is called before the failing operation.
+- **`enable_debug_mode(DebugMode)` / `get_debug_mode() -> DebugMode`** — new public API in
+  `supernovas`. Calling `enable_debug_mode(DebugMode::On)` installs a silent capture handler
+  (via SuperNOVAS 1.7's `novas_set_error_handler`) so that `novas_error()` descriptions are
+  routed into `Error::Ffi` rather than written to `stderr`.
+- **`DebugMode` enum** — `Off` (default), `On`, `Extra`.
+- **`EphemObject` support fixed** — `AniseEphemeris::install()` now also calls
+  `set_ephem_provider`, enabling `NOVAS_EPHEM_OBJECT` sources (spacecraft, minor planets, etc.).
+  Previously only planet providers were registered, causing any `EphemObject` observation to
+  fail with an opaque `Error::Ffi`.
+- **Correct DE-series planet NAIF IDs** — `AniseEphemeris` now uses `novas_to_dexxx_planet`
+  (barycenter IDs present in DE440s) instead of `novas_to_naif_planet` (center IDs absent from
+  short-form DE files). The prior bug silently disabled gravitational deflection for
+  Jupiter and Saturn.
+- **`supernovas-ffi`: new `libc` feature** — controls `WITHOUT_LIBC` in the CMake build.
+  The `std` feature of `supernovas` automatically implies `supernovas-ffi/libc`; no-std builds
+  produce a freestanding C library with no libc calls.
+- **`supernovas-ffi`: vendor updated to SuperNOVAS v1.7** — picks up `novas_set_error_handler`,
+  `novas_offset_by`, `novas_equ_offset_by`, and other v1.7 additions. The vendored build
+  passes `WITHOUT_CURL=ON` (no libcurl dependency) and respects `WITHOUT_LIBC` via the new
+  `libc` feature.
+- **`track_ephem` example** — corrected observation date to 2020-01-01 (MJD 58849), within the
+  bundled Voyager 1 SPK coverage window (1977–2020).
+
+### Changed
+
+- **Default features** — `vendored` and `anise` are now on by default. Out-of-the-box builds
+  compile SuperNOVAS from the bundled submodule (no system library required) and include the
+  ANISE ephemeris backend. Disable with `default-features = false` for no-std / custom setups.
+- **CI / coverage** — flake.nix updated to build SuperNOVAS from the vendored submodule rather
+  than the nixpkgs-packaged system library. The `nixpkgs-master` input is removed; calceph is
+  still provided by nix for the optional `calceph` feature tests. The coverage derivation now
+  exercises the default feature set (vendored + anise + std).
+
 ## [0.4.0] — 2026-05-28
 
 ### Added

@@ -91,7 +91,7 @@ impl Frame {
             )
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Ok(Frame(unsafe { frame.assume_init() }))
     }

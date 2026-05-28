@@ -171,7 +171,7 @@ impl OrbitalObject {
         let rc =
             unsafe { make_orbital_object(name_cs.as_ptr(), num as _, &orbit, obj.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Ok(OrbitalObject {
             object: unsafe { obj.assume_init() },

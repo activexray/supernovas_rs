@@ -12,11 +12,11 @@ authors.workspace = true
 readme.workspace = true
 
 [package.metadata.docs.rs]
-features = ["vendored", "hifitime"]
+features = ["vendored", "std", "hifitime", "anise"]
 
 [features]
-default = []
-std = ["hifitime?/std"]
+default = ["anise", "vendored"]
+std = ["hifitime?/std", "supernovas-ffi/libc"]
 hifitime = ["dep:hifitime"]
 vendored = ["supernovas-ffi/vendored"]
 # Enable CALCEPH planet-ephemeris support for `Accuracy::Full` astrometry.

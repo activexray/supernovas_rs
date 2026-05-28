@@ -55,7 +55,7 @@ impl EphemObject {
         // SAFETY: make_ephem_object fully initializes *obj on a zero return.
         let rc = unsafe { make_ephem_object(name_cs.as_ptr(), naif_id as _, obj.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Ok(EphemObject {
             object: unsafe { obj.assume_init() },

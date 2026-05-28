@@ -33,6 +33,9 @@
 //!   [`Frame::observe`] (accepts any `impl Source`) for a quick az/el, or
 //!   [`Source::apparent_in`] to get an [`Apparent`] position with access to
 //!   intermediate RA/Dec and conversion to any output frame.
+//! - **Error context**: [`enable_debug_mode`] / [`DebugMode`] — install a
+//!   silent capture handler so that [`Error::Ffi`] displays the human-readable
+//!   C-library description rather than a bare numeric code.
 //!
 //! # Quick start
 //!
@@ -71,6 +74,7 @@ extern crate std;
 pub use supernovas_ffi as sys;
 
 pub mod apparent;
+pub mod debug;
 #[cfg(any(feature = "calceph", feature = "anise"))]
 pub mod ephemeris;
 pub mod equinox;
@@ -86,6 +90,7 @@ pub mod unit;
 pub mod vector;
 
 pub use apparent::{Apparent, ReferenceSystem};
+pub use debug::{DebugMode, enable_debug_mode, get_debug_mode};
 #[cfg(feature = "anise")]
 pub use ephemeris::AniseEphemeris;
 #[cfg(feature = "calceph")]
@@ -93,7 +98,7 @@ pub use ephemeris::CalcephEphemeris;
 #[cfg(any(feature = "calceph", feature = "anise"))]
 pub use ephemeris::{Ephemeris, EphemerisProvider, PlanetProvider};
 pub use equinox::Equinox;
-pub use error::{Error, Result};
+pub use error::{set_provider_error, take_provider_error, Error, Result};
 pub use frame::{Accuracy, Frame};
 pub use observer::{Observer, Site, Weather};
 pub use refraction::Refraction;

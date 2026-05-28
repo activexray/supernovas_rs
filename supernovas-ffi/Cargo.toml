@@ -18,18 +18,24 @@ features = ["vendored"]
 [features]
 default = []
 
-# Build SuperNOVAS from the bundled git submodule (vendor/supernovas, pinned to v1.6.0).
-# Enable this if no system supernovas >= 1.6.0 is available via pkg-config.
+# Build SuperNOVAS from the bundled git submodule (vendor/supernovas, tracking v1.7).
+# Enable this if no system supernovas >= 1.7.0 is available via pkg-config.
 vendored = ["dep:cmake"]
 
-# Wrap the CALCEPH planetary-ephemeris integration: SuperNOVAS' `novas_use_calceph`
-# plus enough of CALCEPH itself (open/close, opaque handle type) to feed the
-# wrapper from a file path. Requires either:
-#   * a system `libcalceph` (located via pkg-config), or
-#   * `--features vendored,calceph`, in which case the vendored SuperNOVAS is
-#     built with `ENABLE_CALCEPH=ON` and still needs a system `libcalceph` at
-#     link time (CALCEPH itself is not vendored).
+# Expose the CALCEPH ephemeris integration symbols from SuperNOVAS.
+# Also requires a system `libcalceph` at link time (CALCEPH itself is never vendored).
+#
+# With `vendored`: the CMake build automatically enables ENABLE_CALCEPH=ON.
+# Without `vendored`: the system SuperNOVAS **must** have been compiled with
+#   CALCEPH support (-DENABLE_CALCEPH=ON); otherwise linking will fail with
+#   missing `solsys_calceph` / `novas_use_calceph` symbols.
 calceph = []
+
+# Only affects the `vendored` CMake build: compile SuperNOVAS with full libc
+# support (stdio, stdlib, etc.).  When absent, WITHOUT_LIBC=ON is passed to
+# CMake, producing a freestanding build.  Has no effect on system library builds.
+# Implied by the `std` feature in the `supernovas` safe-wrapper crate.
+libc = []
 
 [build-dependencies]
 bindgen = "0.72"

@@ -88,7 +88,7 @@ impl Planet {
         // SAFETY: make_planet fully initializes *obj on a zero return.
         let rc = unsafe { make_planet(body.to_ffi(), obj.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Ok(Planet {
             body,

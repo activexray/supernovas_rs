@@ -1,7 +1,56 @@
 //! Error type for the safe wrapper.
 
+// Thread-local storage for the most recent human-readable error context.
+// Populated by two sources:
+//   1. Rust ephemeris callbacks (ANISE, CALCEPH): call set_provider_error()
+//      before returning a non-zero code to bridge the FFI boundary.
+//   2. SuperNOVAS C library: the capture handler in debug.rs intercepts
+//      novas_error() descriptions when debug mode is non-Off.
+// Both sources are drained by Error::ffi() and take_provider_error().
+#[cfg(feature = "std")]
+std::thread_local! {
+    static PROVIDER_ERROR: std::cell::RefCell<Option<String>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+/// Store a descriptive error message.
+///
+/// Called either from a Rust ephemeris provider callback before returning a
+/// non-zero code, or from the SuperNOVAS C error capture handler.  In either
+/// case the message is retrievable via [`take_provider_error`].
+///
+/// Only available under the `std` feature. On `no_std` targets, this is a
+/// no-op (the message is discarded).
+#[inline]
+pub fn set_provider_error(msg: impl Into<String>) {
+    #[cfg(feature = "std")]
+    PROVIDER_ERROR.with(|cell| *cell.borrow_mut() = Some(msg.into()));
+    #[cfg(not(feature = "std"))]
+    let _ = msg;
+}
+
+/// Retrieve and clear the most recent error description, if any.
+///
+/// Under `std` this is drained automatically by every [`Error::Ffi`]
+/// construction (via [`Error::ffi`]), so calling this manually is only
+/// necessary when you need the raw string separately from the error value.
+///
+/// Returns `None` if no context was recorded or if it has already been taken.
+/// Only meaningful under the `std` feature; always returns `None` otherwise.
+#[inline]
+pub fn take_provider_error() -> Option<String> {
+    #[cfg(feature = "std")]
+    {
+        PROVIDER_ERROR.with(|cell| cell.borrow_mut().take())
+    }
+    #[cfg(not(feature = "std"))]
+    {
+        None
+    }
+}
+
 /// Errors produced by safe-wrapper constructors and parsers.
-#[derive(Debug, Clone, Copy, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 #[non_exhaustive]
 pub enum Error {
     /// A finite real value was required, but the input was NaN or infinite.
@@ -13,8 +62,21 @@ pub enum Error {
     Parse,
 
     /// A SuperNOVAS or supporting C library call returned a non-zero status.
-    #[error("FFI call returned an error")]
-    Ffi,
+    ///
+    /// Under `std`, the display text is the human-readable description
+    /// captured from the C library or from a Rust ephemeris callback.
+    /// Enable [`crate::enable_debug_mode`] before the failing call to ensure
+    /// C-side descriptions are captured.
+    ///
+    /// Under `no_std`, the display text is `"FFI error (code N)"`.
+    #[cfg(feature = "std")]
+    #[error("{0}")]
+    Ffi(String),
+
+    /// A SuperNOVAS or supporting C library call returned a non-zero status.
+    #[cfg(not(feature = "std"))]
+    #[error("FFI error (code {0})")]
+    Ffi(i32),
 
     /// The requested operation is not supported for the given coordinate
     /// system (e.g. converting ITRS coordinates to ecliptic).
@@ -29,6 +91,28 @@ pub enum Error {
     /// whose process-global `OnceLock` is already occupied.
     #[error("ephemeris error")]
     Ephemeris,
+}
+
+impl Error {
+    /// Build an `Ffi` error.
+    ///
+    /// Under `std`, drains the thread-local error description captured from
+    /// either a Rust ephemeris callback or the SuperNOVAS C error handler.
+    /// Falls back to `"FFI error (code N)"` if nothing was captured.
+    #[inline]
+    pub(crate) fn ffi(code: impl Into<i32>) -> Self {
+        #[cfg(feature = "std")]
+        {
+            let code = code.into();
+            let desc = take_provider_error()
+                .unwrap_or_else(|| format!("FFI error (code {code})"));
+            Error::Ffi(desc)
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            Error::Ffi(code.into())
+        }
+    }
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

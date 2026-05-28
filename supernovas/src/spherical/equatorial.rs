@@ -121,7 +121,7 @@ impl Equatorial {
         // input is finite by Equatorial's construction invariants.
         let rc = unsafe { radec2vector(self.ra().hours(), self.dec().deg(), 1.0, v.as_mut_ptr()) };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
 
         // src system → ICRS unit vector.
@@ -138,7 +138,7 @@ impl Equatorial {
             )
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
 
         // ICRS → target system unit vector.
@@ -154,7 +154,7 @@ impl Equatorial {
             )
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
 
         // Unit vector → RA/Dec in the target system.
@@ -164,7 +164,7 @@ impl Equatorial {
         // two output scalars on a 0 return.
         let rc = unsafe { vector2radec(out.as_ptr(), &mut ra_h, &mut dec_d) };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Self::from_hours_and_degrees(ra_h, dec_d, target)
     }
@@ -227,7 +227,7 @@ impl Equatorial {
             )
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Ecliptic::from_degrees(elon, elat, eq.system)
     }
@@ -247,7 +247,7 @@ impl Equatorial {
         // SAFETY: equ2gal writes the two output doubles on a 0 return.
         let rc = unsafe { equ2gal(icrs.ra().hours(), icrs.dec().deg(), &mut glon, &mut glat) };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Galactic::from_degrees(glon, glat)
     }

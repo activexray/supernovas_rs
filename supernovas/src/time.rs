@@ -83,7 +83,7 @@ impl Time {
             novas_set_split_time(scale, ijd as _, fjd, leap_seconds, dut1, ts.as_mut_ptr())
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Ok(Time(unsafe { ts.assume_init() }))
     }
@@ -98,7 +98,7 @@ impl Time {
             novas_set_unix_time(secs as _, nanos as _, leap_seconds, dut1, ts.as_mut_ptr())
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Ok(Time(unsafe { ts.assume_init() }))
     }

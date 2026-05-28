@@ -97,7 +97,7 @@ impl Ecliptic {
             )
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Equatorial::from_hours_and_degrees(ra_h, dec_d, self.system)
     }

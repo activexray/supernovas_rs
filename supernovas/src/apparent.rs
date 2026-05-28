@@ -199,7 +199,7 @@ impl Apparent {
             )
         };
         if rc != 0 {
-            return Err(Error::Ffi);
+            return Err(Error::ffi(rc));
         }
         Horizontal::from_degrees(az_deg, el_deg)
     }
@@ -225,7 +225,7 @@ pub(crate) fn apparent_of_source_in(
         )
     };
     if rc != 0 {
-        return Err(Error::Ffi);
+        return Err(Error::ffi(rc));
     }
     Ok(Apparent {
         frame: *frame,

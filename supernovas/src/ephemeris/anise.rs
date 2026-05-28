@@ -1,4 +1,10 @@
-use std::{os::raw::c_short, panic::AssertUnwindSafe, path::Path, sync::OnceLock};
+use std::{
+    ffi::c_char,
+    os::raw::{c_int, c_long},
+    panic::AssertUnwindSafe,
+    path::Path,
+    sync::OnceLock,
+};
 
 use ::anise::{
     almanac::Almanac,
@@ -68,108 +74,96 @@ impl AniseEphemeris {
 impl EphemerisProvider for AniseEphemeris {
     fn install(self) -> Result<()> {
         ALMANAC.set(self.almanac).map_err(|_| Error::Ephemeris)?;
-        // SAFETY: set_planet_provider[_hp] stores the function pointer in a
-        // SuperNOVAS global. Our callbacks have C-compatible ABI and outlive
-        // the process. Both return 0 on success.
-        let rc1 = unsafe { sys::set_planet_provider(Some(planet_provider)) };
-        let rc2 = unsafe { sys::set_planet_provider_hp(Some(planet_provider_hp)) };
-        if rc1 != 0 || rc2 != 0 {
+        // SAFETY: The function pointers have C-compatible ABI and outlive the
+        // process. planet_ephem_provider[_hp] are SuperNOVAS built-ins that
+        // delegate to whatever ephem_provider is registered. All return 0 on
+        // success.
+        let rc1 = unsafe { sys::set_planet_provider(Some(sys::planet_ephem_provider)) };
+        let rc2 = unsafe { sys::set_planet_provider_hp(Some(sys::planet_ephem_provider_hp)) };
+        let rc3 = unsafe { sys::set_ephem_provider(Some(ephem_provider)) };
+        if rc1 != 0 || rc2 != 0 || rc3 != 0 {
             return Err(Error::Ephemeris);
         }
         Ok(())
     }
 }
 
-/// Map a SuperNOVAS planet enum to a NAIF SPK body ID using the
-/// SuperNOVAS-provided `novas_to_naif_planet` function.
+/// Unified ephemeris callback for all solar-system bodies (`set_ephem_provider`).
 ///
-/// Returns `None` for bodies SuperNOVAS considers out-of-range (EMB,
-/// PLUTO_BARYCENTER, etc.), matching the upstream planet-provider contract.
-fn naif_id(body: sys::novas_planet) -> Option<i32> {
-    // SAFETY: novas_to_naif_planet is a pure mapping function with no
-    // side effects. It returns -1 for unsupported bodies.
-    let id = unsafe { sys::novas_to_naif_planet(body) };
-    if id < 0 { None } else { Some(id as i32) }
-}
-
-/// Map a SuperNOVAS origin enum to the corresponding NAIF body ID.
+/// Handles two call sites:
+/// - **Planet calls** (forwarded by the built-in `planet_ephem_provider`):
+///   `id` is a `novas_planet` discriminant (0–13); converted to the NAIF body
+///   ID via `novas_to_naif_planet`.
+/// - **Ephem-object calls** (`EphemObject` sources, e.g. spacecraft):
+///   `id` is the NAIF body ID directly (e.g. −31 for Voyager 1).
 ///
-/// NAIF 0 = Solar System Barycenter, NAIF 10 = Sun; these are fixed by
-/// the NAIF standard and match SuperNOVAS's `NOVAS_BARYCENTER` /
-/// `NOVAS_HELIOCENTER` semantics.
-fn origin_naif_id(origin: sys::novas_origin) -> i32 {
-    use sys::novas_origin::*;
-    match origin {
-        NOVAS_BARYCENTER => 0,
-        NOVAS_HELIOCENTER => 10,
-    }
-}
-
-/// Single-precision JD planet provider (`set_planet_provider`).
-unsafe extern "C" fn planet_provider(
-    jd_tdb: f64,
-    body: sys::novas_planet,
-    origin: sys::novas_origin,
-    position: *mut f64,
-    velocity: *mut f64,
-) -> c_short {
-    provider_impl(jd_tdb, 0.0, body, origin, position, velocity)
-}
-
-/// High-precision JD planet provider (`set_planet_provider_hp`).
-/// NOVAS passes `jd_tdb` as a 2-element array (high word + low word).
-unsafe extern "C" fn planet_provider_hp(
-    jd_tdb: *const f64,
-    body: sys::novas_planet,
-    origin: sys::novas_origin,
-    position: *mut f64,
-    velocity: *mut f64,
-) -> c_short {
-    // SAFETY: NOVAS guarantees a `double[2]` at jd_tdb.
-    let (high, low) = unsafe { (*jd_tdb, *jd_tdb.add(1)) };
-    provider_impl(high, low, body, origin, position, velocity)
-}
-
-fn provider_impl(
-    jd_high: f64,
-    jd_low: f64,
-    body: sys::novas_planet,
-    origin: sys::novas_origin,
-    position: *mut f64,
-    velocity: *mut f64,
-) -> c_short {
+/// In both cases the state is returned relative to the Solar System Barycenter
+/// (NAIF 0) and `*origin` is set to `NOVAS_BARYCENTER`.
+unsafe extern "C" fn ephem_provider(
+    _name: *const c_char,
+    id: c_long,
+    jd_tdb_high: f64,
+    jd_tdb_low: f64,
+    origin: *mut sys::novas_origin,
+    pos: *mut f64,
+    vel: *mut f64,
+) -> c_int {
     // Rust panics across FFI boundaries are UB. Catch and convert to a
     // non-zero return so SuperNOVAS surfaces it as a normal error.
-    let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
+    let result = std::panic::catch_unwind(AssertUnwindSafe(|| -> i32 {
         let Some(almanac) = ALMANAC.get() else {
+            crate::error::set_provider_error("ANISE almanac not installed");
             return 1;
         };
-        let Some(target_id) = naif_id(body) else {
-            return 2;
-        };
-        let observer_id = origin_naif_id(origin);
 
-        // hifitime's i128-ns Epoch + Duration preserves the split JD
-        // better than a naive f64 add.
-        let epoch = Epoch::from_jde_tdb(jd_high) + Duration::from_days(jd_low);
-        let target = AniseFrame::from_ephem_j2000(target_id);
-        let observer = AniseFrame::from_ephem_j2000(observer_id);
+        // novas_planet discriminants are 0–13 (NOVAS_SSB … NOVAS_PLUTO_BARYCENTER).
+        // Any id outside that range is a direct NAIF body ID.
+        let naif = if (0..14).contains(&id) {
+            // SAFETY: id is in [0, 14), which covers every valid novas_planet
+            // discriminant (repr u32).
+            let planet: sys::novas_planet =
+                unsafe { std::mem::transmute(id as u32) };
+            // novas_to_dexxx_planet returns the barycenter NAIF IDs that DE-series
+            // SPK files (de440s.bsp, etc.) actually contain. novas_to_naif_planet
+            // would return center IDs (e.g. 599 for Jupiter) which are absent from
+            // short-form DE files, silently breaking gravitational deflection.
+            let n = unsafe { sys::novas_to_dexxx_planet(planet) };
+            if n < 0 {
+                crate::error::set_provider_error(format!(
+                    "novas_to_dexxx_planet returned -1 for novas_planet id {id}"
+                ));
+                return 2;
+            }
+            n as i32
+        } else {
+            id as i32 // direct NAIF ID: spacecraft, minor planets, etc.
+        };
+
+        let epoch = Epoch::from_jde_tdb(jd_tdb_high) + Duration::from_days(jd_tdb_low);
+        let target = AniseFrame::from_ephem_j2000(naif);
+        let observer = AniseFrame::from_ephem_j2000(0); // SSB = NAIF 0
 
         let state = match almanac.translate(target, observer, epoch, Aberration::NONE) {
             Ok(s) => s,
-            Err(_) => return 3,
+            Err(e) => {
+                crate::error::set_provider_error(format!(
+                    "ANISE could not translate NAIF {naif}: {e}"
+                ));
+                return 3;
+            }
         };
 
-        // ANISE returns km / km·s⁻¹ in ICRF; NOVAS expects AU / AU·day⁻¹.
-        // SAFETY: NOVAS guarantees `position` and `velocity` each point to
-        // a 3-element `double` array.
+        // SAFETY: NOVAS guarantees `origin`, `pos`, and `vel` are non-null.
+        // Set `*origin` to indicate we computed relative to the Solar System
+        // Barycenter. ANISE returns km / km·s⁻¹; NOVAS expects AU / AU·day⁻¹.
         unsafe {
-            *position.add(0) = state.radius_km.x / KM_PER_AU;
-            *position.add(1) = state.radius_km.y / KM_PER_AU;
-            *position.add(2) = state.radius_km.z / KM_PER_AU;
-            *velocity.add(0) = state.velocity_km_s.x * SEC_PER_DAY / KM_PER_AU;
-            *velocity.add(1) = state.velocity_km_s.y * SEC_PER_DAY / KM_PER_AU;
-            *velocity.add(2) = state.velocity_km_s.z * SEC_PER_DAY / KM_PER_AU;
+            *origin = sys::novas_origin::NOVAS_BARYCENTER;
+            *pos.add(0) = state.radius_km.x / KM_PER_AU;
+            *pos.add(1) = state.radius_km.y / KM_PER_AU;
+            *pos.add(2) = state.radius_km.z / KM_PER_AU;
+            *vel.add(0) = state.velocity_km_s.x * SEC_PER_DAY / KM_PER_AU;
+            *vel.add(1) = state.velocity_km_s.y * SEC_PER_DAY / KM_PER_AU;
+            *vel.add(2) = state.velocity_km_s.z * SEC_PER_DAY / KM_PER_AU;
         }
         0
     }));

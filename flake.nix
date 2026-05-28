@@ -1,7 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     flake-utils.url = "github:numtide/flake-utils";
     fenix = {
       url = "github:nix-community/fenix";
@@ -13,7 +12,6 @@
   outputs = {
     self,
     nixpkgs,
-    nixpkgs-master,
     flake-utils,
     fenix,
     crane,
@@ -22,19 +20,7 @@
       system: let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            fenix.overlays.default
-            # nixpkgs-unstable carries supernovas 1.5.1; master has 1.6.0.
-            # Take the master derivation without the C++ wrapper but with
-            # CALCEPH support, so libsolsys-calceph is available when the
-            # `calceph` cargo feature is enabled.
-            (_: _: {
-              supernovas = (nixpkgs-master.legacyPackages.${system}.supernovas).override {
-                cppSupport = false;
-                withCalceph = true;
-              };
-            })
-          ];
+          overlays = [fenix.overlays.default];
         };
         inherit (pkgs) lib;
 
@@ -48,28 +34,31 @@
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-        # Crane source filter: vendor/ is excluded automatically (C files);
-        # that's fine because we use --no-default-features below.
-        # wrapper.h is included so bindgen can generate the FFI bindings.
+        # Include Rust/Cargo sources, headers (for bindgen), and the vendored
+        # SuperNOVAS C source tree (for the CMake vendored build).
         src = lib.cleanSourceWith {
           src = ./.;
           filter = path: type:
-            (lib.hasSuffix ".h" path) || (craneLib.filterCargoSources path type);
+            (lib.hasSuffix ".h" path)
+            || (lib.hasInfix "/vendor/" path)
+            || (craneLib.filterCargoSources path type);
         };
 
-        # All crane builds use the nixpkgs supernovas library via pkg-config;
-        # cmake is not needed in the sandbox.
+        # SuperNOVAS is built from the vendored submodule (no system lib needed).
+        # calceph is still system-provided (not vendored); it is only required
+        # when the `calceph` cargo feature is enabled.
         commonArgs = {
           inherit src;
           pname = "supernovas";
           strictDeps = true;
-          cargoExtraArgs = "--workspace --no-default-features";
+          # Default features: vendored (SuperNOVAS via CMake) + anise (implies std).
+          cargoExtraArgs = "--workspace";
           nativeBuildInputs = with pkgs; [
             pkg-config
+            cmake
             rustPlatform.bindgenHook
           ];
           buildInputs = with pkgs; [
-            supernovas
             calceph
           ];
         };
@@ -77,31 +66,26 @@
         # Shared pre-built dependency artifacts; amortises compile time across checks.
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        # Pinned MSRV toolchain (1.88.0 — established by `cargo msrv`).
-        # To update: set sha256 = lib.fakeSha256, run `nix flake check`, replace
-        # with the hash reported in the error.
+        # Pinned MSRV toolchain — version tracks rust-toolchain.toml's `channel`.
+        # To update: bump `channel`, set sha256 = lib.fakeSha256, run `nix flake check`,
+        # then replace sha256 with the hash reported in the error.
         msrvToolchain =
           (pkgs.fenix.toolchainOf {
-            channel = "1.88.0";
-            sha256 = "sha256-Qxt8XAuaUR2OMdKbN4u8dBJOhSHxS+uS06Wl9+flVEk=";
+            channel = "1.89.0";
+            sha256 = "sha256-+9FmLhAOezBZCOziO0Qct1NOrfpjNsXxc/8I0c7BdKE=";
           }).minimalToolchain;
 
         craneLibMsrv = (crane.mkLib pkgs).overrideToolchain msrvToolchain;
       in {
         checks = {
-          # cargo nextest run --workspace --no-default-features
+          # cargo nextest run --workspace
           test = craneLib.cargoNextest (commonArgs
             // {
               inherit cargoArtifacts;
               nativeBuildInputs = commonArgs.nativeBuildInputs ++ [pkgs.cargo-nextest];
-              # libsupernovas is a shared library; tell the dynamic linker where
-              # to find it when the test binaries run inside the Nix sandbox.
-              preCheck = ''
-                export LD_LIBRARY_PATH=${lib.makeLibraryPath [pkgs.supernovas]}
-              '';
             });
 
-          # cargo clippy --workspace --no-default-features -- -D warnings
+          # cargo clippy --workspace -- -D warnings
           clippy = craneLib.cargoClippy (commonArgs
             // {
               inherit cargoArtifacts;
@@ -114,7 +98,7 @@
             pname = "supernovas";
           };
 
-          # cargo doc --workspace --no-default-features --no-deps
+          # cargo doc --workspace --no-deps
           doc = craneLib.cargoDoc (commonArgs
             // {
               inherit cargoArtifacts;
@@ -122,7 +106,7 @@
               RUSTDOCFLAGS = "-D warnings";
             });
 
-          # Compile check against the declared MSRV (1.88.0).
+          # Compile check against the declared MSRV
           msrv = craneLibMsrv.cargoBuild (commonArgs
             // {
               cargoArtifacts = craneLibMsrv.buildDepsOnly commonArgs;
@@ -131,10 +115,6 @@
           cov = craneLib.cargoLlvmCov (commonArgs
             // {
               inherit cargoArtifacts;
-              # cargoLlvmCov runs cargo test during buildPhase, not checkPhase,
-              # so preCheck never fires. Set LD_LIBRARY_PATH as a derivation
-              # env var so libsupernovas.so.1 is visible to the test binary.
-              LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.supernovas];
             });
         };
 
@@ -146,10 +126,8 @@
             cargo-msrv
           ];
 
-          # Test binaries link against shared libsupernovas (and libcalceph
-          # when the `calceph` cargo feature is enabled); Nix doesn't set
-          # RPATH on cargo outputs so expose the lib dirs explicitly.
-          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.supernovas pkgs.calceph];
+          # calceph is a shared library; expose it for the `calceph` cargo feature.
+          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.calceph];
           RUST_BACKTRACE = 1;
         };
       }

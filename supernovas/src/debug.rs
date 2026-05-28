@@ -1,0 +1,123 @@
+//! Control SuperNOVAS's built-in error-reporting verbosity.
+//!
+//! When debug mode is [`DebugMode::On`] or [`DebugMode::Extra`], SuperNOVAS
+//! routes every `novas_error()` / `novas_set_errno()` description through a
+//! custom handler.  The default behaviour is to write to `stderr`; this crate
+//! replaces that with silent capture into the same thread-local slot used by
+//! [`crate::take_provider_error`], so all error context — whether from a Rust
+//! ephemeris callback or from deep inside the C library — is retrievable with
+//! a single call.
+//!
+//! Note: trace lines (`@ func [=> code]`) are printed via `fprintf(stderr,…)`
+//! directly in the C source and are not intercepted by the handler.  They will
+//! still appear on stderr when debug mode is non-Off.
+
+use supernovas_ffi::novas_debug_mode;
+
+/// Verbosity level for SuperNOVAS's built-in error reporter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugMode {
+    /// Silent — no error output, no captures (default).
+    Off,
+    /// Capture error descriptions via [`crate::take_provider_error`]; trace
+    /// lines still appear on `stderr`.
+    On,
+    /// Same as `On` but also captures otherwise-acceptable conditions.
+    Extra,
+}
+
+impl DebugMode {
+    fn to_sys(self) -> novas_debug_mode {
+        match self {
+            DebugMode::Off => novas_debug_mode::NOVAS_DEBUG_OFF,
+            DebugMode::On => novas_debug_mode::NOVAS_DEBUG_ON,
+            DebugMode::Extra => novas_debug_mode::NOVAS_DEBUG_EXTRA,
+        }
+    }
+
+    fn from_sys(m: novas_debug_mode) -> Self {
+        match m {
+            novas_debug_mode::NOVAS_DEBUG_ON => DebugMode::On,
+            novas_debug_mode::NOVAS_DEBUG_EXTRA => DebugMode::Extra,
+            _ => DebugMode::Off,
+        }
+    }
+}
+
+/// Error handler installed via `novas_set_error_handler` when debug mode is
+/// non-Off.  Captures the description part of every `novas_error()` call into
+/// the thread-local slot returned by [`crate::take_provider_error`].
+///
+/// SuperNOVAS calls the handler three times per error:
+///   1. `"\n  ERROR! %s: "` (function name) — via `novas_emit`, skipped
+///   2. The actual description string — captured
+///   3. `" [=> %d]\n"` (return code) — via `novas_emit`, skipped
+#[cfg(feature = "std")]
+unsafe extern "C" fn capture_handler(
+    fmt: *const ::std::os::raw::c_char,
+    _args: *mut supernovas_ffi::__va_list_tag,
+) {
+    use std::ffi::CStr;
+    // SAFETY: SuperNOVAS guarantees fmt is a valid, non-NULL C string.
+    // SAFETY: fmt is a valid non-NULL C string per the handler contract.
+    let Ok(s) = unsafe { CStr::from_ptr(fmt) }.to_str() else {
+        return;
+    };
+    // Skip the novas_emit() wrapper lines that bracket the real description.
+    if s.starts_with('\n') || s.starts_with(" [=>") {
+        return;
+    }
+    crate::error::set_provider_error(s);
+}
+
+/// Set the SuperNOVAS error-reporting verbosity.
+///
+/// - [`DebugMode::Off`] (default): silent; [`crate::take_provider_error`]
+///   still returns messages from Rust ephemeris callbacks (e.g. ANISE), but
+///   not from the C library itself.
+/// - [`DebugMode::On`] / [`DebugMode::Extra`]: installs a capture handler so
+///   that `novas_error()` descriptions are silently stored rather than written
+///   to `stderr`.  After any [`crate::Error::Ffi`] failure, call
+///   [`crate::take_provider_error`] to retrieve the description.  Trace lines
+///   (`@ func [=> code]`) are still printed to `stderr` via `fprintf`.
+///
+/// # Example
+///
+/// ```no_run
+/// use supernovas::{DebugMode, enable_debug_mode, take_provider_error};
+///
+/// enable_debug_mode(DebugMode::On);
+/// // … reproduce the failing call …
+/// if let Some(desc) = take_provider_error() {
+///     eprintln!("SuperNOVAS said: {desc}");
+/// }
+/// enable_debug_mode(DebugMode::Off);
+/// ```
+pub fn enable_debug_mode(mode: DebugMode) {
+    // SAFETY: novas_debug and novas_set_error_handler are process-global; the
+    // docs say novas_set_error_handler is not thread-safe but we accept that
+    // (same contract as the C API).
+    unsafe {
+        match mode {
+            DebugMode::Off => {
+                supernovas_ffi::novas_debug(novas_debug_mode::NOVAS_DEBUG_OFF);
+                // Restore the default stderr handler.
+                #[cfg(feature = "std")]
+                supernovas_ffi::novas_set_error_handler(None);
+            }
+            _ => {
+                // Install our silent capture handler before enabling debug
+                // mode so no messages leak to stderr.
+                #[cfg(feature = "std")]
+                supernovas_ffi::novas_set_error_handler(Some(capture_handler));
+                supernovas_ffi::novas_debug(mode.to_sys());
+            }
+        }
+    }
+}
+
+/// Return the current SuperNOVAS error-reporting verbosity.
+pub fn get_debug_mode() -> DebugMode {
+    // SAFETY: read-only access to a process-global flag.
+    DebugMode::from_sys(unsafe { supernovas_ffi::novas_get_debug_mode() })
+}
