@@ -61,14 +61,14 @@ needed directly by users.
 
 ### Planets and solar-system bodies
 
-- [ ] `make_planet` → typed `Planet` source
-- [ ] `make_ephem_object` → `EphemerisSource` (arbitrary NAIF body by name/number)
+- [x] `make_planet` → `Planet` / `SolarBody`
+- [x] `make_ephem_object` → `EphemObject` (arbitrary NAIF body by name/number)
 - [ ] `novas_approx_sky_pos` — fast approximate sky position using built-in VSOP/ELP models (no external ephemeris required)
 - [ ] `novas_approx_heliocentric` — low-accuracy heliocentric position
 
 ### Keplerian orbitals
 
-- [ ] `make_orbital_object` → `OrbitalSource`
+- [x] `make_orbital_object` → `OrbitalObject` / `OrbitalElements`
 - [ ] `novas_orbit_posvel` / `novas_orbit_native_posvel` — evaluate Keplerian orbit
 - [ ] `novas_make_planet_orbit` / `novas_make_moon_orbit` / `novas_make_moon_mean_orbit` — build `novas_orbital` from built-in models
 
@@ -77,7 +77,7 @@ needed directly by users.
 ## Frame and observation pipeline
 
 - [x] `novas_make_frame` → `Frame::new` / `Frame::with_polar_motion`
-- [x] `novas_sky_pos` → `CatalogEntry::apparent_in` → `Apparent`
+- [x] `novas_sky_pos` → `Source::apparent_in` → `Apparent` (all source types)
 - [x] `novas_app_to_hor` → `Apparent::to_horizontal` / `to_horizontal_with_refraction`
 - [ ] `novas_change_observer` — rebuild a frame with a different observer at the same time
 - [ ] `novas_hor_to_app` — inverse: horizontal → apparent equatorial

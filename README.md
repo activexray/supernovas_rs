@@ -19,6 +19,8 @@ SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observat
 
 - ICRS catalog source → apparent position in any reference frame (`ReferenceSystem`: ICRS, GCRS, CIRS, equinox-of-date) via `CatalogEntry::apparent_in`
 - Apparent → horizontal (az/el) projection with `Refraction` correction
+- **Non-sidereal sources**: `Planet` (major bodies, barycenters), `EphemObject` (arbitrary body by NAIF ID), `OrbitalObject` (Keplerian elements, no external provider needed)
+- `Source` sealed trait — common interface for all source types; `Frame::observe` accepts any `impl Source`
 - Spherical coordinate types: `Horizontal`, `Equatorial`, `Ecliptic`, `Galactic`
 - Dimensioned scalar types: `Angle`, `TimeAngle`, `Coordinate`, `Interval`, `Pressure`, `Temperature`, `ScalarVelocity`
 - 3-D vector types: `Position`, `Velocity`, with cross-type arithmetic
@@ -36,14 +38,14 @@ Add the wrapper crate to your `Cargo.toml`. Enable the `vendored` feature to bui
 
 ```toml
 [dependencies]
-supernovas = { version = "0.3", features = ["vendored"] }
+supernovas = { version = "0.4", features = ["vendored"] }
 ```
 
 If you already have SuperNOVAS ≥ 1.6.0 installed system-wide (e.g. via Nix or a distro package), omit the feature and it will be found via `pkg-config`:
 
 ```toml
 [dependencies]
-supernovas = "0.3"
+supernovas = "0.4"
 ```
 
 ### Example — ICRS to horizontal

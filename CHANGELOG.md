@@ -7,6 +7,26 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-28
+
+### Added
+
+- **`Source` trait** (sealed) — common interface for all sky sources; provides a default
+  `apparent_in(frame, system)` method. Implemented by `CatalogEntry`, `Planet`,
+  `EphemObject`, and `OrbitalObject`.
+- **`Planet`** — major solar-system body source (Sun, Moon, planets, barycenters) via
+  `Planet::new(SolarBody::Mars)?` or convenience constructors (`Planet::mars()?`).
+  Uses the installed planet-ephemeris provider at `Accuracy::Full`; built-in
+  low-precision approximations suffice at `Accuracy::Reduced`.
+- **`SolarBody`** enum — discriminant for `Planet`; variants cover all `novas_planet`
+  entries including barycenters.
+- **`EphemObject`** — arbitrary solar-system body by name and NAIF ID from the installed
+  ephemeris provider (`EphemObject::new("Ceres", 2000001)?`).
+- **`OrbitalObject`** + **`OrbitalElements`** — Keplerian orbital-elements source; no
+  external provider required. Construct via `OrbitalElements { epoch_jd_tdb, semi_major_axis_au,
+  eccentricity, … }.into_source("Halley", 1000012)?`.
+- **`Frame::observe` is now generic** — accepts any `impl Source`, not only `CatalogEntry`.
+
 ## [0.3.0] — 2026-05-28
 
 ### Added
@@ -108,7 +128,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
   `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
-[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.1...v0.2.0

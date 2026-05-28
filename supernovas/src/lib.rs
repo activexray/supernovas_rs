@@ -20,12 +20,19 @@
 //! - **Time**: [`Time`] — UTC, TT, and split Julian dates, plus Unix epoch.
 //! - **Observers**: [`Observer`] — geodetic ground site ([`Site`] + [`Weather`])
 //!   and geocenter.
-//! - **Sources**: [`CatalogEntry`] — ICRS sidereal source with optional proper
-//!   motion, parallax, and radial velocity.
+//! - **Sources**: [`Source`] sealed trait — common interface for all source kinds.
+//!   - [`CatalogEntry`] — ICRS sidereal source with optional proper motion,
+//!     parallax, and radial velocity.
+//!   - [`Planet`] — major solar-system body (`Sun`, `Moon`, planets, barycenters)
+//!     via the installed planet provider.
+//!   - [`EphemObject`] — arbitrary body by name and NAIF ID from the installed
+//!     ephemeris provider.
+//!   - [`OrbitalObject`] / [`OrbitalElements`] — Keplerian elements source; no
+//!     external provider required.
 //! - **Frame + observation**: [`Frame`] — observer × time snapshot; call
-//!   [`Frame::observe`] for a quick az/el, or [`CatalogEntry::apparent_in`]
-//!   to get an [`Apparent`] position with access to intermediate RA/Dec and
-//!   conversion to any output frame.
+//!   [`Frame::observe`] (accepts any `impl Source`) for a quick az/el, or
+//!   [`Source::apparent_in`] to get an [`Apparent`] position with access to
+//!   intermediate RA/Dec and conversion to any output frame.
 //!
 //! # Quick start
 //!
