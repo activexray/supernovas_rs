@@ -107,9 +107,9 @@ These are known gaps that will be addressed in future releases:
 - **`Interval` timescale**: `Interval::from_seconds` takes a raw `novas_timescale` FFI enum
   directly; this will be replaced by a safe `Timescale` newtype.
 
-## Note on AI Usage
+## Note on LLM Usage
 
-Generative AI was used in the production of some portions of this crate, mainly in the generation of unit tests and getting `build.rs` correct for the ffi layer.
+LLMs were used in the production of some portions of this crate, mainly in the generation of unit tests and getting `build.rs` correct for the ffi layer.
 All code in this crate was at the very least validated manually by the author, if not written by them.
 
 ## Upstream attribution
