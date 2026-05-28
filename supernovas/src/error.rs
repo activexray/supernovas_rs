@@ -104,8 +104,7 @@ impl Error {
         #[cfg(feature = "std")]
         {
             let code = code.into();
-            let desc = take_provider_error()
-                .unwrap_or_else(|| format!("FFI error (code {code})"));
+            let desc = take_provider_error().unwrap_or_else(|| format!("FFI error (code {code})"));
             Error::Ffi(desc)
         }
         #[cfg(not(feature = "std"))]

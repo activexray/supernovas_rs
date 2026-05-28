@@ -98,7 +98,7 @@ pub use ephemeris::CalcephEphemeris;
 #[cfg(any(feature = "calceph", feature = "anise"))]
 pub use ephemeris::{Ephemeris, EphemerisProvider, PlanetProvider};
 pub use equinox::Equinox;
-pub use error::{set_provider_error, take_provider_error, Error, Result};
+pub use error::{Error, Result, set_provider_error, take_provider_error};
 pub use frame::{Accuracy, Frame};
 pub use observer::{Observer, Site, Weather};
 pub use refraction::Refraction;

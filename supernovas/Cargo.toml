@@ -32,4 +32,4 @@ supernovas-ffi = { workspace = true }
 thiserror = { version = "2", default-features = false }
 approx = { version = "0.5", default-features = false }
 hifitime = { version = "4", optional = true, default-features = false }
-anise = { version = "0.10", optional = true }
+anise = { git = "https://github.com/nyx-space/anise", package = "anise", optional = true } # switch to next version after 0.10.1

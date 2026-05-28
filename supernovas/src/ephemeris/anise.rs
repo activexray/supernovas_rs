@@ -121,8 +121,7 @@ unsafe extern "C" fn ephem_provider(
         let naif = if (0..14).contains(&id) {
             // SAFETY: id is in [0, 14), which covers every valid novas_planet
             // discriminant (repr u32).
-            let planet: sys::novas_planet =
-                unsafe { std::mem::transmute(id as u32) };
+            let planet: sys::novas_planet = unsafe { std::mem::transmute(id as u32) };
             // novas_to_dexxx_planet returns the barycenter NAIF IDs that DE-series
             // SPK files (de440s.bsp, etc.) actually contain. novas_to_naif_planet
             // would return center IDs (e.g. 599 for Jupiter) which are absent from
