@@ -1,11 +1,8 @@
 use core::{ffi::CStr, mem::MaybeUninit};
 
 use supernovas_ffi::{
-    make_orbital_object, novas_orbital, novas_orbital_system,
-    novas_planet::NOVAS_SUN,
-    novas_reference_plane::NOVAS_ECLIPTIC_PLANE,
-    novas_reference_system::NOVAS_ICRS,
-    object,
+    make_orbital_object, novas_orbital, novas_orbital_system, novas_planet::NOVAS_SUN,
+    novas_reference_plane::NOVAS_ECLIPTIC_PLANE, novas_reference_system::NOVAS_ICRS, object,
 };
 
 use crate::error::{Error, Result};
@@ -131,8 +128,8 @@ impl OrbitalObject {
         }
         let mut name_buf = [0u8; 50];
         name_buf[..bytes.len()].copy_from_slice(bytes);
-        let name_cs = CStr::from_bytes_with_nul(&name_buf[..=bytes.len()])
-            .map_err(|_| Error::Parse)?;
+        let name_cs =
+            CStr::from_bytes_with_nul(&name_buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
 
         if !elements.epoch_jd_tdb.is_finite()
             || !elements.semi_major_axis_au.is_finite()
@@ -171,17 +168,19 @@ impl OrbitalObject {
 
         let mut obj = MaybeUninit::<object>::zeroed();
         // SAFETY: make_orbital_object fully initializes *obj on a zero return.
-        let rc = unsafe {
-            make_orbital_object(name_cs.as_ptr(), num as _, &orbit, obj.as_mut_ptr())
-        };
+        let rc =
+            unsafe { make_orbital_object(name_cs.as_ptr(), num as _, &orbit, obj.as_mut_ptr()) };
         if rc != 0 {
             return Err(Error::Ffi);
         }
-        Ok(OrbitalObject { object: unsafe { obj.assume_init() } })
+        Ok(OrbitalObject {
+            object: unsafe { obj.assume_init() },
+        })
     }
 
     /// The object number this source was constructed with.
+    #[allow(clippy::useless_conversion)] // c_long = i32 on 32-bit targets
     pub fn number(&self) -> i64 {
-        self.object.number as i64
+        i64::from(self.object.number)
     }
 }

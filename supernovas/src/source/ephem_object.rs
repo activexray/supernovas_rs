@@ -13,8 +13,8 @@ use crate::error::{Error, Result};
 /// if it doesn't, `novas_sky_pos` will return an error.
 ///
 /// Configure a provider before use:
-/// - [`crate::CalcephEphemeris`] (`calceph` feature)
-/// - [`crate::AniseEphemeris`] (`anise` feature)
+/// - `CalcephEphemeris` (`calceph` feature)
+/// - `AniseEphemeris` (`anise` feature)
 #[derive(Clone, Copy)]
 pub struct EphemObject {
     object: object,
@@ -48,22 +48,23 @@ impl EphemObject {
         }
         let mut name_buf = [0u8; 50];
         name_buf[..bytes.len()].copy_from_slice(bytes);
-        let name_cs = CStr::from_bytes_with_nul(&name_buf[..=bytes.len()])
-            .map_err(|_| Error::Parse)?;
+        let name_cs =
+            CStr::from_bytes_with_nul(&name_buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
 
         let mut obj = MaybeUninit::<object>::zeroed();
         // SAFETY: make_ephem_object fully initializes *obj on a zero return.
-        let rc = unsafe {
-            make_ephem_object(name_cs.as_ptr(), naif_id as _, obj.as_mut_ptr())
-        };
+        let rc = unsafe { make_ephem_object(name_cs.as_ptr(), naif_id as _, obj.as_mut_ptr()) };
         if rc != 0 {
             return Err(Error::Ffi);
         }
-        Ok(EphemObject { object: unsafe { obj.assume_init() } })
+        Ok(EphemObject {
+            object: unsafe { obj.assume_init() },
+        })
     }
 
     /// The NAIF ID this object was constructed with.
+    #[allow(clippy::useless_conversion)] // c_long = i32 on 32-bit targets
     pub fn naif_id(&self) -> i64 {
-        self.object.number as i64
+        i64::from(self.object.number)
     }
 }

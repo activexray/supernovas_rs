@@ -17,8 +17,8 @@ use supernovas_ffi::{
 };
 
 use crate::{
-    Accuracy, Angle, Coordinate, Ecliptic, Equatorial, Equinox, Frame, Galactic,
-    Horizontal, Refraction, ScalarVelocity, TimeAngle,
+    Accuracy, Angle, Coordinate, Ecliptic, Equatorial, Equinox, Frame, Galactic, Horizontal,
+    Refraction, ScalarVelocity, TimeAngle,
     error::{Error, Result},
     source::Source,
 };
@@ -103,7 +103,7 @@ impl Apparent {
     ///
     /// For catalog stars, treat this as "not available" — the underlying C
     /// API doesn't carry parallax distance through `sky_pos`. Use
-    /// [`CatalogEntry`]'s parallax accessor if you need the distance.
+    /// `CatalogEntry`'s parallax accessor if you need the distance.
     pub fn distance(self) -> Coordinate {
         // sky_pos.dis is in AU. NaN-safe via Coordinate's constructor.
         Coordinate::from_au(self.sky.dis)

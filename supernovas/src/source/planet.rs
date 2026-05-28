@@ -56,11 +56,11 @@ impl SolarBody {
 /// A major solar-system body as a sky source.
 ///
 /// Apparent positions are computed via the installed planet-ephemeris
-/// provider. Configure one before observing at [`Accuracy::Full`]:
-/// - [`crate::CalcephEphemeris`] (`calceph` feature)
-/// - [`crate::AniseEphemeris`] (`anise` feature)
+/// provider. Configure one before observing at `Accuracy::Full`:
+/// - `CalcephEphemeris` (`calceph` feature)
+/// - `AniseEphemeris` (`anise` feature)
 ///
-/// At [`Accuracy::Reduced`] SuperNOVAS uses built-in low-precision
+/// At `Accuracy::Reduced` SuperNOVAS uses built-in low-precision
 /// approximations and no external provider is needed.
 #[derive(Clone, Copy)]
 pub struct Planet {
@@ -90,7 +90,10 @@ impl Planet {
         if rc != 0 {
             return Err(Error::Ffi);
         }
-        Ok(Planet { body, object: unsafe { obj.assume_init() } })
+        Ok(Planet {
+            body,
+            object: unsafe { obj.assume_init() },
+        })
     }
 
     /// The solar-system body this source represents.
@@ -98,15 +101,37 @@ impl Planet {
         self.body
     }
 
-    pub fn mercury() -> Result<Self> { Self::new(SolarBody::Mercury) }
-    pub fn venus() -> Result<Self> { Self::new(SolarBody::Venus) }
-    pub fn earth() -> Result<Self> { Self::new(SolarBody::Earth) }
-    pub fn mars() -> Result<Self> { Self::new(SolarBody::Mars) }
-    pub fn jupiter() -> Result<Self> { Self::new(SolarBody::Jupiter) }
-    pub fn saturn() -> Result<Self> { Self::new(SolarBody::Saturn) }
-    pub fn uranus() -> Result<Self> { Self::new(SolarBody::Uranus) }
-    pub fn neptune() -> Result<Self> { Self::new(SolarBody::Neptune) }
-    pub fn pluto() -> Result<Self> { Self::new(SolarBody::Pluto) }
-    pub fn sun() -> Result<Self> { Self::new(SolarBody::Sun) }
-    pub fn moon() -> Result<Self> { Self::new(SolarBody::Moon) }
+    pub fn mercury() -> Result<Self> {
+        Self::new(SolarBody::Mercury)
+    }
+    pub fn venus() -> Result<Self> {
+        Self::new(SolarBody::Venus)
+    }
+    pub fn earth() -> Result<Self> {
+        Self::new(SolarBody::Earth)
+    }
+    pub fn mars() -> Result<Self> {
+        Self::new(SolarBody::Mars)
+    }
+    pub fn jupiter() -> Result<Self> {
+        Self::new(SolarBody::Jupiter)
+    }
+    pub fn saturn() -> Result<Self> {
+        Self::new(SolarBody::Saturn)
+    }
+    pub fn uranus() -> Result<Self> {
+        Self::new(SolarBody::Uranus)
+    }
+    pub fn neptune() -> Result<Self> {
+        Self::new(SolarBody::Neptune)
+    }
+    pub fn pluto() -> Result<Self> {
+        Self::new(SolarBody::Pluto)
+    }
+    pub fn sun() -> Result<Self> {
+        Self::new(SolarBody::Sun)
+    }
+    pub fn moon() -> Result<Self> {
+        Self::new(SolarBody::Moon)
+    }
 }
