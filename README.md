@@ -8,45 +8,9 @@
 
 Safe Rust bindings to the [SuperNOVAS](https://github.com/sigmyne/supernovas) astrometry C library.
 
-SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observatory Vector Astrometry Software). This workspace provides two crates:
-
-| Crate | Description |
-|---|---|
-| [`supernovas-ffi`](supernovas-ffi/) | Raw FFI bindings (auto-generated via bindgen) |
-| [`supernovas`](supernovas/) | Safe, idiomatic Rust wrapper |
-
-## Features
-
-- ICRS catalog source → apparent position in any reference frame (`ReferenceSystem`: ICRS, GCRS, CIRS, equinox-of-date) via `CatalogEntry::apparent_in`
-- Apparent → horizontal (az/el) projection with `Refraction` correction
-- **Non-sidereal sources**: `Planet` (major bodies, barycenters), `EphemObject` (arbitrary body by NAIF ID), `OrbitalObject` (Keplerian elements, no external provider needed)
-- `Source` sealed trait — common interface for all source types; `Frame::observe` accepts any `impl Source`
-- Spherical coordinate types: `Horizontal`, `Equatorial`, `Ecliptic`, `Galactic`
-- Dimensioned scalar types: `Angle`, `TimeAngle`, `Coordinate`, `Interval`, `Pressure`, `Temperature`, `ScalarVelocity`
-- 3-D vector types: `Position`, `Velocity`, with cross-type arithmetic
-- `Time` from UTC/TT Julian dates and Unix epoch; optional `hifitime` feature for nanosecond-precision `Epoch` interop
-- Geodetic and geocentric `Observer`; `Site` + `Weather`
-- `CatalogEntry` with proper motion, parallax, and radial velocity
-- Full and reduced accuracy modes — full accuracy requires a planetary ephemeris (see below)
-- Planetary ephemeris backends: `CalcephEphemeris` (`calceph` feature) and `AniseEphemeris` (`anise` feature); or implement `PlanetProvider` for a custom backend without writing `unsafe` code
-- `no_std` + alloc-free by default; opt-in `std` feature available
-- Optional `vendored` feature: bundles SuperNOVAS v1.6.0 statically (no system library required)
+SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observatory Vector Astrometry Software).
 
 ## Quick start
-
-Add the wrapper crate to your `Cargo.toml`. Enable the `vendored` feature to build the bundled SuperNOVAS v1.6.0 statically — no system library required:
-
-```toml
-[dependencies]
-supernovas = { version = "0.4", features = ["vendored"] }
-```
-
-If you already have SuperNOVAS ≥ 1.6.0 installed system-wide (e.g. via Nix or a distro package), omit the feature and it will be found via `pkg-config`:
-
-```toml
-[dependencies]
-supernovas = "0.4"
-```
 
 ### Example — ICRS to horizontal
 
