@@ -14,3 +14,14 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/magic-nix-cache-action@v9
       - run: nix flake check
+
+      - name: Get coverage output path
+        run: |
+          # The cov derivation was already built by `nix flake check` above;
+          # this just resolves the cached store path without rebuilding.
+          echo "COV=$(nix build .#checks.x86_64-linux.cov --no-link --print-out-paths)" >> "$GITHUB_ENV"
+
+      - uses: codecov/codecov-action@v5
+        with:
+          files: ${{ env.COV }}/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
