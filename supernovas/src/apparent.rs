@@ -400,6 +400,57 @@ mod tests {
         assert_eq!(j2000.equatorial().system(), Equinox::J2000);
     }
 
+    #[test]
+    fn distance_and_radial_velocity_are_finite() {
+        let frame = ovro_frame();
+        let apparent = vega().apparent_in(&frame, ReferenceSystem::Icrs).unwrap();
+        // Sidereal catalog source: dis = 0 (unset by SuperNOVAS convention).
+        assert!(apparent.distance().m().is_finite());
+        // Radial velocity is finite (may be ~0 for a zero-rv catalog source).
+        assert!(apparent.radial_velocity().km_per_s().is_finite());
+    }
+
+    #[test]
+    fn frame_getter_round_trips() {
+        let frame = ovro_frame();
+        let apparent = vega().apparent_in(&frame, ReferenceSystem::Icrs).unwrap();
+        // The stored frame has the same TT JD.
+        assert!((apparent.frame().tt_jd() - frame.tt_jd()).abs() < 1e-9);
+    }
+
+    #[test]
+    fn reference_system_getter() {
+        let frame = ovro_frame();
+        let apparent = vega().apparent_in(&frame, ReferenceSystem::Mod).unwrap();
+        assert_eq!(apparent.reference_system(), ReferenceSystem::Mod);
+    }
+
+    #[test]
+    fn radio_refraction_lifts_elevation() {
+        let obs = Observer::Geodetic(
+            crate::Site::from_degrees(37.234, -118.282, 1222.0)
+                .unwrap()
+                .with_weather(Weather::standard()),
+        );
+        let t = crate::Time::from_utc_jd(2_461_236.75, 37, 0.0).unwrap();
+        let frame = Frame::new(Accuracy::Reduced, &obs, &t).unwrap();
+        let polaris = CatalogEntry::icrs(
+            "Polaris",
+            "02:31:49.10".parse().unwrap(),
+            "+89:15:50.79".parse().unwrap(),
+        )
+        .unwrap();
+        let apparent = polaris.apparent_in(&frame, ReferenceSystem::Cirs).unwrap();
+        let geometric = apparent.to_horizontal().unwrap();
+        let radio = apparent
+            .to_horizontal_with_refraction(Refraction::Radio)
+            .unwrap();
+        assert!(
+            radio.elevation().deg() > geometric.elevation().deg(),
+            "radio refraction should lift elevation"
+        );
+    }
+
     /// Optical-band refraction (which uses the site's local weather)
     /// should give a slightly different answer from the
     /// weather-agnostic standard model.

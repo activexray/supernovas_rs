@@ -257,4 +257,42 @@ mod tests {
         assert!((v.y().m_per_s() - -2.5).abs() < 1e-12);
         assert!((v.z().m_per_s() - 1.0).abs() < 1e-12);
     }
+
+    #[test]
+    fn from_au_and_km() {
+        let p = Position::from_au(1.0, 0.0, 0.0).unwrap();
+        assert!((p.x().au() - 1.0).abs() < 1e-12);
+
+        let p = Position::from_km(1.0, 2.0, 3.0).unwrap();
+        assert!((p.x().km() - 1.0).abs() < 1e-12);
+        assert!((p.z().km() - 3.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn from_components_and_components_getter() {
+        let cx = Coordinate::from_km(1.0).unwrap();
+        let cy = Coordinate::from_km(2.0).unwrap();
+        let cz = Coordinate::from_km(3.0).unwrap();
+        let p = Position::from_components([cx, cy, cz]);
+        let out = p.components();
+        assert!((out[0].km() - 1.0).abs() < 1e-12);
+        assert!((out[1].km() - 2.0).abs() < 1e-12);
+        assert!((out[2].km() - 3.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn inv_is_neg() {
+        let p = Position::from_meters(1.0, -2.0, 3.0).unwrap();
+        let neg = -p;
+        assert_abs_diff_eq!(p.inv(), neg, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn display_shows_components() {
+        // 10 000 km crosses the km display threshold (>= 1e9 m = 1e6 km).
+        // Stay in AU range: 1 AU = ~1.496e11 m.
+        let p = Position::from_au(1.0, 2.0, 3.0).unwrap();
+        let s = format!("{p}");
+        assert!(s.contains("AU"), "got: {s}");
+    }
 }

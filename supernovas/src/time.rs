@@ -279,6 +279,69 @@ mod tests {
         let expected_tt = 2_440_587.5 + 32.184 / 86_400.0;
         assert_abs_diff_eq!(t.tt_jd(), expected_tt, epsilon = 1e-9);
     }
+
+    #[test]
+    fn from_split_jd_directly() {
+        let t = Time::from_split_jd(NOVAS_TT, 2_451_545, 0.0, 37, 0.0).unwrap();
+        let (ijd, fjd) = t.tt_split_jd();
+        assert_eq!(ijd, 2_451_545);
+        assert!(fjd.abs() < 1e-9);
+    }
+
+    #[test]
+    fn from_split_jd_rejects_non_finite() {
+        assert!(matches!(
+            Time::from_split_jd(NOVAS_TT, 0, f64::NAN, 0, 0.0),
+            Err(Error::NotFinite)
+        ));
+        assert!(matches!(
+            Time::from_split_jd(NOVAS_TT, 0, 0.0, 0, f64::INFINITY),
+            Err(Error::NotFinite)
+        ));
+    }
+
+    #[test]
+    fn from_unix_non_zero() {
+        // 1000 seconds past Unix epoch — larger gap to avoid leap-second
+        // edge effects near the epoch (leap count was 0 before 1972).
+        let t0 = Time::from_unix(0, 0, 0, 0.0).unwrap();
+        let t1 = Time::from_unix(1_000, 0, 0, 0.0).unwrap();
+        let diff = (t1.tt_jd() - t0.tt_jd()) * 86_400.0;
+        assert!((diff - 1_000.0).abs() < 1e-3, "expected 1000 s, got {diff}");
+    }
+
+    #[test]
+    fn from_unix_rejects_non_finite_dut1() {
+        assert!(matches!(
+            Time::from_unix(0, 0, 0, f64::NAN),
+            Err(Error::NotFinite)
+        ));
+    }
+
+    #[test]
+    fn as_timespec_gives_same_jd() {
+        let t = Time::from_tt_jd(JD_J2000_TT, 37, 0.0).unwrap();
+        let ts = t.as_timespec();
+        let reconstructed = ts.ijd_tt as f64 + ts.fjd_tt;
+        assert!((reconstructed - JD_J2000_TT).abs() < 1e-9);
+    }
+
+    #[test]
+    fn display_contains_jd() {
+        let t = Time::from_tt_jd(JD_J2000_TT, 37, 0.0).unwrap();
+        let s = format!("{t}");
+        assert!(s.contains("JD"), "got: {s}");
+        assert!(s.contains("TT"), "got: {s}");
+    }
+
+    #[test]
+    fn partial_eq() {
+        let a = Time::from_tt_jd(JD_J2000_TT, 37, 0.0).unwrap();
+        let b = Time::from_tt_jd(JD_J2000_TT, 37, 0.0).unwrap();
+        let c = Time::from_tt_jd(JD_J2000_TT + 1.0, 37, 0.0).unwrap();
+        assert_eq!(a, b);
+        assert_ne!(a, c);
+    }
 }
 
 #[cfg(all(test, feature = "hifitime"))]

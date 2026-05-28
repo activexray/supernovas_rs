@@ -115,4 +115,17 @@ mod tests {
         // matters is just that the FFI returned 0.
         let _ = raw;
     }
+
+    #[test]
+    fn display_geodetic() {
+        let obs = Observer::geodetic(34.0, -118.0, 100.0).unwrap();
+        let s = format!("{obs}");
+        assert!(s.contains("Geodetic"), "got: {s}");
+    }
+
+    #[test]
+    fn display_geocenter() {
+        let s = format!("{}", Observer::Geocenter);
+        assert_eq!(s, "Geocenter");
+    }
 }

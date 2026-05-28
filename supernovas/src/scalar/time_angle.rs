@@ -290,4 +290,47 @@ mod tests {
         let s = format!("{t}");
         assert!(s.contains("12"), "expected HMS string, got {s:?}");
     }
+
+    #[test]
+    fn from_minutes_and_seconds() {
+        let t = TimeAngle::from_minutes(120.0).unwrap();
+        assert!((t.hours() - 2.0).abs() < 1e-12);
+
+        let t = TimeAngle::from_seconds(7200.0).unwrap();
+        assert!((t.hours() - 2.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn from_impls() {
+        // From<Angle> for TimeAngle
+        let a = Angle::from_degrees(180.0).unwrap();
+        let t: TimeAngle = a.into();
+        assert!((t.hours() - 12.0).abs() < 1e-12);
+
+        // From<TimeAngle> for Angle
+        let t = TimeAngle::from_hours(6.0).unwrap();
+        let a: Angle = t.into();
+        assert!((a.deg() - 90.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn neg_wraps_correctly() {
+        let t = TimeAngle::from_hours(6.0).unwrap();
+        // -6h → 18h
+        assert!(((-t).hours() - 18.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn sub_interval_goes_backward() {
+        let t = TimeAngle::from_hours(12.0).unwrap();
+        let dt = Interval::from_minutes(30.0).unwrap();
+        let earlier = t - dt;
+        assert!((earlier.hours() - 11.5).abs() < 1e-12);
+    }
+
+    #[test]
+    fn parse_rejects_too_long_string() {
+        let long = "1".repeat(64);
+        assert!(matches!(long.parse::<TimeAngle>(), Err(Error::Parse)));
+    }
 }

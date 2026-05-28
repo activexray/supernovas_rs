@@ -55,3 +55,22 @@ impl Refraction {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all_variants_produce_a_model() {
+        // None → null; others → Some(fn ptr).
+        assert!(Refraction::None.to_sys().is_none());
+        assert!(Refraction::Standard.to_sys().is_some());
+        assert!(Refraction::Optical.to_sys().is_some());
+        assert!(Refraction::Radio.to_sys().is_some());
+    }
+
+    #[test]
+    fn default_is_none() {
+        assert_eq!(Refraction::default(), Refraction::None);
+    }
+}

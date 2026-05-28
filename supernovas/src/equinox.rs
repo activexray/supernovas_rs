@@ -246,4 +246,50 @@ mod tests {
         // Same date but different system: not equal.
         assert!(!a.abs_diff_eq(&c, 1.0));
     }
+
+    #[test]
+    fn name_getter() {
+        assert_eq!(Equinox::ICRS.name(), "ICRS");
+        assert_eq!(Equinox::J2000.name(), "J2000");
+        assert_eq!(Equinox::B1950.name(), "B1950");
+        assert_eq!(Equinox::HIPPARCOS.name(), "HIP");
+        assert_eq!(Equinox::B1900.name(), "B1900");
+    }
+
+    #[test]
+    fn b1900_is_near_1900() {
+        assert!((Equinox::B1900.epoch() - 1900.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn hipparcos_epoch_is_near_1991() {
+        assert!((Equinox::HIPPARCOS.epoch() - 1991.25).abs() < 0.1);
+    }
+
+    #[test]
+    fn display_renders_name() {
+        assert_eq!(format!("{}", Equinox::J2000), "J2000");
+        assert_eq!(format!("{}", Equinox::ICRS), "ICRS");
+    }
+
+    #[test]
+    fn cirs_is_not_icrs_or_mod_or_true() {
+        let cirs = Equinox::cirs_at(NOVAS_JD_J2000).unwrap();
+        assert!(!cirs.is_icrs());
+        assert!(!cirs.is_mod());
+        assert!(!cirs.is_true());
+    }
+
+    #[test]
+    fn equator_type_for_ecliptic_returns_none_for_cirs() {
+        let cirs = Equinox::cirs_at(NOVAS_JD_J2000).unwrap();
+        assert!(cirs.equator_type_for_ecliptic().is_none());
+    }
+
+    #[test]
+    fn equator_type_for_ecliptic_returns_some_for_common_systems() {
+        assert!(Equinox::ICRS.equator_type_for_ecliptic().is_some());
+        assert!(Equinox::J2000.equator_type_for_ecliptic().is_some());
+        assert!(Equinox::tod_at(NOVAS_JD_J2000).unwrap().equator_type_for_ecliptic().is_some());
+    }
 }

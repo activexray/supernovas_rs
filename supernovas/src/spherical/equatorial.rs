@@ -294,6 +294,59 @@ mod tests {
     use super::*;
 
     #[test]
+    fn from_degrees_constructor() {
+        let e = Equatorial::from_degrees(279.235, 38.784, Equinox::J2000).unwrap();
+        // 279.235° / 15 = 18.615... h
+        assert!((e.ra().hours() - 279.235 / 15.0).abs() < 1e-9);
+        assert!((e.dec().deg() - 38.784).abs() < 1e-9);
+    }
+
+    #[test]
+    fn from_radians_constructor() {
+        use core::f64::consts::PI;
+        let e = Equatorial::from_radians(PI, 0.0, Equinox::ICRS).unwrap();
+        assert!((e.ra().hours() - 12.0).abs() < 1e-9);
+        assert!((e.dec().deg()).abs() < 1e-12);
+    }
+
+    #[test]
+    fn as_spherical_gives_same_coords() {
+        let e = Equatorial::from_hours_and_degrees(6.0, 30.0, Equinox::ICRS).unwrap();
+        let s = e.as_spherical();
+        assert!((s.latitude().deg() - 30.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn display_contains_ra_dec_system() {
+        let e = Equatorial::from_hours_and_degrees(12.0, 45.0, Equinox::ICRS).unwrap();
+        let s = format!("{e}");
+        assert!(s.contains("RA"), "got: {s}");
+        assert!(s.contains("Dec"), "got: {s}");
+        assert!(s.contains("ICRS"), "got: {s}");
+    }
+
+    #[test]
+    fn to_ecliptic_itrs_returns_unsupported() {
+        use crate::error::Error;
+        // ITRS has no ecliptic mapping; to_ecliptic should return UnsupportedSystem.
+        let itrs_eq = Equinox::at("ITRS", ReferenceSystem::Itrs, 2_451_545.0).unwrap();
+        let e = Equatorial::from_hours_and_degrees(12.0, 0.0, itrs_eq).unwrap();
+        assert!(matches!(
+            e.to_ecliptic(Accuracy::Reduced),
+            Err(Error::UnsupportedSystem)
+        ));
+    }
+
+    #[test]
+    fn to_galactic_when_already_icrs() {
+        // When source is already ICRS, to_galactic skips the to_icrs() call.
+        let e = Equatorial::from_hours_and_degrees(18.6156, 38.784, Equinox::ICRS).unwrap();
+        let g = e.to_galactic(Accuracy::Reduced).unwrap();
+        assert!(g.l().deg().is_finite());
+        assert!(g.b().deg().is_finite());
+    }
+
+    #[test]
     fn round_trip_hours_and_degrees() {
         let e = Equatorial::from_hours_and_degrees(18.6156, 38.7837, Equinox::J2000).unwrap();
         assert!((e.ra().hours() - 18.6156).abs() < 1e-9);

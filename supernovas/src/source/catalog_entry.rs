@@ -246,6 +246,37 @@ mod tests {
     }
 
     #[test]
+    fn with_proper_motion_rejects_non_finite() {
+        let ra = TimeAngle::from_hours(0.0).unwrap();
+        let dec = Angle::from_degrees(0.0).unwrap();
+        let entry = CatalogEntry::icrs("Star", ra, dec).unwrap();
+        assert!(matches!(
+            entry.with_proper_motion_mas_per_yr(f64::NAN, 0.0),
+            Err(Error::NotFinite)
+        ));
+    }
+
+    #[test]
+    fn display_contains_name_and_coords() {
+        let ra = TimeAngle::from_hours(18.0).unwrap();
+        let dec = Angle::from_degrees(38.0).unwrap();
+        let entry = CatalogEntry::icrs("Vega", ra, dec).unwrap();
+        let s = format!("{entry}");
+        assert!(s.contains("Vega"), "got: {s}");
+        assert!(s.contains("RA="), "got: {s}");
+        assert!(s.contains("Dec="), "got: {s}");
+    }
+
+    #[test]
+    fn debug_format_shows_name() {
+        let ra = TimeAngle::from_hours(18.0).unwrap();
+        let dec = Angle::from_degrees(38.0).unwrap();
+        let entry = CatalogEntry::icrs("Vega", ra, dec).unwrap();
+        let s = format!("{entry:?}");
+        assert!(s.contains("Vega"), "got: {s}");
+    }
+
+    #[test]
     fn builder_attaches_optional_fields() {
         let ra = TimeAngle::from_hours(18.0).unwrap();
         let dec = Angle::from_degrees(38.0).unwrap();

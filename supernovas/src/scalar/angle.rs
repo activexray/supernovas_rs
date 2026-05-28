@@ -269,4 +269,38 @@ mod tests {
         let s = format!("{a}");
         assert!(s.contains("12"), "expected DMS string, got {s:?}");
     }
+
+    #[test]
+    fn small_unit_constructors_and_getters() {
+        let a = Angle::from_arcmin(60.0).unwrap();
+        assert!((a.deg() - 1.0).abs() < TIGHT);
+
+        let a = Angle::from_arcsec(3600.0).unwrap();
+        assert!((a.deg() - 1.0).abs() < TIGHT);
+        assert!((a.arcsec() - 3600.0).abs() < 1e-6);
+        assert!((a.arcmin() - 60.0).abs() < 1e-9);
+
+        let a = Angle::from_mas(1000.0).unwrap();
+        assert!((a.mas() - 1000.0).abs() < 1e-6);
+
+        let a = Angle::from_uas(1_000_000.0).unwrap();
+        assert!((a.uas() - 1_000_000.0).abs() < 1e-3);
+    }
+
+    #[test]
+    fn fraction_in_range() {
+        let a = Angle::from_degrees(90.0).unwrap();
+        // 90° / 360° = 0.25
+        assert!((a.fraction() - 0.25).abs() < TIGHT);
+
+        let neg = Angle::from_degrees(-90.0).unwrap();
+        // -90° → 270° / 360° = 0.75
+        assert!((neg.fraction() - 0.75).abs() < TIGHT);
+    }
+
+    #[test]
+    fn parse_rejects_too_long_string() {
+        let long = "1".repeat(64);
+        assert!(matches!(long.parse::<Angle>(), Err(Error::Parse)));
+    }
 }
