@@ -20,7 +20,7 @@ jobs:
           # The cov derivation was already built by `nix flake check` above;
           # this just resolves the cached store path without rebuilding.
           COV=$(nix build .#checks.x86_64-linux.cov --no-link --print-out-paths)
-          cp "$COV/lcov.info" ./lcov.info
+          cp "$COV" ./lcov.info
 
       - uses: codecov/codecov-action@v5
         with:
