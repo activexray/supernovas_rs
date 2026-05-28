@@ -156,22 +156,31 @@ impl approx::AbsDiffEq for Time {
     }
 }
 
-// TT = TAI + 32.184 s exactly (by SI definition of TT).
-#[cfg(feature = "hifitime")]
-const TT_TAI_OFFSET_DAYS: f64 = 32.184 / 86_400.0;
-
 #[cfg(feature = "hifitime")]
 impl Time {
     /// Convert to a hifitime [`Epoch`], preserving the full TT Julian date.
     ///
-    /// The mapping is lossless to `f64` precision (~0.1 ms). The resulting
-    /// `Epoch` carries no `dut1` information (hifitime doesn't model UT1−UTC),
-    /// so round-tripping through [`From<hifitime::Epoch>`] will lose the
-    /// original `dut1`.
+    /// The mapping is lossless to ~1 nanosecond (the precision of hifitime's
+    /// internal `Duration`). The resulting `Epoch` carries no `dut1`
+    /// information (hifitime doesn't model UT1−UTC), so round-tripping through
+    /// [`From<hifitime::Epoch>`] will lose the original `dut1`.
     pub fn to_epoch(self) -> hifitime::Epoch {
         let (ijd, fjd) = self.tt_split_jd();
-        // TT JDE → TAI JDE: subtract the fixed TT−TAI offset
-        hifitime::Epoch::from_jde_tai(ijd as f64 + fjd - TT_TAI_OFFSET_DAYS)
+        // Avoid combining ijd+fjd as a single f64 (≈40 µs precision loss).
+        // Work in integer nanoseconds throughout.
+        // J1900 reference: JDE 2415020.5 (= integer part 2415020, fraction 0.5)
+        // TT − TAI = 32.184 s exactly by SI definition
+        const NS_PER_DAY: i128 = 86_400_000_000_000;
+        const TT_TAI_NS: i128 = 32_184_000_000; // 32.184 s in ns
+        const J1900_JD_INT: i64 = 2_415_020;
+
+        let int_ns = (ijd as i128 - J1900_JD_INT as i128) * NS_PER_DAY;
+        // Subtract 0.5 for the fractional part of JDE 2415020.5
+        let frac_ns = ((fjd - 0.5) * NS_PER_DAY as f64).round() as i128;
+        let tai_ns = int_ns + frac_ns - TT_TAI_NS;
+
+        let duration = hifitime::Duration::from_total_nanoseconds(tai_ns);
+        hifitime::Epoch::from_duration(duration, hifitime::TimeScale::TAI)
     }
 
     /// Convert from a hifitime [`Epoch`] with an explicit UT1−UTC offset.
@@ -181,9 +190,21 @@ impl Time {
     /// it defaults to `0.0`, which introduces at most ~0.9 s of error in
     /// UT1-dependent quantities (negligible for az/el at arcsecond accuracy).
     pub fn from_epoch_with_dut1(epoch: hifitime::Epoch, dut1: f64) -> Result<Self> {
-        let tt_jd = epoch.to_jde_tt_days();
         let leap_seconds = epoch.leap_seconds_iers();
-        Self::from_tt_jd(tt_jd, leap_seconds, dut1)
+        // Use integer nanoseconds to avoid single-f64 JDE precision loss.
+        // to_tai_duration() is exact (Duration → i128, no f64 JDE involved).
+        const NS_PER_DAY: i128 = 86_400_000_000_000;
+        const TT_TAI_NS: i128 = 32_184_000_000;
+        // J1900 noon (JDE 2415020.5) expressed as ns: 2415020 full days + 12 h
+        const J1900_NOON_NS: i128 = 2_415_020 * NS_PER_DAY + 43_200_000_000_000;
+
+        let tai_ns = epoch.to_tai_duration().total_nanoseconds();
+        let tt_jde_ns = tai_ns + TT_TAI_NS + J1900_NOON_NS;
+
+        let ijd = tt_jde_ns.div_euclid(NS_PER_DAY) as i64;
+        let fjd = tt_jde_ns.rem_euclid(NS_PER_DAY) as f64 / NS_PER_DAY as f64;
+
+        Self::from_split_jd(NOVAS_TT, ijd, fjd, leap_seconds, dut1)
     }
 }
 
@@ -194,9 +215,7 @@ impl From<hifitime::Epoch> for Time {
     /// The leap-second count is derived from hifitime's built-in IERS table.
     /// Use [`Time::from_epoch_with_dut1`] when you have a precise UT1−UTC value.
     fn from(epoch: hifitime::Epoch) -> Self {
-        let tt_jd = epoch.to_jde_tt_days();
-        let leap_seconds = epoch.leap_seconds_iers();
-        Time::from_tt_jd(tt_jd, leap_seconds, 0.0)
+        Time::from_epoch_with_dut1(epoch, 0.0)
             .expect("hifitime Epoch always yields a finite TT JDE")
     }
 }
@@ -268,28 +287,45 @@ mod hifitime_tests {
 
     #[test]
     fn round_trips_through_hifitime() {
-        // A modern epoch with leap seconds.
-        let t = Time::from_tt_jd(2_451_545.0, 37, 0.3).unwrap();
+        // Use fjd = 0.75 (exactly representable in f64) to exercise the
+        // ns-precision path; compare split JD to avoid tt_jd() catastrophic
+        // cancellation when testing sub-nanosecond differences.
+        let t = Time::from_tt_jd(2_451_545.75, 37, 0.3).unwrap();
         let t2 = Time::from(t.to_epoch());
-        // TT JDs match; dut1 is not preserved (hifitime doesn't carry it).
-        assert!((t.tt_jd() - t2.tt_jd()).abs() < 1e-9);
+        let (ijd, fjd) = t.tt_split_jd();
+        let (ijd2, fjd2) = t2.tt_split_jd();
+        assert_eq!(ijd, ijd2, "integer JD should round-trip exactly");
+        // At most 1 ns = 1.16e-14 days from frac_ns rounding; dut1 is not preserved.
+        assert!(
+            (fjd - fjd2).abs() < 2e-14,
+            "fjd diff {} days > 2 ns",
+            (fjd - fjd2).abs()
+        );
     }
 
     #[test]
     fn tt_tai_offset_correct() {
         // J2000.0 TT (JDE 2451545.0) should sit 32.184 s before
         // 2000-01-01 12:00:00 TAI in hifitime's timeline.
-        // Tolerance of 100 µs accounts for f64 rounding at the ~2.4e6 JDE scale.
         let t = Time::from_tt_jd(2_451_545.0, 32, 0.0).unwrap();
         let j2000_tai = hifitime::Epoch::from_gregorian_tai_at_noon(2000, 1, 1);
         let diff_s = (j2000_tai - t.to_epoch()).to_seconds();
-        assert!((diff_s - 32.184).abs() < 1e-4, "TT−TAI offset: {diff_s}");
+        // Integer-ns arithmetic makes this exact; allow 1 µs for any rounding
+        // inside hifitime's gregorian→duration path.
+        assert!((diff_s - 32.184).abs() < 1e-6, "TT−TAI offset: {diff_s}");
     }
 
     #[test]
     fn from_epoch_with_dut1_round_trips() {
-        let t = Time::from_tt_jd(2_451_545.0, 37, 0.5).unwrap();
+        let t = Time::from_tt_jd(2_451_545.75, 37, 0.5).unwrap();
         let t2 = Time::from_epoch_with_dut1(t.to_epoch(), 0.5).unwrap();
-        assert!((t.tt_jd() - t2.tt_jd()).abs() < 1e-9);
+        let (ijd, fjd) = t.tt_split_jd();
+        let (ijd2, fjd2) = t2.tt_split_jd();
+        assert_eq!(ijd, ijd2);
+        assert!(
+            (fjd - fjd2).abs() < 2e-14,
+            "fjd diff {} days > 2 ns",
+            (fjd - fjd2).abs()
+        );
     }
 }

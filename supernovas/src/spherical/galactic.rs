@@ -2,8 +2,14 @@
 
 use core::fmt;
 
-use super::Spherical;
-use crate::{Angle, Coordinate, Position, error::Result, unit};
+use supernovas_ffi::gal2equ;
+
+use super::{Equatorial, Spherical};
+use crate::{
+    Angle, Coordinate, Equinox, Position,
+    error::{Error, Result},
+    unit,
+};
 
 /// A direction on the sky in the Galactic coordinate system (`l`, `b`).
 ///
@@ -55,6 +61,22 @@ impl Galactic {
     /// galactic-aligned axes.
     pub fn xyz(self, distance: Coordinate) -> Position {
         self.0.xyz(distance)
+    }
+
+    /// Convert to equatorial coordinates in ICRS.
+    ///
+    /// The galactic ↔ ICRS rotation is fixed (defined by the galactic pole
+    /// and centre directions in ICRS), so no date / accuracy parameter is
+    /// needed.
+    pub fn to_equatorial_icrs(self) -> Result<Equatorial> {
+        let mut ra_h = 0.0_f64;
+        let mut dec_d = 0.0_f64;
+        // SAFETY: gal2equ writes the two output doubles on a 0 return.
+        let rc = unsafe { gal2equ(self.l().deg(), self.b().deg(), &mut ra_h, &mut dec_d) };
+        if rc != 0 {
+            return Err(Error::Parse);
+        }
+        Equatorial::from_hours_and_degrees(ra_h, dec_d, Equinox::ICRS)
     }
 }
 

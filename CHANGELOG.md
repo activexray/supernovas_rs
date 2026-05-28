@@ -7,6 +7,41 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-28
+
+### Added
+
+- **Apparent position types**: `Apparent` — a typed apparent position carrying a `ReferenceSystem`
+  tag (ICRS, GCRS, CIRS, or equinox-of-date); `ReferenceSystem` enum.
+- **`CatalogEntry::apparent_in(frame, reference_system)`** — compute an `Apparent` position for
+  a catalog source in the requested reference frame.
+- **Spherical coordinate types**: `Equatorial` (RA/Dec, tagged with `ReferenceSystem`) and
+  `Ecliptic` (ecliptic longitude/latitude λ/β). Both support `Display` and `approx::AbsDiffEq`.
+- **`Equinox`** — equinox representation for coordinate conversions between reference frames.
+- **`Refraction`** — refraction model selector (`None`, `Standard`, or `Weather`-driven) passed
+  to `Frame::observe` for apparent az/el corrections.
+- **Ephemeris system** — planetary ephemeris backends for `Accuracy::Full`:
+  - `EphemerisProvider` trait — low-level interface for installing a planet provider via C callbacks.
+  - `PlanetProvider` trait — high-level safe interface; implement `state()` and a blanket impl
+    handles all C callback registration, process-global `OnceLock`, and `catch_unwind` for you.
+  - `Ephemeris` wrapper — `Ephemeris::open(path)` (single-backend) and `Ephemeris::from_provider(p)`.
+  - `CalcephEphemeris` (feature `calceph`) — CALCEPH C library backend; wraps `novas_use_calceph`.
+  - `AniseEphemeris` (feature `anise`) — pure-Rust ANISE/SPK reader; no extra C dependency.
+  - When both features are enabled simultaneously the two backends agree to **≤2 µas** for a
+    typical DE440s pointing — irreducible rounding noise from independent Chebyshev evaluators.
+- **`Accuracy::Full` now works end-to-end**: install any `EphemerisProvider` (or `PlanetProvider`)
+  once at process start and `Frame::new(Accuracy::Full, …)` produces sub-µas apparent positions.
+- **Three new integration tests**: `full_accuracy` (CALCEPH), `full_accuracy_anise` (ANISE),
+  `full_accuracy_backends_agree` (cross-validation of both backends against de440s.bsp).
+
+### Fixed
+
+- **`hifitime` feature — nanosecond-level precision**: `Time::to_epoch()` and
+  `Time::from_epoch_with_dut1()` previously combined the split Julian date into a single `f64`,
+  losing ~40–64 µs from ULP rounding on large integers. Both methods are now rewritten using
+  integer `i128` nanosecond arithmetic (via `Duration::from_total_nanoseconds` /
+  `Epoch::to_tai_duration().total_nanoseconds()`), achieving ≤1 ns round-trip precision.
+
 ## [0.2.1] — 2026-05-20
 
 ### Added
@@ -73,7 +108,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
   `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
-[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/kiranshila/supernovas_rs/compare/v0.1.0...v0.1.1

@@ -11,15 +11,21 @@
 //!   arithmetic operators and cross-type ops (`Position / Interval → Velocity`,
 //!   `Velocity × Interval → Position`).
 //! - **Spherical coordinates**: [`Spherical`] (base shape), [`Horizontal`]
-//!   (az/el), [`Galactic`] (`l`/`b`).
+//!   (az/el), [`Equatorial`] (RA/Dec + equinox), [`Ecliptic`] (λ/β + equinox),
+//!   [`Galactic`] (`l`/`b`).
+//! - **Reference systems**: [`ReferenceSystem`], [`Equinox`] — tag coordinate
+//!   sets with the equatorial frame they were computed in.
+//! - **Refraction**: [`Refraction`] — choose None / Standard / Optical / Radio
+//!   when converting apparent equatorial → horizontal.
 //! - **Time**: [`Time`] — UTC, TT, and split Julian dates, plus Unix epoch.
 //! - **Observers**: [`Observer`] — geodetic ground site ([`Site`] + [`Weather`])
 //!   and geocenter.
 //! - **Sources**: [`CatalogEntry`] — ICRS sidereal source with optional proper
 //!   motion, parallax, and radial velocity.
 //! - **Frame + observation**: [`Frame`] — observer × time snapshot; call
-//!   [`Frame::observe`] to produce an apparent [`Horizontal`] position for a
-//!   catalog source.
+//!   [`Frame::observe`] for a quick az/el, or [`CatalogEntry::apparent_in`]
+//!   to get an [`Apparent`] position with access to intermediate RA/Dec and
+//!   conversion to any output frame.
 //!
 //! # Quick start
 //!
@@ -57,9 +63,14 @@ extern crate std;
 
 pub use supernovas_ffi as sys;
 
+pub mod apparent;
+#[cfg(any(feature = "calceph", feature = "anise"))]
+pub mod ephemeris;
+pub mod equinox;
 pub mod error;
 pub mod frame;
 pub mod observer;
+pub mod refraction;
 pub mod scalar;
 pub mod source;
 pub mod spherical;
@@ -67,11 +78,20 @@ pub mod time;
 pub mod unit;
 pub mod vector;
 
+pub use apparent::{Apparent, ReferenceSystem};
+#[cfg(feature = "anise")]
+pub use ephemeris::AniseEphemeris;
+#[cfg(feature = "calceph")]
+pub use ephemeris::CalcephEphemeris;
+#[cfg(any(feature = "calceph", feature = "anise"))]
+pub use ephemeris::{Ephemeris, EphemerisProvider, PlanetProvider};
+pub use equinox::Equinox;
 pub use error::{Error, Result};
 pub use frame::{Accuracy, Frame};
 pub use observer::{Observer, Site, Weather};
+pub use refraction::Refraction;
 pub use scalar::{Angle, Coordinate, Interval, Pressure, ScalarVelocity, Temperature, TimeAngle};
 pub use source::CatalogEntry;
-pub use spherical::{Galactic, Horizontal, Spherical};
+pub use spherical::{Ecliptic, Equatorial, Galactic, Horizontal, Spherical};
 pub use time::Time;
 pub use vector::{Position, Velocity};

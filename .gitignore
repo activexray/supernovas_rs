@@ -1,2 +1,7 @@
 /target
 .direnv
+
+# Planetary ephemeris files used by the `calceph` feature integration tests.
+# Download instructions are in supernovas/tests/full_accuracy.rs.
+/supernovas/tests/data/*.bsp
+

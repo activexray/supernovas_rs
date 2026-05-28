@@ -112,6 +112,20 @@ impl CatalogEntry {
         &self.object
     }
 
+    /// Compute the apparent place of this source in the given [`crate::Frame`] and
+    /// [`crate::ReferenceSystem`].
+    ///
+    /// The returned [`crate::Apparent`] carries RA/Dec in `system` and can
+    /// be converted to horizontal (az/el) coordinates via
+    /// [`crate::Apparent::to_horizontal`].
+    pub fn apparent_in(
+        &self,
+        frame: &crate::Frame,
+        system: crate::ReferenceSystem,
+    ) -> Result<crate::Apparent> {
+        crate::apparent::apparent_of_catalog_in(self, frame, system)
+    }
+
     fn new(
         name: &str,
         ra: TimeAngle,

@@ -9,13 +9,12 @@ use core::mem::MaybeUninit;
 
 use supernovas_ffi::{
     novas_accuracy::{NOVAS_FULL_ACCURACY, NOVAS_REDUCED_ACCURACY},
-    novas_app_to_hor, novas_frame, novas_make_frame,
-    novas_reference_system::NOVAS_CIRS,
-    novas_sky_pos, sky_pos,
+    novas_frame, novas_make_frame,
 };
 
 use crate::{
     Angle, CatalogEntry, Horizontal, Observer, Time,
+    apparent::ReferenceSystem,
     error::{Error, Result},
 };
 
@@ -32,7 +31,7 @@ pub enum Accuracy {
 }
 
 impl Accuracy {
-    fn to_sys(self) -> supernovas_ffi::novas_accuracy {
+    pub(crate) fn to_sys(self) -> supernovas_ffi::novas_accuracy {
         match self {
             Accuracy::Full => NOVAS_FULL_ACCURACY,
             Accuracy::Reduced => NOVAS_REDUCED_ACCURACY,
@@ -104,52 +103,39 @@ impl Frame {
         }
     }
 
+    /// The frame's instant as a TT-based Julian date.
+    pub fn tt_jd(&self) -> f64 {
+        // novas_timespec stores integer + fractional TT JD parts.
+        // `c_long` is `i64` on 64-bit Unix and `i32` on 32-bit / Windows;
+        // `i64::from` is identity on the former and a widening on the latter.
+        #[allow(clippy::useless_conversion)]
+        let ijd: i64 = i64::from(self.0.time.ijd_tt);
+        ijd as f64 + self.0.time.fjd_tt
+    }
+
+    /// Borrow the underlying C `novas_frame` for FFI calls inside the
+    /// safe-wrapper crate.
+    pub(crate) fn as_novas_frame(&self) -> &novas_frame {
+        &self.0
+    }
+
     /// Compute the apparent horizontal (azimuth, elevation) of a catalog
     /// source as seen from this frame's observer at this frame's time.
     ///
-    /// No refraction correction is applied — the result is the geometric
-    /// (unrefracted) direction.
+    /// This is the convenience shortcut for the full pipeline:
     ///
-    /// # Known limitations
+    /// ```text
+    ///   source.apparent_in(frame, ReferenceSystem::Cirs)?.to_horizontal()
+    /// ```
     ///
-    /// - No atmospheric refraction. Pass a custom `novas_refraction_model`
-    ///   callback via the raw FFI (`novas_app_to_hor`) if you need it.
-    // FIXME: return a richer type once Equatorial / GCRS coordinate types land,
-    //        so callers can request non-horizontal output frames.
-    // FIXME: expose a refraction-enabled variant once the Weather → refraction
-    //        plumbing is wired up in this layer.
+    /// No atmospheric refraction is applied — the result is the geometric
+    /// direction. Build through [`crate::Apparent`] explicitly if you want
+    /// access to the intermediate RA/Dec, or to request a different
+    /// [`ReferenceSystem`].
     pub fn observe(&self, source: &CatalogEntry) -> Result<Horizontal> {
-        use core::mem::MaybeUninit;
-
-        let mut sky = MaybeUninit::<sky_pos>::zeroed();
-        // SAFETY: novas_sky_pos initializes *sky on a zero return.
-        let rc =
-            unsafe { novas_sky_pos(source.as_object(), &self.0, NOVAS_CIRS, sky.as_mut_ptr()) };
-        if rc != 0 {
-            return Err(Error::Parse);
-        }
-        let sky = unsafe { sky.assume_init() };
-
-        let mut az_deg: f64 = 0.0;
-        let mut el_deg: f64 = 0.0;
-        // SAFETY: novas_app_to_hor writes the two output doubles on zero
-        // return. `None` for the refraction-model callback disables
-        // refraction entirely.
-        let rc = unsafe {
-            novas_app_to_hor(
-                &self.0,
-                NOVAS_CIRS,
-                sky.ra,
-                sky.dec,
-                None,
-                &mut az_deg as *mut f64,
-                &mut el_deg as *mut f64,
-            )
-        };
-        if rc != 0 {
-            return Err(Error::Parse);
-        }
-        Horizontal::from_degrees(az_deg, el_deg)
+        source
+            .apparent_in(self, ReferenceSystem::Cirs)?
+            .to_horizontal()
     }
 }
 

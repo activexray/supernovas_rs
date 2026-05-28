@@ -2,17 +2,18 @@
 //! specific newtype wrappers.
 //!
 //! [`Spherical`] is the geometric base shape (longitude, latitude). The
-//! typed variants — [`Galactic`], [`Horizontal`] — add domain accessors and
-//! prevent accidental mixing of reference systems.
-//!
-//! `Equatorial` and `Ecliptic` coordinate types are not yet implemented.
-//! Refraction-corrected and frame-converted variants of [`Horizontal`] are
-//! also pending.
+//! typed variants — [`Equatorial`], [`Ecliptic`], [`Galactic`],
+//! [`Horizontal`] — add domain accessors and prevent accidental mixing of
+//! reference systems.
 
 mod base;
+mod ecliptic;
+mod equatorial;
 mod galactic;
 mod horizontal;
 
 pub use base::Spherical;
+pub use ecliptic::Ecliptic;
+pub use equatorial::Equatorial;
 pub use galactic::Galactic;
 pub use horizontal::Horizontal;

@@ -25,13 +25,14 @@
           overlays = [
             fenix.overlays.default
             # nixpkgs-unstable carries supernovas 1.5.1; master has 1.6.0.
-            # Take the master derivation without the optional C++ wrapper or
-            # calceph support — we only need the plain C library.
+            # Take the master derivation without the C++ wrapper but with
+            # CALCEPH support, so libsolsys-calceph is available when the
+            # `calceph` cargo feature is enabled.
             (_: _: {
               supernovas =
                 (nixpkgs-master.legacyPackages.${system}.supernovas).override {
                   cppSupport = false;
-                  withCalceph = false;
+                  withCalceph = true;
                 };
             })
           ];
@@ -70,6 +71,7 @@
           ];
           buildInputs = with pkgs; [
             supernovas
+            calceph
           ];
         };
 
@@ -135,9 +137,10 @@
             cargo-msrv
           ];
 
-          # Test binaries link against shared libsupernovas; Nix doesn't set
-          # RPATH on cargo outputs so expose the lib dir explicitly.
-          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.supernovas];
+          # Test binaries link against shared libsupernovas (and libcalceph
+          # when the `calceph` cargo feature is enabled); Nix doesn't set
+          # RPATH on cargo outputs so expose the lib dirs explicitly.
+          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.supernovas pkgs.calceph];
           RUST_BACKTRACE = 1;
         };
       }
