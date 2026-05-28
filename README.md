@@ -1,6 +1,7 @@
 # SuperNOVAS (Rust)
 
 [![CI](https://github.com/kiranshila/supernovas_rs/actions/workflows/ci.yml/badge.svg)](https://github.com/kiranshila/supernovas_rs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/kiranshila/supernovas_rs/graph/badge.svg)](https://codecov.io/gh/kiranshila/supernovas_rs)
 [![crates.io](https://img.shields.io/crates/v/supernovas.svg)](https://crates.io/crates/supernovas)
 [![docs.rs](https://docs.rs/supernovas/badge.svg)](https://docs.rs/supernovas)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
