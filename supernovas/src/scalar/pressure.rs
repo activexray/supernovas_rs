@@ -145,4 +145,33 @@ mod tests {
         assert!((one_bar.pa() - 1e5).abs() < 1e-9);
         assert!((one_bar.kpa() - 100.0).abs() < 1e-9);
     }
+
+    #[test]
+    fn mbar_equals_hpa() {
+        let p = Pressure::from_mbar(1013.25).unwrap();
+        assert!((p.mbar() - 1013.25).abs() < 1e-9);
+        assert!((p.hpa() - 1013.25).abs() < 1e-9);
+    }
+
+    #[test]
+    fn mpa_round_trip() {
+        let p = Pressure::from_mpa(1.0).unwrap();
+        assert!((p.mpa() - 1.0).abs() < 1e-12);
+        assert!((p.pa() - 1e6).abs() < 1e-6);
+    }
+
+    #[test]
+    fn torr_round_trip() {
+        let p = Pressure::from_torr(760.0).unwrap();
+        assert!((p.torr() - 760.0).abs() < 1e-9);
+        // 1 atm = 760 torr
+        assert!((p.atm() - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn display_renders_mbar() {
+        let p = Pressure::from_hpa(1013.25).unwrap();
+        let s = format!("{p}");
+        assert!(s.contains("mbar"), "got: {s}");
+    }
 }

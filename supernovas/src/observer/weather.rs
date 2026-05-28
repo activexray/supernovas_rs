@@ -112,4 +112,30 @@ mod tests {
             Err(Error::NotFinite)
         ));
     }
+
+    #[test]
+    fn new_with_all_fields() {
+        let t = Temperature::from_celsius(20.0).unwrap();
+        let p = Pressure::from_hpa(1013.0).unwrap();
+        let w = Weather::new(Some(t), Some(p), Some(60.0)).unwrap();
+        assert!((w.temperature().unwrap().celsius() - 20.0).abs() < 1e-12);
+        assert!((w.pressure().unwrap().hpa() - 1013.0).abs() < 1e-9);
+        assert!((w.humidity_percent().unwrap() - 60.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn display_all_fields() {
+        let w = Weather::standard();
+        let s = format!("{w}");
+        assert!(s.contains('T'), "got: {s}");
+        assert!(s.contains('P'), "got: {s}");
+        assert!(s.contains("RH"), "got: {s}");
+    }
+
+    #[test]
+    fn display_missing_fields() {
+        let w = Weather::default();
+        let s = format!("{w}");
+        assert!(s.contains('—'), "got: {s}");
+    }
 }

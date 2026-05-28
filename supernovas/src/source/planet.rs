@@ -135,3 +135,47 @@ impl Planet {
         Self::new(SolarBody::Moon)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn all_convenience_constructors_succeed() {
+        Planet::mercury().unwrap();
+        Planet::venus().unwrap();
+        Planet::earth().unwrap();
+        Planet::mars().unwrap();
+        Planet::jupiter().unwrap();
+        Planet::saturn().unwrap();
+        Planet::uranus().unwrap();
+        Planet::neptune().unwrap();
+        Planet::pluto().unwrap();
+        Planet::sun().unwrap();
+        Planet::moon().unwrap();
+    }
+
+    #[test]
+    fn new_covers_all_solar_bodies() {
+        for body in [
+            SolarBody::SolarSystemBarycenter,
+            SolarBody::EarthMoonBarycenter,
+            SolarBody::PlutoBarycenter,
+        ] {
+            Planet::new(body).unwrap();
+        }
+    }
+
+    #[test]
+    fn body_getter_round_trips() {
+        let p = Planet::new(SolarBody::Mars).unwrap();
+        assert_eq!(p.body(), SolarBody::Mars);
+    }
+
+    #[test]
+    fn debug_format_shows_body() {
+        let p = Planet::new(SolarBody::Jupiter).unwrap();
+        let s = format!("{p:?}");
+        assert!(s.contains("Jupiter"), "got: {s}");
+    }
+}

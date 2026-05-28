@@ -222,4 +222,62 @@ mod tests {
         assert!(((a - b).hours() - 1.5).abs() < 1e-12);
         assert!(((-a).seconds() - -7200.0).abs() < 1e-12);
     }
+
+    #[test]
+    fn remaining_constructors_and_getters() {
+        let dt = Interval::from_millis(500.0).unwrap();
+        assert!((dt.millis() - 500.0).abs() < 1e-9);
+
+        let dt = Interval::from_minutes(2.0).unwrap();
+        assert!((dt.minutes() - 2.0).abs() < 1e-12);
+
+        let dt = Interval::from_days(1.0).unwrap();
+        assert!((dt.days() - 1.0).abs() < 1e-12);
+        assert!((dt.weeks() - 1.0 / 7.0).abs() < 1e-15);
+        assert!((dt.years()).is_finite());
+
+        let dt = Interval::from_julian_years(1.0).unwrap();
+        assert!((dt.julian_years() - 1.0).abs() < 1e-12);
+
+        let dt = Interval::from_julian_centuries(1.0).unwrap();
+        assert!((dt.julian_centuries() - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn from_seconds_preserves_timescale() {
+        use supernovas_ffi::novas_timescale::NOVAS_TCB;
+        let dt = Interval::from_seconds(10.0, NOVAS_TCB).unwrap();
+        assert_eq!(dt.timescale(), NOVAS_TCB);
+        assert!((dt.seconds() - 10.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn display_auto_scales() {
+        let ps = Interval::from_seconds(1e-13, NOVAS_TT).unwrap();
+        assert!(format!("{ps}").contains("ps"));
+
+        let ns = Interval::from_seconds(1e-9, NOVAS_TT).unwrap();
+        assert!(format!("{ns}").contains("ns"));
+
+        let us = Interval::from_seconds(1e-6, NOVAS_TT).unwrap();
+        assert!(format!("{us}").contains("μs"));
+
+        let ms = Interval::from_millis(1.0).unwrap();
+        assert!(format!("{ms}").contains("ms"));
+
+        let s = Interval::from_seconds(5.0, NOVAS_TT).unwrap();
+        assert!(format!("{s}").contains(" s"));
+
+        let min = Interval::from_minutes(3.0).unwrap();
+        assert!(format!("{min}").contains("min"));
+
+        let h = Interval::from_hours(2.0).unwrap();
+        assert!(format!("{h}").contains(" h"));
+
+        let d = Interval::from_days(3.0).unwrap();
+        assert!(format!("{d}").contains(" d"));
+
+        let yr = Interval::from_julian_years(2.0).unwrap();
+        assert!(format!("{yr}").contains("yr"));
+    }
 }

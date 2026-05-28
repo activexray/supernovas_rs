@@ -130,4 +130,38 @@ mod tests {
         let b = Galactic::from_degrees(-180.0, 0.0).unwrap();
         assert_abs_diff_eq!(a, b, epsilon = unit::ARCSEC);
     }
+
+    #[test]
+    fn from_radians_round_trip() {
+        use core::f64::consts::PI;
+        let g = Galactic::from_radians(PI / 2.0, PI / 6.0).unwrap();
+        assert!((g.l().rad() - PI / 2.0).abs() < 1e-12);
+        assert!((g.b().rad() - PI / 6.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn as_spherical_gives_same_coords() {
+        let g = Galactic::from_degrees(30.0, 15.0).unwrap();
+        let s = g.as_spherical();
+        assert!((s.longitude().deg() - 30.0).abs() < 1e-12);
+        assert!((s.latitude().deg() - 15.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn xyz_has_finite_components() {
+        let g = Galactic::from_degrees(0.0, 30.0).unwrap();
+        let d = crate::Coordinate::from_kpc(1.0).unwrap();
+        let p = g.xyz(d);
+        assert!(p.x().m().is_finite());
+        assert!(p.y().m().is_finite());
+        assert!(p.z().m().is_finite());
+    }
+
+    #[test]
+    fn display_contains_l_and_b() {
+        let g = Galactic::from_degrees(120.0, -10.0).unwrap();
+        let s = format!("{g}");
+        assert!(s.contains("l="), "got: {s}");
+        assert!(s.contains("b="), "got: {s}");
+    }
 }

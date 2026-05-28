@@ -193,4 +193,61 @@ mod tests {
         let d = Coordinate::from_parallax(arcsec).unwrap();
         assert!((d.pc() - 2.0).abs() < 1e-6);
     }
+
+    #[test]
+    fn all_unit_constructors_and_getters() {
+        let d = Coordinate::from_km(1.0).unwrap();
+        assert!((d.km() - 1.0).abs() < 1e-12);
+
+        let d = Coordinate::from_lyr(1.0).unwrap();
+        assert!((d.lyr() - 1.0).abs() < 1e-9);
+
+        let d = Coordinate::from_pc(1.0).unwrap();
+        assert!((d.pc() - 1.0).abs() < 1e-12);
+
+        let d = Coordinate::from_kpc(1.0).unwrap();
+        assert!((d.kpc() - 1.0).abs() < 1e-12);
+
+        let d = Coordinate::from_mpc(1.0).unwrap();
+        assert!((d.mpc() - 1.0).abs() < 1e-12);
+
+        let d = Coordinate::from_gpc(1.0).unwrap();
+        assert!((d.gpc() - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn abs_of_negative() {
+        let d = Coordinate::from_meters(-100.0).unwrap();
+        assert!((d.abs().m() - 100.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn parallax_zero_distance_is_err() {
+        let zero = Coordinate::from_meters(0.0).unwrap();
+        assert!(matches!(zero.parallax(), Err(Error::NotFinite)));
+    }
+
+    #[test]
+    fn display_auto_scales() {
+        let m = Coordinate::from_meters(500.0).unwrap();
+        assert!(format!("{m}").contains('m'));
+
+        let km = Coordinate::from_km(1000.0).unwrap();
+        assert!(format!("{km}").contains("km"));
+
+        let au = Coordinate::from_au(10.0).unwrap();
+        assert!(format!("{au}").contains("AU"));
+
+        let pc = Coordinate::from_pc(5.0).unwrap();
+        assert!(format!("{pc}").contains("pc"));
+
+        let kpc = Coordinate::from_kpc(5.0).unwrap();
+        assert!(format!("{kpc}").contains("kpc"));
+
+        let mpc = Coordinate::from_mpc(5.0).unwrap();
+        assert!(format!("{mpc}").contains("Mpc"));
+
+        let gpc = Coordinate::from_gpc(5.0).unwrap();
+        assert!(format!("{gpc}").contains("Gpc"));
+    }
 }

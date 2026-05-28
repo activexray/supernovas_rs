@@ -92,4 +92,25 @@ mod tests {
         let body = Temperature::from_fahrenheit(98.6).unwrap();
         assert!((body.celsius() - 37.0).abs() < 1e-9);
     }
+
+    #[test]
+    fn from_kelvin_round_trip() {
+        let t = Temperature::from_kelvin(373.15).unwrap();
+        assert!((t.celsius() - 100.0).abs() < 1e-9);
+        assert!((t.kelvin() - 373.15).abs() < 1e-12);
+    }
+
+    #[test]
+    fn absolute_zero() {
+        let t = Temperature::from_kelvin(0.0).unwrap();
+        assert!((t.celsius() - -273.15).abs() < 1e-12);
+    }
+
+    #[test]
+    fn display_renders_celsius() {
+        let t = Temperature::from_celsius(20.0).unwrap();
+        let s = format!("{t}");
+        assert!(s.contains("°C"), "got: {s}");
+        assert!(s.contains("20"), "got: {s}");
+    }
 }

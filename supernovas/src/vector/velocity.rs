@@ -269,4 +269,71 @@ mod tests {
         let back = p / dt;
         assert_abs_diff_eq!(v, back, epsilon = 1e-12);
     }
+
+    #[test]
+    fn from_km_per_s_round_trip() {
+        let v = Velocity::from_km_per_s(1.0, 2.0, 3.0).unwrap();
+        assert!((v.x().km_per_s() - 1.0).abs() < 1e-12);
+        assert!((v.y().km_per_s() - 2.0).abs() < 1e-12);
+        assert!((v.z().km_per_s() - 3.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn from_au_per_day_round_trip() {
+        let v = Velocity::from_au_per_day(1.0, 0.0, 0.0).unwrap();
+        assert!((v.x().au_per_day() - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn from_components_round_trip() {
+        let cx = ScalarVelocity::from_km_per_s(1.0).unwrap();
+        let cy = ScalarVelocity::from_km_per_s(2.0).unwrap();
+        let cz = ScalarVelocity::from_km_per_s(3.0).unwrap();
+        let v = Velocity::from_components([cx, cy, cz]);
+        assert!((v.x().km_per_s() - 1.0).abs() < 1e-12);
+        let comps = v.components();
+        assert!((comps[1].km_per_s() - 2.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn dot_product() {
+        let a = Velocity::from_mps(1.0, 0.0, 0.0).unwrap();
+        let b = Velocity::from_mps(0.0, 1.0, 0.0).unwrap();
+        assert!((a.dot(b)).abs() < 1e-12);
+
+        let c = Velocity::from_mps(2.0, 3.0, 4.0).unwrap();
+        let d = Velocity::from_mps(1.0, 1.0, 1.0).unwrap();
+        assert!((c.dot(d) - 9.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn inv_is_neg() {
+        let v = Velocity::from_mps(1.0, -2.0, 3.0).unwrap();
+        let neg = -v;
+        assert_abs_diff_eq!(v.inv(), neg, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn subtraction() {
+        let a = Velocity::from_mps(5.0, 3.0, 1.0).unwrap();
+        let b = Velocity::from_mps(2.0, 1.0, 0.0).unwrap();
+        assert_abs_diff_eq!(
+            a - b,
+            Velocity::from_mps(3.0, 2.0, 1.0).unwrap(),
+            epsilon = 1e-12
+        );
+    }
+
+    #[test]
+    fn scalar_mul_commutes() {
+        let v = Velocity::from_mps(1.0, 2.0, 3.0).unwrap();
+        assert_abs_diff_eq!(v * 3.0, 3.0 * v, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn display_shows_km_per_s() {
+        let v = Velocity::from_km_per_s(1.0, 2.0, 3.0).unwrap();
+        let s = format!("{v}");
+        assert!(s.contains("km/s"), "got: {s}");
+    }
 }

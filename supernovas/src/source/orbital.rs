@@ -184,3 +184,75 @@ impl OrbitalObject {
         i64::from(self.object.number)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn halley() -> OrbitalElements {
+        OrbitalElements {
+            epoch_jd_tdb: 2_446_467.4,
+            semi_major_axis_au: 17.834,
+            eccentricity: 0.9673,
+            arg_of_perihelion_deg: 111.33,
+            ascending_node_deg: 58.42,
+            inclination_deg: 162.26,
+            mean_anomaly_at_epoch_deg: 38.38,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn default_elements_are_all_zero() {
+        let e = OrbitalElements::default();
+        assert_eq!(e.epoch_jd_tdb, 0.0);
+        assert_eq!(e.eccentricity, 0.0);
+    }
+
+    #[test]
+    fn into_source_round_trips_number() {
+        let obj = halley().into_source("Halley", 1_000_012).unwrap();
+        assert_eq!(obj.number(), 1_000_012);
+    }
+
+    #[test]
+    fn new_success() {
+        OrbitalObject::new("Test", 0, halley()).unwrap();
+    }
+
+    #[test]
+    fn rejects_interior_nul_in_name() {
+        assert!(matches!(
+            OrbitalObject::new("bad\0name", 0, halley()),
+            Err(Error::Parse)
+        ));
+    }
+
+    #[test]
+    fn rejects_name_too_long() {
+        let long = "x".repeat(50);
+        assert!(matches!(
+            OrbitalObject::new(&long, 0, halley()),
+            Err(Error::Parse)
+        ));
+    }
+
+    #[test]
+    fn rejects_non_finite_element() {
+        let bad = OrbitalElements {
+            eccentricity: f64::NAN,
+            ..halley()
+        };
+        assert!(matches!(
+            OrbitalObject::new("Bad", 0, bad),
+            Err(Error::NotFinite)
+        ));
+    }
+
+    #[test]
+    fn debug_format_is_non_empty() {
+        let obj = OrbitalObject::new("Test", 42, halley()).unwrap();
+        let s = format!("{obj:?}");
+        assert!(!s.is_empty());
+    }
+}

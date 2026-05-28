@@ -166,4 +166,32 @@ mod tests {
         // γ at β=0.5 is 2/√3 ≈ 1.1547
         assert!((v.gamma() - 2.0 / 3f64.sqrt()).abs() < 1e-12);
     }
+
+    #[test]
+    fn au_per_day_round_trip() {
+        let v = ScalarVelocity::from_au_per_day(1.0).unwrap();
+        assert!((v.au_per_day() - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn abs_of_negative() {
+        let v = ScalarVelocity::from_km_per_s(-30.0).unwrap();
+        assert!((v.abs().km_per_s() - 30.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn arithmetic_ops() {
+        let a = ScalarVelocity::from_km_per_s(10.0).unwrap();
+        let b = ScalarVelocity::from_km_per_s(3.0).unwrap();
+        assert!((( a + b).km_per_s() - 13.0).abs() < 1e-12);
+        assert!((( a - b).km_per_s() -  7.0).abs() < 1e-12);
+        assert!(((-a).km_per_s() - -10.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn display_renders_km_per_s() {
+        let v = ScalarVelocity::from_km_per_s(29.5).unwrap();
+        let s = format!("{v}");
+        assert!(s.contains("km/s"), "got: {s}");
+    }
 }

@@ -124,4 +124,38 @@ mod tests {
         let b = Horizontal::from_degrees(-0.0001, 30.0).unwrap();
         assert_abs_diff_eq!(a, b, epsilon = unit::ARCSEC);
     }
+
+    #[test]
+    fn from_radians_round_trip() {
+        use core::f64::consts::PI;
+        let h = Horizontal::from_radians(PI, PI / 4.0).unwrap();
+        assert!((h.azimuth().rad() - PI).abs() < 1e-12);
+        assert!((h.elevation().rad() - PI / 4.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn as_spherical_gives_same_coords() {
+        let h = Horizontal::from_degrees(90.0, 45.0).unwrap();
+        let s = h.as_spherical();
+        assert!((s.longitude().deg() - 90.0).abs() < 1e-12);
+        assert!((s.latitude().deg() - 45.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn xyz_has_finite_components() {
+        let h = Horizontal::from_degrees(0.0, 45.0).unwrap();
+        let d = crate::Coordinate::from_au(1.0).unwrap();
+        let p = h.xyz(d);
+        assert!(p.x().m().is_finite());
+        assert!(p.y().m().is_finite());
+        assert!(p.z().m().is_finite());
+    }
+
+    #[test]
+    fn display_contains_az_el() {
+        let h = Horizontal::from_degrees(270.0, 30.0).unwrap();
+        let s = format!("{h}");
+        assert!(s.contains("az="), "got: {s}");
+        assert!(s.contains("el="), "got: {s}");
+    }
 }

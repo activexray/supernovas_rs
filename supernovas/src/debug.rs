@@ -121,3 +121,32 @@ pub fn get_debug_mode() -> DebugMode {
     // SAFETY: read-only access to a process-global flag.
     DebugMode::from_sys(unsafe { supernovas_ffi::novas_get_debug_mode() })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn round_trips_all_modes() {
+        for mode in [DebugMode::Off, DebugMode::On, DebugMode::Extra] {
+            enable_debug_mode(mode);
+            assert_eq!(get_debug_mode(), mode);
+        }
+        // Leave debug off so other tests are not affected by stderr output.
+        enable_debug_mode(DebugMode::Off);
+    }
+
+    #[test]
+    fn debug_mode_eq_and_clone() {
+        assert_eq!(DebugMode::On, DebugMode::On);
+        assert_ne!(DebugMode::On, DebugMode::Extra);
+        let _ = DebugMode::Off.clone();
+    }
+
+    #[test]
+    fn debug_mode_debug_format() {
+        assert_eq!(format!("{:?}", DebugMode::On), "On");
+        assert_eq!(format!("{:?}", DebugMode::Extra), "Extra");
+        assert_eq!(format!("{:?}", DebugMode::Off), "Off");
+    }
+}

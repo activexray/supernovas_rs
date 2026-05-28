@@ -115,3 +115,57 @@ impl Error {
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn set_and_take_provider_error() {
+        set_provider_error("something went wrong");
+        let msg = take_provider_error();
+        assert_eq!(msg.as_deref(), Some("something went wrong"));
+        // Second take clears the slot.
+        assert!(take_provider_error().is_none());
+    }
+
+    #[test]
+    fn ffi_drains_captured_description() {
+        set_provider_error("bad ephemeris call");
+        let err = Error::ffi(3);
+        assert!(format!("{err}").contains("bad ephemeris call"));
+        // Slot is now empty — next ffi() falls back to numeric.
+        let err2 = Error::ffi(7);
+        assert!(format!("{err2}").contains("7"));
+    }
+
+    #[test]
+    fn not_finite_display() {
+        let s = format!("{}", Error::NotFinite);
+        assert_eq!(s, "value was not finite");
+    }
+
+    #[test]
+    fn parse_display() {
+        let s = format!("{}", Error::Parse);
+        assert!(!s.is_empty());
+    }
+
+    #[test]
+    fn unsupported_system_display() {
+        let s = format!("{}", Error::UnsupportedSystem);
+        assert!(!s.is_empty());
+    }
+
+    #[test]
+    fn ephemeris_display() {
+        let s = format!("{}", Error::Ephemeris);
+        assert!(!s.is_empty());
+    }
+
+    #[test]
+    fn error_is_clone() {
+        let e = Error::NotFinite;
+        let _e2 = e.clone();
+    }
+}

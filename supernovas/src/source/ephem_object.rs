@@ -68,3 +68,40 @@ impl EphemObject {
         i64::from(self.object.number)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_success_and_naif_id() {
+        let obj = EphemObject::new("Voyager 1", -31).unwrap();
+        assert_eq!(obj.naif_id(), -31);
+    }
+
+    #[test]
+    fn rejects_interior_nul() {
+        assert!(matches!(
+            EphemObject::new("bad\0name", 0),
+            Err(Error::Parse)
+        ));
+    }
+
+    #[test]
+    fn rejects_name_too_long() {
+        let long = "x".repeat(50);
+        assert!(matches!(EphemObject::new(&long, 0), Err(Error::Parse)));
+    }
+
+    #[test]
+    fn naif_id_zero_is_valid() {
+        EphemObject::new("Unknown", 0).unwrap();
+    }
+
+    #[test]
+    fn debug_format_is_non_empty() {
+        let obj = EphemObject::new("Halley", 1_000_012).unwrap();
+        let s = format!("{obj:?}");
+        assert!(!s.is_empty());
+    }
+}

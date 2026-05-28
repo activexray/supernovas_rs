@@ -198,4 +198,37 @@ mod tests {
         assert!(l.is_finite() && b.is_finite());
         assert!((-90.0..=90.0).contains(&b));
     }
+
+    #[test]
+    fn from_radians_round_trip() {
+        use core::f64::consts::PI;
+        let e = Ecliptic::from_radians(PI / 3.0, PI / 8.0, Equinox::J2000).unwrap();
+        assert!((e.longitude().rad() - PI / 3.0).abs() < 1e-12);
+        assert!((e.latitude().rad() - PI / 8.0).abs() < 1e-12);
+        assert_eq!(e.system(), Equinox::J2000);
+    }
+
+    #[test]
+    fn as_spherical_gives_same_coords() {
+        let e = Ecliptic::from_degrees(45.0, -10.0, Equinox::ICRS).unwrap();
+        let s = e.as_spherical();
+        assert!((s.longitude().deg() - 45.0).abs() < 1e-9);
+        assert!((s.latitude().deg() - -10.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn to_system_same_equinox_is_identity() {
+        use crate::Accuracy;
+        let e = Ecliptic::from_degrees(90.0, 5.0, Equinox::J2000).unwrap();
+        let same = e.to_system(Equinox::J2000, Accuracy::Reduced).unwrap();
+        assert_abs_diff_eq!(e, same, epsilon = unit::UAS);
+    }
+
+    #[test]
+    fn display_contains_lambda_beta_system() {
+        let e = Ecliptic::from_degrees(90.0, 5.0, Equinox::J2000).unwrap();
+        let s = format!("{e}");
+        assert!(s.contains('λ'), "got: {s}");
+        assert!(s.contains('β'), "got: {s}");
+    }
 }
