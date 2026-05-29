@@ -222,7 +222,8 @@ impl approx::AbsDiffEq for Position {
 #[cfg(test)]
 mod tests {
     use approx::assert_abs_diff_eq;
-    use supernovas_ffi::novas_timescale::NOVAS_TT;
+
+    use crate::Timescale;
 
     use super::*;
 
@@ -295,7 +296,7 @@ mod tests {
     #[test]
     fn divides_by_interval_to_velocity() {
         let p = Position::from_meters(300.0, -150.0, 60.0).unwrap();
-        let dt = Interval::from_seconds(60.0, NOVAS_TT).unwrap();
+        let dt = Interval::from_seconds(60.0, Timescale::Tt).unwrap();
         let v = p / dt;
         assert!((v.x().m_per_s() - 5.0).abs() < 1e-12);
         assert!((v.y().m_per_s() - -2.5).abs() < 1e-12);

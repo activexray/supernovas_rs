@@ -17,8 +17,33 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   struct-update syntax referencing the old fields will fail. `OsError` is removed entirely.
 - **`supernovas-ffi` now requires SuperNOVAS ≥ 1.7.0** (up from ≥ 1.6.0) for system builds.
   Vendored builds automatically use the bundled v1.7 submodule.
+- **`Timescale` enum replaces `novas_timescale` in the public API** — `Time::from_jd`,
+  `Time::from_split_jd`, `Interval::from_seconds`, and `Interval::timescale` now use
+  `supernovas::Timescale` instead of the raw `supernovas_ffi::novas_timescale` type. Code
+  passing `NOVAS_TT`, `NOVAS_UTC`, etc. must switch to `Timescale::Tt`, `Timescale::Utc`, etc.
+- **`Interval::timescale()` returns `Timescale`** instead of `novas_timescale`.
+- **`Time::PartialEq` now compares only the TT Julian date** — the previous impl also compared
+  `tt2tdb` and `ut1_to_tt` fields, so two `Time` values at the same instant but different
+  `dut1` were considered unequal. The fixed impl matches the documented semantics.
+- **`Time` is now `Eq + PartialOrd + Ord`** — ordering is by TT Julian date.
 
 ### Added
+
+- **`Timescale` enum** — `Tcb`, `Tdb`, `Tcg`, `Tt`, `Tai`, `Gps`, `Utc`, `Ut1`. Replaces raw
+  `novas_timescale` FFI constants throughout the public API. Implements `Display` (e.g. `"TT"`,
+  `"UTC"`), `Copy`, `Eq`, and `Hash`.
+- **`Time::jd(Timescale) -> f64`** — Julian date in any timescale (wraps `novas_get_time`).
+- **`Time::split_jd(Timescale) -> (i64, f64)`** — split Julian date preserving sub-nanosecond
+  precision (wraps `novas_get_split_time`).
+- **`Time::now(leap_seconds, dut1)` (std only)** — construct from the system clock
+  (wraps `novas_set_current_time`).
+- **`Time::leap_seconds() -> i32`** — returns the TAI − UTC leap-second count stored in the
+  timespec (wraps `novas_time_leap`).
+- **`Time::timescale_offset(scale, reference) -> f64`** — clock difference `scale − reference`
+  in seconds at this instant (wraps `novas_timescale_offset`). Useful for TDB−TT, TAI−UTC, etc.
+- **`Time + Interval` / `Time - Interval`** — shift a `Time` forward or backward in TT seconds
+  (wraps `novas_offset_time`).
+- **`Time - Time → Interval`** — TT-second difference between two instants.
 
 - **`Error::Ffi` now carries a human-readable description** (under `std`). The display text is
   the captured error description rather than a bare numeric code; e.g.

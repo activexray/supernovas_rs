@@ -5,10 +5,9 @@ use core::{
     ops::{Add, Neg, Sub},
 };
 
-use supernovas_ffi::{novas_timescale, novas_timescale::NOVAS_TT};
-
 use crate::{
     error::{Error, Result},
+    timescale::Timescale,
     unit,
 };
 
@@ -16,17 +15,10 @@ use crate::{
 /// timescale.
 ///
 /// Constructors reject non-finite inputs.
-///
-/// # Known limitations
-///
-/// [`Self::from_seconds`] and [`Self::timescale`] expose [`novas_timescale`]
-/// directly, leaking the FFI type into the public API. These will be replaced
-/// by a newtype wrapper before the API stabilises.
-// FIXME: wrap novas_timescale in a safe Timescale enum and use it here.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {
     seconds: f64,
-    timescale: novas_timescale,
+    timescale: Timescale,
 }
 
 impl Interval {
@@ -35,7 +27,7 @@ impl Interval {
     /// # Errors
     ///
     /// Returns [`Error::NotFinite`] if `seconds` is not finite.
-    pub fn from_seconds(seconds: f64, timescale: novas_timescale) -> Result<Self> {
+    pub fn from_seconds(seconds: f64, timescale: Timescale) -> Result<Self> {
         if !seconds.is_finite() {
             return Err(Error::NotFinite);
         }
@@ -48,7 +40,7 @@ impl Interval {
     ///
     /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_millis(ms: f64) -> Result<Self> {
-        Self::from_seconds(ms * unit::MS, NOVAS_TT)
+        Self::from_seconds(ms * unit::MS, Timescale::Tt)
     }
 
     /// Construct from minutes (in TT).
@@ -57,7 +49,7 @@ impl Interval {
     ///
     /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_minutes(min: f64) -> Result<Self> {
-        Self::from_seconds(min * unit::MIN, NOVAS_TT)
+        Self::from_seconds(min * unit::MIN, Timescale::Tt)
     }
 
     /// Construct from hours (in TT).
@@ -66,7 +58,7 @@ impl Interval {
     ///
     /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_hours(hours: f64) -> Result<Self> {
-        Self::from_seconds(hours * unit::HOUR, NOVAS_TT)
+        Self::from_seconds(hours * unit::HOUR, Timescale::Tt)
     }
 
     /// Construct from days (in TT).
@@ -75,7 +67,7 @@ impl Interval {
     ///
     /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_days(days: f64) -> Result<Self> {
-        Self::from_seconds(days * unit::DAY, NOVAS_TT)
+        Self::from_seconds(days * unit::DAY, Timescale::Tt)
     }
 
     /// Construct from Julian years (in TT).
@@ -84,7 +76,7 @@ impl Interval {
     ///
     /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_julian_years(years: f64) -> Result<Self> {
-        Self::from_seconds(years * unit::JULIAN_YEAR, NOVAS_TT)
+        Self::from_seconds(years * unit::JULIAN_YEAR, Timescale::Tt)
     }
 
     /// Construct from Julian centuries (in TT).
@@ -93,12 +85,12 @@ impl Interval {
     ///
     /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_julian_centuries(cy: f64) -> Result<Self> {
-        Self::from_seconds(cy * unit::JULIAN_CENTURY, NOVAS_TT)
+        Self::from_seconds(cy * unit::JULIAN_CENTURY, Timescale::Tt)
     }
 
-    /// The interval's timescale.
+    /// The timescale the interval is expressed in.
     #[must_use]
-    pub fn timescale(self) -> novas_timescale {
+    pub fn timescale(self) -> Timescale {
         self.timescale
     }
 
@@ -283,27 +275,26 @@ mod tests {
 
     #[test]
     fn from_seconds_preserves_timescale() {
-        use supernovas_ffi::novas_timescale::NOVAS_TCB;
-        let dt = Interval::from_seconds(10.0, NOVAS_TCB).unwrap();
-        assert_eq!(dt.timescale(), NOVAS_TCB);
+        let dt = Interval::from_seconds(10.0, Timescale::Tcb).unwrap();
+        assert_eq!(dt.timescale(), Timescale::Tcb);
         assert!((dt.seconds() - 10.0).abs() < 1e-12);
     }
 
     #[test]
     fn display_auto_scales() {
-        let ps = Interval::from_seconds(1e-13, NOVAS_TT).unwrap();
+        let ps = Interval::from_seconds(1e-13, Timescale::Tt).unwrap();
         assert!(format!("{ps}").contains("ps"));
 
-        let ns = Interval::from_seconds(1e-9, NOVAS_TT).unwrap();
+        let ns = Interval::from_seconds(1e-9, Timescale::Tt).unwrap();
         assert!(format!("{ns}").contains("ns"));
 
-        let us = Interval::from_seconds(1e-6, NOVAS_TT).unwrap();
+        let us = Interval::from_seconds(1e-6, Timescale::Tt).unwrap();
         assert!(format!("{us}").contains("μs"));
 
         let ms = Interval::from_millis(1.0).unwrap();
         assert!(format!("{ms}").contains("ms"));
 
-        let s = Interval::from_seconds(5.0, NOVAS_TT).unwrap();
+        let s = Interval::from_seconds(5.0, Timescale::Tt).unwrap();
         assert!(format!("{s}").contains(" s"));
 
         let min = Interval::from_minutes(3.0).unwrap();

@@ -146,12 +146,12 @@ impl Frame {
 
 #[cfg(test)]
 mod tests {
-    use supernovas_ffi::novas_timescale::NOVAS_TT;
+    use crate::Timescale;
 
     use super::*;
 
     fn j2000() -> Time {
-        Time::from_jd(NOVAS_TT, 2_451_545.0, 32, 0.0).unwrap()
+        Time::from_jd(Timescale::Tt, 2_451_545.0, 32, 0.0).unwrap()
     }
 
     #[test]

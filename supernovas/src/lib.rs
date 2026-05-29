@@ -45,6 +45,7 @@ pub mod scalar;
 pub mod source;
 pub mod spherical;
 pub mod time;
+pub mod timescale;
 pub mod unit;
 pub mod vector;
 
@@ -67,4 +68,5 @@ pub use source::{
 };
 pub use spherical::{Ecliptic, Equatorial, Galactic, Horizontal, Spherical};
 pub use time::Time;
+pub use timescale::Timescale;
 pub use vector::{Position, Velocity};

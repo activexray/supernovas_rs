@@ -208,7 +208,8 @@ impl approx::AbsDiffEq for Velocity {
 #[cfg(test)]
 mod tests {
     use approx::assert_abs_diff_eq;
-    use supernovas_ffi::novas_timescale::NOVAS_TT;
+
+    use crate::Timescale;
 
     use super::*;
 
@@ -259,7 +260,7 @@ mod tests {
     #[test]
     fn multiplying_by_interval_gives_position() {
         let v = Velocity::from_mps(5.0, -2.5, 1.0).unwrap();
-        let dt = Interval::from_seconds(60.0, NOVAS_TT).unwrap();
+        let dt = Interval::from_seconds(60.0, Timescale::Tt).unwrap();
         let p = v * dt;
         assert!((p.x().m() - 300.0).abs() < 1e-12);
         assert!((p.y().m() - -150.0).abs() < 1e-12);
@@ -274,7 +275,7 @@ mod tests {
     #[test]
     fn round_trips_through_position() {
         let v = Velocity::from_mps(5.0, -2.5, 1.0).unwrap();
-        let dt = Interval::from_seconds(60.0, NOVAS_TT).unwrap();
+        let dt = Interval::from_seconds(60.0, Timescale::Tt).unwrap();
         let p = v * dt;
         let back = p / dt;
         assert_abs_diff_eq!(v, back, epsilon = 1e-12);

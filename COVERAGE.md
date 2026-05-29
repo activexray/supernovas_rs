@@ -15,13 +15,13 @@ Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas
 - [x] `novas_set_time` / `novas_set_split_time` → `Time::from_jd`, `Time::from_split_jd`
 - [x] `novas_set_unix_time` → `Time::from_unix`
 - [ ] `novas_set_str_time` — parse ISO/calendar string into `Time`
-- [ ] `novas_set_current_time` — set to current system clock (`Time::now`)
-- [ ] `novas_get_time` / `novas_get_split_time` — read back JD in any timescale
-- [ ] `novas_offset_time` — shift a `Time` by seconds
-- [ ] `novas_timescale_offset` — offset between two timescales at a given time
-- [ ] `novas_time_leap` — check whether a `Time` falls in a leap second
+- [x] `novas_set_current_time` → `Time::now` (std only)
+- [x] `novas_get_time` / `novas_get_split_time` → `Time::jd`, `Time::split_jd`
+- [x] `novas_offset_time` → `Time + Interval` / `Time - Interval`
+- [x] `novas_timescale_offset` → `Time::timescale_offset`
+- [x] `novas_time_leap` → `Time::leap_seconds`
 - [ ] `novas_time_gst` / `novas_time_lst` — GST/LST from a `Time`
-- `novas_diff_time` / `novas_diff_time_scale` — superseded by `Interval` arithmetic in Rust
+- `novas_diff_time` / `novas_diff_time_scale` — superseded by `Time - Time → Interval` arithmetic
 - `novas_timestamp` / `novas_iso_timestamp` — superseded by `Display` / `format!`
 - `tt2tdb` / `tdb2tt` — internal scalar TT↔TDB; accessible via `sys`
 - `get_ut1_to_tt` / `get_utc_to_tt` — superseded by `novas_timescale_offset`
