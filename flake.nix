@@ -133,6 +133,23 @@
               cargoArtifacts = craneLibMsrv.buildDepsOnly commonArgs;
             });
 
+          # no_std build: the wrapper must compile with std off (vendored keeps
+          # the C library available without pulling in std). Guards against the
+          # no_std path silently bit-rotting, since every other check enables
+          # std via the default `anise` feature.
+          nostd = let
+            nostdArgs =
+              commonArgs
+              // {
+                pname = "supernovas-nostd";
+                cargoExtraArgs = "-p supernovas --no-default-features --features vendored";
+              };
+          in
+            craneLib.cargoBuild (nostdArgs
+              // {
+                cargoArtifacts = craneLib.buildDepsOnly nostdArgs;
+              });
+
           cov = craneLib.cargoLlvmCov (commonArgs
             // {
               inherit cargoArtifacts;
