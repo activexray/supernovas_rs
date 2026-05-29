@@ -1,6 +1,6 @@
 # SuperNOVAS C API Coverage
 
-Tracks which parts of the SuperNOVAS v1.6.0 C API are wrapped by the `supernovas` crate.
+Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas` crate.
 Items marked **legacy** are old NOVAS-style interfaces superseded by the frame-based API; they
 will not be wrapped. Items marked **internal** are low-level building blocks unlikely to be
 needed directly by users.
@@ -128,7 +128,8 @@ needed directly by users.
 - [x] `novas_use_calceph` → `CalcephEphemeris`
 - [x] `novas_to_naif_planet` — available via `sys` for custom `PlanetProvider` impls
 - [x] `novas_to_dexxx_planet` — available via `sys`
-- [ ] `set_ephem_provider` / `get_ephem_provider` — generic named-body ephemeris provider (not planet-specific)
+- [x] `set_ephem_provider` → called by `AniseEphemeris::install` to register the ephem-object (non-planet) provider
+- [ ] `get_ephem_provider` — read back the installed ephem provider
 - [ ] `set_nutation_lp_provider` — plug in a custom low-precision nutation model
 - [ ] `novas_calceph_use_ids` / `novas_use_calceph_planets` / `novas_calceph_is_thread_safe` — CALCEPH tuning
 
