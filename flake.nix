@@ -66,7 +66,7 @@
           # the submodule directory empty; postPatch fills it in from the
           # separately-fetched derivation above.
           postPatch = ''
-            rm -rf supernovas-ffi/vendor/supernovas
+            mkdir -p supernovas-ffi/vendor/supernovas
             cp -r "${supernovasC}/." supernovas-ffi/vendor/supernovas
             chmod -R u+w supernovas-ffi/vendor/supernovas
           '';
