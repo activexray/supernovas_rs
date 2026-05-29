@@ -225,6 +225,35 @@ mod tests {
     }
 
     #[test]
+    fn distance_to_orthogonal_is_90_deg() {
+        use core::f64::consts::FRAC_PI_2;
+        let a = Ecliptic::from_degrees(0.0, 0.0, Equinox::J2000).unwrap();
+        let b = Ecliptic::from_degrees(90.0, 0.0, Equinox::J2000).unwrap();
+        assert!((a.distance_to(b).rad() - FRAC_PI_2).abs() < 1e-12);
+    }
+
+    #[test]
+    fn to_system_different_equinox_gives_nearby_result() {
+        use crate::Accuracy;
+        let e = Ecliptic::from_degrees(120.0, 5.0, Equinox::J2000).unwrap();
+        // Precession from J2000 to a 2026 MOD equinox: non-identity path.
+        let mod_eq = Equinox::mod_at(2_461_236.75).unwrap();
+        let converted = e.to_system(mod_eq, Accuracy::Reduced).unwrap();
+        // Should be close (within a few arcmin) but not identical.
+        let sep_arcsec = e.distance_to(converted).arcsec();
+        assert!(sep_arcsec < 3600.0, "separation {sep_arcsec} arcsec looks too large");
+        assert!(sep_arcsec > 0.0, "should have non-zero drift over 26 years");
+    }
+
+    #[test]
+    fn display_with_precision() {
+        let e = Ecliptic::from_degrees(90.0, 5.0, Equinox::J2000).unwrap();
+        let s = format!("{e:.2}");
+        assert!(s.contains('λ'), "got: {s}");
+        assert!(s.contains('β'), "got: {s}");
+    }
+
+    #[test]
     fn display_contains_lambda_beta_system() {
         let e = Ecliptic::from_degrees(90.0, 5.0, Equinox::J2000).unwrap();
         let s = format!("{e}");

@@ -169,6 +169,25 @@ mod tests {
     }
 
     #[test]
+    fn kpa_round_trip() {
+        let p = Pressure::from_kpa(100.0).unwrap();
+        assert!((p.kpa() - 100.0).abs() < 1e-12);
+        assert!((p.bar() - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn abs_diff_eq() {
+        use approx::AbsDiffEq;
+        let a = Pressure::from_pa(101_325.0).unwrap();
+        let b = Pressure::from_pa(101_325.5).unwrap();
+        // Within default 1 Pa tolerance.
+        assert!(a.abs_diff_eq(&b, Pressure::default_epsilon()));
+        // Exceeds 1 Pa tolerance.
+        let c = Pressure::from_pa(101_327.0).unwrap();
+        assert!(!a.abs_diff_eq(&c, Pressure::default_epsilon()));
+    }
+
+    #[test]
     fn display_renders_mbar() {
         let p = Pressure::from_hpa(1013.25).unwrap();
         let s = format!("{p}");

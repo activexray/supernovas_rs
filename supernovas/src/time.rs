@@ -342,6 +342,20 @@ mod tests {
         assert_eq!(a, b);
         assert_ne!(a, c);
     }
+
+    #[test]
+    fn abs_diff_eq() {
+        use approx::AbsDiffEq;
+        // Use split JD to avoid fp cancellation when adding tiny fractions to
+        // a large JD integer (e.g. 2451545 + 1e-11 rounds back to 2451545.0).
+        let a = Time::from_split_jd(NOVAS_TT, 2_451_545, 0.0, 37, 0.0).unwrap();
+        // Same instant: within tolerance.
+        let b = Time::from_split_jd(NOVAS_TT, 2_451_545, 0.0, 37, 0.0).unwrap();
+        assert!(a.abs_diff_eq(&b, Time::default_epsilon()));
+        // 2 µs offset — outside 1 µs tolerance.
+        let c = Time::from_split_jd(NOVAS_TT, 2_451_545, 2e-6 / 86_400.0, 37, 0.0).unwrap();
+        assert!(!a.abs_diff_eq(&c, Time::default_epsilon()));
+    }
 }
 
 #[cfg(all(test, feature = "hifitime"))]

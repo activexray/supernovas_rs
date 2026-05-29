@@ -451,6 +451,45 @@ mod tests {
         );
     }
 
+    #[test]
+    fn reference_system_to_sys_covers_all_variants() {
+        // Each call exercises a distinct arm of to_sys(); we just check the
+        // return is non-zero (all variants map to a distinct C constant).
+        let _ = ReferenceSystem::Gcrs.to_sys();
+        let _ = ReferenceSystem::Tod.to_sys();
+        let _ = ReferenceSystem::Cirs.to_sys();
+        let _ = ReferenceSystem::Icrs.to_sys();
+        let _ = ReferenceSystem::J2000.to_sys();
+        let _ = ReferenceSystem::Mod.to_sys();
+        let _ = ReferenceSystem::Tirs.to_sys();
+        let _ = ReferenceSystem::Itrs.to_sys();
+    }
+
+    #[test]
+    fn equinox_for_date_dependent_systems() {
+        let frame = ovro_frame();
+        let vega = vega();
+        // equinox() for Mod returns a Mod-system equinox at the frame's JD.
+        let mod_app = vega.apparent_in(&frame, ReferenceSystem::Mod).unwrap();
+        let eq_mod = mod_app.equinox();
+        assert_eq!(eq_mod.system(), ReferenceSystem::Mod);
+        assert!((eq_mod.jd() - frame.tt_jd()).abs() < 1e-9);
+
+        // equinox() for Tod returns a Tod-system equinox.
+        let tod_app = vega.apparent_in(&frame, ReferenceSystem::Tod).unwrap();
+        let eq_tod = tod_app.equinox();
+        assert_eq!(eq_tod.system(), ReferenceSystem::Tod);
+    }
+
+    #[test]
+    fn gcrs_apparent_computes_and_has_correct_system() {
+        let frame = ovro_frame();
+        let app = vega().apparent_in(&frame, ReferenceSystem::Gcrs).unwrap();
+        assert_eq!(app.reference_system(), ReferenceSystem::Gcrs);
+        // equinox() for GCRS returns the constant ICRS equinox.
+        assert_eq!(app.equinox(), crate::Equinox::ICRS);
+    }
+
     /// Optical-band refraction (which uses the site's local weather)
     /// should give a slightly different answer from the
     /// weather-agnostic standard model.

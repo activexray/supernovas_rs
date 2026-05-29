@@ -34,8 +34,20 @@
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-        # Include Rust/Cargo sources, headers (for bindgen), and the vendored
-        # SuperNOVAS C source tree (for the CMake vendored build).
+        # The SuperNOVAS C library, fetched at the exact commit recorded by the
+        # git submodule.  Nix's flake source copy excludes git-submodule working
+        # trees, so we bring the content in separately and graft it in postPatch.
+        # Update `rev` + `hash` whenever supernovas-ffi/vendor/supernovas moves.
+        supernovasC = pkgs.fetchFromGitHub {
+          owner = "sigmyne";
+          repo = "supernovas";
+          rev = "119e5e1276312a0ed69163c0e8dc2059b49259de";
+          hash = "sha256-+Tw7Zd4fmq6fw+1T1Abj51eJqy32Lwfuf8HMW+VbpY0=";
+        };
+
+        # Include Rust/Cargo sources and headers (for bindgen).  The vendor
+        # directory skeleton is included so the path exists, but its contents
+        # are populated by postPatch (see commonArgs below).
         src = lib.cleanSourceWith {
           src = ./.;
           filter = path: type:
@@ -49,6 +61,15 @@
         # when the `calceph` cargo feature is enabled.
         commonArgs = {
           inherit src;
+          # Graft the SuperNOVAS C source into the vendor directory.  Nix's
+          # flake source machinery copies the git-tracked skeleton but leaves
+          # the submodule directory empty; postPatch fills it in from the
+          # separately-fetched derivation above.
+          postPatch = ''
+            rm -rf supernovas-ffi/vendor/supernovas
+            cp -r "${supernovasC}/." supernovas-ffi/vendor/supernovas
+            chmod -R u+w supernovas-ffi/vendor/supernovas
+          '';
           pname = "supernovas";
           strictDeps = true;
           # Default features: vendored (SuperNOVAS via CMake) + anise (implies std).

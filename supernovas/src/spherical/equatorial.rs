@@ -326,6 +326,14 @@ mod tests {
     }
 
     #[test]
+    fn display_with_precision() {
+        let e = Equatorial::from_hours_and_degrees(6.0, 30.0, Equinox::J2000).unwrap();
+        let s = format!("{e:.3}");
+        assert!(s.contains("RA"), "got: {s}");
+        assert!(s.contains("Dec"), "got: {s}");
+    }
+
+    #[test]
     fn to_ecliptic_itrs_returns_unsupported() {
         use crate::error::Error;
         // ITRS has no ecliptic mapping; to_ecliptic should return UnsupportedSystem.

@@ -183,8 +183,8 @@ mod tests {
     fn arithmetic_ops() {
         let a = ScalarVelocity::from_km_per_s(10.0).unwrap();
         let b = ScalarVelocity::from_km_per_s(3.0).unwrap();
-        assert!((( a + b).km_per_s() - 13.0).abs() < 1e-12);
-        assert!((( a - b).km_per_s() -  7.0).abs() < 1e-12);
+        assert!(((a + b).km_per_s() - 13.0).abs() < 1e-12);
+        assert!(((a - b).km_per_s() - 7.0).abs() < 1e-12);
         assert!(((-a).km_per_s() - -10.0).abs() < 1e-12);
     }
 

@@ -290,6 +290,11 @@ mod tests {
     fn equator_type_for_ecliptic_returns_some_for_common_systems() {
         assert!(Equinox::ICRS.equator_type_for_ecliptic().is_some());
         assert!(Equinox::J2000.equator_type_for_ecliptic().is_some());
-        assert!(Equinox::tod_at(NOVAS_JD_J2000).unwrap().equator_type_for_ecliptic().is_some());
+        assert!(
+            Equinox::tod_at(NOVAS_JD_J2000)
+                .unwrap()
+                .equator_type_for_ecliptic()
+                .is_some()
+        );
     }
 }
