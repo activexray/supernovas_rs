@@ -1,9 +1,12 @@
 # SuperNOVAS C API Coverage
 
 Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas` crate.
-Items marked **legacy** are old NOVAS-style interfaces superseded by the frame-based API; they
-will not be wrapped. Items marked **internal** are low-level building blocks unlikely to be
-needed directly by users.
+
+- `[x]` — implemented
+- `[ ]` — planned
+- plain bullet — not planned: either an internal building block best accessed via
+  `supernovas::sys`, redundant with a Rust-native equivalent, or superseded by the
+  frame-based API
 
 ---
 
@@ -12,16 +15,16 @@ needed directly by users.
 - [x] `novas_set_time` / `novas_set_split_time` → `Time::from_jd`, `Time::from_split_jd`
 - [x] `novas_set_unix_time` → `Time::from_unix`
 - [ ] `novas_set_str_time` — parse ISO/calendar string into `Time`
-- [ ] `novas_set_current_time` — set to current system clock
+- [ ] `novas_set_current_time` — set to current system clock (`Time::now`)
 - [ ] `novas_get_time` / `novas_get_split_time` — read back JD in any timescale
-- [ ] `novas_diff_time` / `novas_diff_time_scale` — interval between two `Time`s
 - [ ] `novas_offset_time` — shift a `Time` by seconds
 - [ ] `novas_timescale_offset` — offset between two timescales at a given time
 - [ ] `novas_time_leap` — check whether a `Time` falls in a leap second
-- [ ] `novas_timestamp` / `novas_iso_timestamp` — format `Time` as a string
-- [ ] `tt2tdb` / `tdb2tt` — TT ↔ TDB conversion (scalar, no `novas_timespec`)
-- [ ] `get_ut1_to_tt` / `get_utc_to_tt` — convenience UT1/UTC→TT offsets
 - [ ] `novas_time_gst` / `novas_time_lst` — GST/LST from a `Time`
+- `novas_diff_time` / `novas_diff_time_scale` — superseded by `Interval` arithmetic in Rust
+- `novas_timestamp` / `novas_iso_timestamp` — superseded by `Display` / `format!`
+- `tt2tdb` / `tdb2tt` — internal scalar TT↔TDB; accessible via `sys`
+- `get_ut1_to_tt` / `get_utc_to_tt` — superseded by `novas_timescale_offset`
 
 ---
 
@@ -36,12 +39,12 @@ needed directly by users.
 ### Site construction
 
 - [x] `make_observer_on_surface` (lat/lon/height/T/P) → `Site::from_degrees`
-- [ ] `make_on_surface` (same, without creating an `observer`) → bare `Site`
 - [ ] `make_itrf_site` / `make_gps_site` — ITRF/GPS coordinate constructors
 - [ ] `make_xyz_site` — ECEF Cartesian site
-- [ ] `novas_set_default_weather` — populate default weather on a site
 - [ ] `novas_geodetic_to_cartesian` / `novas_cartesian_to_geodetic` — geodetic ↔ ECEF
-- [ ] `novas_site_gcrs_posvel` — site position/velocity in GCRS
+- `make_on_surface` — redundant with `Site::new`
+- `novas_set_default_weather` — internal C helper
+- `novas_site_gcrs_posvel` — internal; accessible via `sys`
 
 ---
 
@@ -51,26 +54,26 @@ needed directly by users.
 
 - [x] `make_cat_entry` + `make_cat_object` → `CatalogEntry::icrs`
 - [x] proper motion, parallax, radial velocity → `CatalogEntry::with_*` builders
-- [ ] `novas_init_cat_entry` — zero-initialise a `cat_entry` (internal helper)
-- [ ] `novas_set_parallax` / `novas_set_proper_motion` / `novas_set_redshift` — individual field setters (already covered by builders)
 - [ ] `novas_set_distance` / `novas_set_lsr_vel` / `novas_set_ssb_vel` — LSR/distance setters
 - [ ] `make_redshifted_cat_entry` / `make_redshifted_object` — cosmologically-redshifted point source
 - [ ] `make_cat_object_sys` — catalog object in a named coordinate system other than FK5
 - [ ] `transform_cat` — transform a `cat_entry` between catalog epochs
 - [ ] `transform_hip` — Hipparcos catalog → FK5 J2000
+- `novas_init_cat_entry` — internal zero-init helper
+- `novas_set_parallax` / `novas_set_proper_motion` / `novas_set_redshift` — redundant with `with_*` builders
 
 ### Planets and solar-system bodies
 
 - [x] `make_planet` → `Planet` / `SolarBody`
 - [x] `make_ephem_object` → `EphemObject` (arbitrary NAIF body by name/number)
-- [ ] `novas_approx_sky_pos` — fast approximate sky position using built-in VSOP/ELP models (no external ephemeris required)
+- [ ] `novas_approx_sky_pos` — fast approximate sky position via built-in VSOP/ELP (no external ephemeris)
 - [ ] `novas_approx_heliocentric` — low-accuracy heliocentric position
 
 ### Keplerian orbitals
 
 - [x] `make_orbital_object` → `OrbitalObject` / `OrbitalElements`
-- [ ] `novas_orbit_posvel` / `novas_orbit_native_posvel` — evaluate Keplerian orbit
 - [ ] `novas_make_planet_orbit` / `novas_make_moon_orbit` / `novas_make_moon_mean_orbit` — build `novas_orbital` from built-in models
+- `novas_orbit_posvel` / `novas_orbit_native_posvel` — internal Keplerian evaluator; accessible via `sys`
 
 ---
 
@@ -82,12 +85,11 @@ needed directly by users.
 - [ ] `novas_change_observer` — rebuild a frame with a different observer at the same time
 - [ ] `novas_hor_to_app` — inverse: horizontal → apparent equatorial
 - [ ] `novas_geom_posvel` — geometric (astrometric) position+velocity of a source
-- [ ] `novas_geom_to_app` — geometric unit-vector → apparent sky position
-- [ ] `novas_app_to_geom` — apparent sky position → geometric unit-vector
 - [ ] `novas_make_transform` / `novas_transform_sky_pos` / `novas_transform_vector` — pre-built rotation matrix for fast repeated transforms
 - [ ] `novas_invert_transform` — invert a `novas_transform`
-- [ ] `novas_frame_is_initialized` — guard against using an uninitialised frame
 - [ ] `novas_frame_lst` — local sidereal time of the frame's observer
+- `novas_geom_to_app` / `novas_app_to_geom` — internal unit-vector ↔ sky-pos conversions; accessible via `sys`
+- `novas_frame_is_initialized` — unnecessary: Rust construction guarantees a valid frame
 
 ---
 
@@ -97,16 +99,13 @@ needed directly by users.
 - [x] `equ2ecl` / `ecl2equ` → `Equatorial::to_ecliptic` / `Ecliptic::to_equatorial`
 - [x] `novas_sys_to_icrs` / `novas_icrs_to_sys` → `Equatorial::to_system`
 - [x] `radec2vector` / `vector2radec` — internal to `Equatorial::to_system`
-- [ ] `frame_tie` — ICRS ↔ dynamical-frame tie rotation
-- [ ] `gcrs_to_cirs` / `cirs_to_gcrs` and the full family of pairwise transforms
-  (`gcrs_to_j2000`, `gcrs_to_mod`, `gcrs_to_tod`, `j2000_to_gcrs`, `j2000_to_tod`,
-  `tod_to_cirs`, `tod_to_gcrs`, `tod_to_j2000`, `cirs_to_tod`, `mod_to_gcrs`)
 - [ ] `cirs_to_itrs` / `tod_to_itrs` / `itrs_to_cirs` / `itrs_to_tod` — ITRS ↔ celestial transforms
 - [ ] `hor_to_itrs` / `itrs_to_hor` — horizontal ↔ ITRS
-- [ ] `wobble` — polar motion rotation
-- [ ] `nutation` — nutation rotation
-- [ ] `precession` — precession rotation
-- [ ] `gcrs2equ` (**legacy**) — GCRS → equatorial of date
+- `frame_tie` — internal ICRS ↔ dynamical-frame tie rotation; accessible via `sys`
+- `gcrs_to_cirs` / `cirs_to_gcrs` and the full pairwise family (`gcrs_to_j2000`, `gcrs_to_mod`,
+  `gcrs_to_tod`, `j2000_to_gcrs`, `j2000_to_tod`, `tod_to_cirs`, `tod_to_gcrs`, `tod_to_j2000`,
+  `cirs_to_tod`, `mod_to_gcrs`) — internal frame-rotation building blocks; accessible via `sys`
+- `wobble` / `nutation` / `precession` — internal rotation steps; accessible via `sys`
 
 ---
 
@@ -118,7 +117,7 @@ needed directly by users.
 - [ ] `novas_wave_refraction` — wavelength-specific refraction model
 - [ ] `novas_refract_wavelength` — set the wavelength for `novas_wave_refraction`
 - [ ] `novas_inv_refract` — inverse refraction (observed elevation → apparent elevation)
-- [ ] `refract` / `refract_astro` (**legacy**) — old refraction interface
+- `refract` / `refract_astro` (**legacy**) — superseded by `novas_optical_refraction`
 
 ---
 
@@ -129,9 +128,9 @@ needed directly by users.
 - [x] `novas_to_naif_planet` — available via `sys` for custom `PlanetProvider` impls
 - [x] `novas_to_dexxx_planet` — available via `sys`
 - [x] `set_ephem_provider` → called by `AniseEphemeris::install` to register the ephem-object (non-planet) provider
-- [ ] `get_ephem_provider` — read back the installed ephem provider
-- [ ] `set_nutation_lp_provider` — plug in a custom low-precision nutation model
-- [ ] `novas_calceph_use_ids` / `novas_use_calceph_planets` / `novas_calceph_is_thread_safe` — CALCEPH tuning
+- `get_ephem_provider` — process-global state readback; not useful to expose
+- `set_nutation_lp_provider` — custom low-precision nutation hook; won't wrap
+- `novas_calceph_use_ids` / `novas_use_calceph_planets` / `novas_calceph_is_thread_safe` — internal CALCEPH tuning; accessible via `sys`
 
 ---
 
@@ -141,13 +140,12 @@ needed directly by users.
 - [x] `novas_str_hours` → `TimeAngle::from_str` (HMS)
 - [x] `novas_print_dms` → `Angle::fmt`
 - [x] `novas_print_hms` → `TimeAngle::fmt`
-- [ ] `novas_parse_dms` / `novas_parse_hms` / `novas_parse_degrees` / `novas_parse_hours` — parse with a trailing-pointer (tail) for embedded strings
 - [ ] `novas_parse_date` / `novas_parse_iso_date` / `novas_parse_date_format` — calendar date string → JD
 - [ ] `novas_date` / `novas_date_scale` — convenience date string → JD
-- [ ] `novas_dms_degrees` / `novas_hms_hours` — like `str_degrees/hours` but without validation
 - [ ] `novas_epoch` — parse an epoch string (`"J2000"`, `"B1950"`, …) → JD
-- [ ] `novas_print_decimal` — format a number to a fixed-decimal string
-- [ ] `novas_print_timescale` — timescale enum → string label
+- `novas_parse_dms` / `novas_parse_hms` / `novas_parse_degrees` / `novas_parse_hours` — trailing-pointer C idiom; `FromStr` covers this
+- `novas_dms_degrees` / `novas_hms_hours` — non-validating variants; we validate at construction
+- `novas_print_decimal` / `novas_print_timescale` — superseded by Rust `Display`
 
 ---
 
@@ -159,7 +157,7 @@ needed directly by users.
 - [ ] `novas_moon_angle` / `novas_sun_angle` — proximity to Moon / Sun from a frame
 - [ ] `novas_e2h_offset` / `novas_h2e_offset` — equatorial ↔ horizontal small-angle offset
 - [ ] `novas_epa` / `novas_hpa` — equatorial / horizontal parallactic angle
-- [ ] `novas_norm_ang` — normalise an angle to (-π, π]
+- `novas_norm_ang` — superseded by `Angle`, which normalises at construction
 
 ---
 
@@ -199,7 +197,7 @@ needed directly by users.
 
 ## Calendar and date utilities
 
-- [ ] `julian_date` / `cal_date` — scalar JD ↔ Gregorian calendar (**legacy**, simple wrappers)
+- [ ] `julian_date` / `cal_date` — scalar JD ↔ Gregorian calendar
 - [ ] `novas_jd_to_date` / `novas_jd_from_date` — JD ↔ Gregorian or Julian calendar
 - [ ] `novas_day_of_week` / `novas_day_of_year` — calendar helpers
 
