@@ -16,7 +16,10 @@ use core::{
     ops::{Add, Sub},
 };
 
-use supernovas_ffi::{novas_get_split_time, novas_get_time, novas_offset_time, novas_set_split_time, novas_set_unix_time, novas_time_leap, novas_timescale_offset, novas_timespec};
+use supernovas_ffi::{
+    novas_get_split_time, novas_get_time, novas_offset_time, novas_set_split_time,
+    novas_set_unix_time, novas_time_leap, novas_timescale_offset, novas_timespec,
+};
 
 use crate::{
     error::{Error, Result},
@@ -111,7 +114,14 @@ impl Time {
         }
         let mut ts = MaybeUninit::<novas_timespec>::zeroed();
         let rc = unsafe {
-            novas_set_split_time(scale.to_sys(), ijd as _, fjd, leap_seconds, dut1, ts.as_mut_ptr())
+            novas_set_split_time(
+                scale.to_sys(),
+                ijd as _,
+                fjd,
+                leap_seconds,
+                dut1,
+                ts.as_mut_ptr(),
+            )
         };
         if rc != 0 {
             return Err(Error::ffi(rc));
@@ -219,7 +229,11 @@ impl Time {
     #[must_use]
     pub fn timescale_offset(self, scale: Timescale, reference: Timescale) -> f64 {
         unsafe {
-            novas_timescale_offset(core::ptr::addr_of!(self.0), scale.to_sys(), reference.to_sys())
+            novas_timescale_offset(
+                core::ptr::addr_of!(self.0),
+                scale.to_sys(),
+                reference.to_sys(),
+            )
         }
     }
 
@@ -521,7 +535,11 @@ mod tests {
         let t0 = Time::from_tt_jd(JD_J2000_TT, 37, 0.0).unwrap();
         let t1 = Time::from_tt_jd(JD_J2000_TT + 1.0, 37, 0.0).unwrap();
         let dt = t1 - t0;
-        assert!((dt.seconds() - 86_400.0).abs() < 1e-6, "expected 86400 s, got {}", dt.seconds());
+        assert!(
+            (dt.seconds() - 86_400.0).abs() < 1e-6,
+            "expected 86400 s, got {}",
+            dt.seconds()
+        );
     }
 
     #[test]
@@ -533,7 +551,10 @@ mod tests {
         // TT = UTC + 64.184 s with leap=32, so TT is 64.184 s ahead.
         // f64 subtraction of two ~2.45M-day JDs loses ~50 µs; allow 1 ms.
         let diff_s = (tt_jd - utc_jd) * 86_400.0;
-        assert!((diff_s - 64.184).abs() < 1e-3, "expected 64.184 s, got {diff_s}");
+        assert!(
+            (diff_s - 64.184).abs() < 1e-3,
+            "expected 64.184 s, got {diff_s}"
+        );
     }
 
     #[test]

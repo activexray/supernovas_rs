@@ -223,9 +223,8 @@ impl approx::AbsDiffEq for Position {
 mod tests {
     use approx::assert_abs_diff_eq;
 
-    use crate::Timescale;
-
     use super::*;
+    use crate::Timescale;
 
     #[test]
     fn rejects_non_finite() {

@@ -146,9 +146,8 @@ impl Frame {
 
 #[cfg(test)]
 mod tests {
-    use crate::Timescale;
-
     use super::*;
+    use crate::Timescale;
 
     fn j2000() -> Time {
         Time::from_jd(Timescale::Tt, 2_451_545.0, 32, 0.0).unwrap()
