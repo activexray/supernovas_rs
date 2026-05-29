@@ -199,7 +199,7 @@ fn generic_dispatch(
 /// `PlanetProvider` can be installed per process via this path; a second call
 /// returns [`Error::Ephemeris`].
 ///
-/// Built-in backends ([`CalcephEphemeris`], [`AniseEphemeris`]) implement
+/// Built-in backends (`CalcephEphemeris`, [`AniseEphemeris`]) implement
 /// [`EphemerisProvider`] directly and do not go through this dispatch layer.
 impl<T: PlanetProvider> EphemerisProvider for T {
     fn install(self) -> Result<()> {
@@ -239,7 +239,7 @@ pub trait EphemerisProvider: Send + 'static {
     /// provided output buffers, returning 0 on success.
     ///
     /// Any state the callbacks need must live in a process-global static (e.g.
-    /// [`OnceLock`][std::sync::OnceLock]), since C function pointers cannot
+    /// [`OnceLock`]), since C function pointers cannot
     /// close over Rust values. See [`AniseEphemeris`] for a complete reference
     /// implementation, or implement [`PlanetProvider`] to avoid all of this.
     fn install(self) -> Result<()>;
