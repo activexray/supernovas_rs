@@ -241,7 +241,10 @@ mod tests {
         let converted = e.to_system(mod_eq, Accuracy::Reduced).unwrap();
         // Should be close (within a few arcmin) but not identical.
         let sep_arcsec = e.distance_to(converted).arcsec();
-        assert!(sep_arcsec < 3600.0, "separation {sep_arcsec} arcsec looks too large");
+        assert!(
+            sep_arcsec < 3600.0,
+            "separation {sep_arcsec} arcsec looks too large"
+        );
         assert!(sep_arcsec > 0.0, "should have non-zero drift over 26 years");
     }
 
