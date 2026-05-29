@@ -32,7 +32,7 @@ pub fn set_provider_error(msg: impl Into<String>) {
 /// Retrieve and clear the most recent error description, if any.
 ///
 /// Under `std` this is drained automatically by every [`Error::Ffi`]
-/// construction (via [`Error::ffi`]), so calling this manually is only
+/// construction (via `Error::ffi`), so calling this manually is only
 /// necessary when you need the raw string separately from the error value.
 ///
 /// Returns `None` if no context was recorded or if it has already been taken.

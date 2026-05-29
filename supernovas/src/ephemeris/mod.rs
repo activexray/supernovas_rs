@@ -3,7 +3,7 @@
 //! Two built-in backends are available as optional features:
 //!
 //! - `calceph` — wraps the C CALCEPH library; fast, mature, requires a
-//!   system `libcalceph`. Exposes [`CalcephEphemeris`].
+//!   system `libcalceph`. Exposes `CalcephEphemeris`.
 //! - `anise` — pure-Rust ANISE/SPK reader ([nyx-space/anise]); no C
 //!   dependency beyond SuperNOVAS itself. Exposes [`AniseEphemeris`].
 //!
@@ -287,7 +287,7 @@ impl Ephemeris {
     ///
     /// Available when exactly one of `calceph` or `anise` is enabled.
     /// When both features are active, use
-    /// [`Ephemeris::from_provider`] with [`CalcephEphemeris`] or
+    /// [`Ephemeris::from_provider`] with `CalcephEphemeris` or
     /// [`AniseEphemeris`] explicitly.
     ///
     /// Returns [`crate::Error::Ephemeris`] if the file is missing,
