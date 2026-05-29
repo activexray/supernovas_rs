@@ -1,71 +1,30 @@
 //! Safe Rust bindings to [SuperNOVAS](https://github.com/sigmyne/supernovas), a
 //! high-precision astrometry library based on NOVAS (Naval Observatory Vector
 //! Astrometry Software).
-//!
-//! # What's implemented
-//!
-//! - **Scalars**: [`Angle`], [`TimeAngle`], [`Coordinate`], [`Interval`],
-//!   [`Pressure`], [`Temperature`], [`ScalarVelocity`] — dimensioned newtypes
-//!   with validated constructors and unit-aware accessors.
-//! - **Vectors**: [`Position`] and [`Velocity`] — 3-D Cartesian vectors with
-//!   arithmetic operators and cross-type ops (`Position / Interval → Velocity`,
-//!   `Velocity × Interval → Position`).
-//! - **Spherical coordinates**: [`Spherical`] (base shape), [`Horizontal`]
-//!   (az/el), [`Equatorial`] (RA/Dec + equinox), [`Ecliptic`] (λ/β + equinox),
-//!   [`Galactic`] (`l`/`b`).
-//! - **Reference systems**: [`ReferenceSystem`], [`Equinox`] — tag coordinate
-//!   sets with the equatorial frame they were computed in.
-//! - **Refraction**: [`Refraction`] — choose None / Standard / Optical / Radio
-//!   when converting apparent equatorial → horizontal.
-//! - **Time**: [`Time`] — UTC, TT, and split Julian dates, plus Unix epoch.
-//! - **Observers**: [`Observer`] — geodetic ground site ([`Site`] + [`Weather`])
-//!   and geocenter.
-//! - **Sources**: [`Source`] sealed trait — common interface for all source kinds.
-//!   - [`CatalogEntry`] — ICRS sidereal source with optional proper motion,
-//!     parallax, and radial velocity.
-//!   - [`Planet`] — major solar-system body (`Sun`, `Moon`, planets, barycenters)
-//!     via the installed planet provider.
-//!   - [`EphemObject`] — arbitrary body by name and NAIF ID from the installed
-//!     ephemeris provider.
-//!   - [`OrbitalObject`] / [`OrbitalElements`] — Keplerian elements source; no
-//!     external provider required.
-//! - **Frame + observation**: [`Frame`] — observer × time snapshot; call
-//!   [`Frame::observe`] (accepts any `impl Source`) for a quick az/el, or
-//!   [`Source::apparent_in`] to get an [`Apparent`] position with access to
-//!   intermediate RA/Dec and conversion to any output frame.
-//! - **Error context**: [`enable_debug_mode`] / [`DebugMode`] — install a
-//!   silent capture handler so that [`Error::Ffi`] displays the human-readable
-//!   C-library description rather than a bare numeric code.
-//!
-//! # Quick start
-//!
-//! ```no_run
-//! use supernovas::{Accuracy, CatalogEntry, Frame, Observer, Site, Time, Weather};
-//!
-//! // Vega in ICRS J2000
-//! let vega = CatalogEntry::icrs(
-//!     "Vega",
-//!     "18:36:56.336".parse().unwrap(),
-//!     "+38:47:01.28".parse().unwrap(),
-//! ).unwrap();
-//!
-//! // OVRO site with standard atmosphere
-//! let site = Site::from_degrees(37.234, -118.282, 1222.0).unwrap()
-//!     .with_weather(Weather::standard());
-//! let observer = Observer::Geodetic(site);
-//!
-//! // 2026-07-15 06:00 UTC (37 leap seconds, dut1 ≈ 0)
-//! let time = Time::from_utc_jd(2_461_236.75, 37, 0.0).unwrap();
-//!
-//! let frame = Frame::new(Accuracy::Reduced, &observer, &time).unwrap();
-//! let horizontal = frame.observe(&vega).unwrap();
-//! println!("{horizontal}");
-//! ```
-//!
-//! The raw FFI bindings are re-exported as [`sys`] for callers that need to
-//! drop down to the C layer directly.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+// `Error` embeds a fixed-capacity inline FFI message buffer (see
+// [`error::FfiMessage`]) so it carries a human-readable description without
+// allocating, identically under `std` and `no_std`. That makes the enum
+// ~140 bytes and trips `result_large_err`; boxing it to satisfy the lint would
+// reintroduce the heap allocation we deliberately avoid, so we accept the
+// larger `Result` instead.
+#![allow(clippy::result_large_err)]
+// This crate does heavy f64 astronomy and integer↔float Julian-date
+// arithmetic, where lossy / sign-changing / truncating casts and exact float
+// comparisons (e.g. bit-identity checks against the C library) are intentional
+// and correct. The pedantic lints that flag those produce only noise here, so
+// they are allowed crate-wide; every other pedantic lint stays denied (see the
+// workspace `Cargo.toml`).
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::float_cmp,
+    clippy::missing_panics_doc,
+    clippy::missing_errors_doc
+)]
 
 // Test binaries always link std; make it available in test code.
 #[cfg(all(test, not(feature = "std")))]
@@ -98,7 +57,7 @@ pub use ephemeris::CalcephEphemeris;
 #[cfg(any(feature = "calceph", feature = "anise"))]
 pub use ephemeris::{Ephemeris, EphemerisProvider, PlanetProvider};
 pub use equinox::Equinox;
-pub use error::{Error, Result, set_provider_error, take_provider_error};
+pub use error::{Error, FfiMessage, Result, set_provider_error, take_provider_error};
 pub use frame::{Accuracy, Frame};
 pub use observer::{Observer, Site, Weather};
 pub use refraction::Refraction;
