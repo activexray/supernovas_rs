@@ -40,5 +40,8 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 #![allow(clippy::all, clippy::pedantic)]
+// bindgen preserves bare URLs from C doc comments; suppress the resulting
+// rustdoc::bare_urls warnings that would become errors under -D warnings.
+#![allow(rustdoc::bare_urls)]
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
