@@ -28,6 +28,7 @@ pub struct Equatorial {
 
 impl Equatorial {
     /// Construct from typed RA and Dec in the given equinox.
+    #[must_use]
     pub fn new(ra: TimeAngle, dec: Angle, system: Equinox) -> Self {
         // TimeAngle lives in [0, 2π); Angle in (-π, π]. Convert TimeAngle
         // to Angle (lossless) for the underlying Spherical.
@@ -38,7 +39,11 @@ impl Equatorial {
     }
 
     /// Construct from RA in hours and Dec in degrees.
+    ///
+    /// Declination must lie in `[-90°, 90°]`; RA is modular and unrestricted.
+    /// Returns [`Error::OutOfRange`] for an out-of-range declination.
     pub fn from_hours_and_degrees(ra_hours: f64, dec_deg: f64, system: Equinox) -> Result<Self> {
+        validate_dec_deg(dec_deg)?;
         Ok(Equatorial::new(
             TimeAngle::from_hours(ra_hours)?,
             Angle::from_degrees(dec_deg)?,
@@ -47,7 +52,11 @@ impl Equatorial {
     }
 
     /// Construct from RA and Dec in degrees.
+    ///
+    /// Declination must lie in `[-90°, 90°]`; RA is modular and unrestricted.
+    /// Returns [`Error::OutOfRange`] for an out-of-range declination.
     pub fn from_degrees(ra_deg: f64, dec_deg: f64, system: Equinox) -> Result<Self> {
+        validate_dec_deg(dec_deg)?;
         Ok(Equatorial::new(
             TimeAngle::from_radians(ra_deg * unit::DEG)?,
             Angle::from_degrees(dec_deg)?,
@@ -56,7 +65,11 @@ impl Equatorial {
     }
 
     /// Construct from RA and Dec in radians.
+    ///
+    /// Declination must lie in `[-π/2, π/2]`; RA is modular and unrestricted.
+    /// Returns [`Error::OutOfRange`] for an out-of-range declination.
     pub fn from_radians(ra_rad: f64, dec_rad: f64, system: Equinox) -> Result<Self> {
+        validate_dec_deg(dec_rad / unit::DEG)?;
         Ok(Equatorial::new(
             TimeAngle::from_radians(ra_rad)?,
             Angle::from_radians(dec_rad)?,
@@ -65,22 +78,26 @@ impl Equatorial {
     }
 
     /// Right ascension, in `[0, 24h)`.
+    #[must_use]
     pub fn ra(self) -> TimeAngle {
         TimeAngle::from_angle(self.sph.longitude())
     }
 
     /// Declination, in `[-90°, 90°]`.
+    #[must_use]
     pub fn dec(self) -> Angle {
         self.sph.latitude()
     }
 
     /// The equinox these coordinates are measured in.
+    #[must_use]
     pub fn system(self) -> Equinox {
         self.system
     }
 
     /// The bare [`Spherical`] view (longitude = RA folded into `(-π, π]`,
     /// latitude = Dec).
+    #[must_use]
     pub fn as_spherical(self) -> Spherical {
         self.sph
     }
@@ -91,13 +108,14 @@ impl Equatorial {
     /// If `self` and `other` are in different equinoxes, the result is
     /// only meaningful if you've already established that the two systems
     /// align to within your precision target.
+    #[must_use]
     pub fn distance_to(self, other: Equatorial) -> Angle {
         self.sph.distance_to(other.sph)
     }
 
     /// Convert to another equinox.
     ///
-    /// Routes through ICRS internally via SuperNOVAS's
+    /// Routes through ICRS internally via `SuperNOVAS`'s
     /// `novas_sys_to_icrs` + `novas_icrs_to_sys`. Both calls accept a JD,
     /// so date-dependent input systems (MOD/TOD/CIRS) carry their epoch
     /// through correctly.
@@ -162,7 +180,7 @@ impl Equatorial {
         let mut dec_d = 0.0_f64;
         // SAFETY: vector2radec reads 3 doubles from `out` and writes the
         // two output scalars on a 0 return.
-        let rc = unsafe { vector2radec(out.as_ptr(), &mut ra_h, &mut dec_d) };
+        let rc = unsafe { vector2radec(out.as_ptr(), &raw mut ra_h, &raw mut dec_d) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
@@ -222,8 +240,8 @@ impl Equatorial {
                 accuracy.to_sys(),
                 eq.ra().hours(),
                 eq.dec().deg(),
-                &mut elon,
-                &mut elat,
+                &raw mut elon,
+                &raw mut elat,
             )
         };
         if rc != 0 {
@@ -245,12 +263,34 @@ impl Equatorial {
         let mut glon = 0.0_f64;
         let mut glat = 0.0_f64;
         // SAFETY: equ2gal writes the two output doubles on a 0 return.
-        let rc = unsafe { equ2gal(icrs.ra().hours(), icrs.dec().deg(), &mut glon, &mut glat) };
+        let rc = unsafe {
+            equ2gal(
+                icrs.ra().hours(),
+                icrs.dec().deg(),
+                &raw mut glon,
+                &raw mut glat,
+            )
+        };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
         Galactic::from_degrees(glon, glat)
     }
+}
+
+/// Reject a declination that is finite but clearly outside `[-90°, 90°]`.
+///
+/// A small slack absorbs floating-point boundary noise — e.g. `π/2` rad
+/// converting to `90.0 ± 1 ulp`, or a pole-grazing result from an internal
+/// vector→RA/Dec conversion — without letting through a genuine mistake like
+/// a swapped RA/Dec pair (`95°`). Non-finite inputs are left for the angle
+/// constructors to reject as [`Error::NotFinite`].
+fn validate_dec_deg(dec_deg: f64) -> Result<()> {
+    const SLACK_DEG: f64 = 1e-9;
+    if dec_deg.is_finite() && dec_deg.abs() > 90.0 + SLACK_DEG {
+        return Err(Error::OutOfRange("declination"));
+    }
+    Ok(())
 }
 
 // Keep the ReferenceSystem -> novas_reference_system mapping accessible
@@ -299,6 +339,34 @@ mod tests {
         // 279.235° / 15 = 18.615... h
         assert!((e.ra().hours() - 279.235 / 15.0).abs() < 1e-9);
         assert!((e.dec().deg() - 38.784).abs() < 1e-9);
+    }
+
+    #[test]
+    fn rejects_out_of_range_declination() {
+        use crate::error::Error;
+        // Swapped RA/Dec or a data-entry error: 95° is not a valid declination.
+        assert!(matches!(
+            Equatorial::from_degrees(180.0, 95.0, Equinox::ICRS),
+            Err(Error::OutOfRange("declination"))
+        ));
+        assert!(matches!(
+            Equatorial::from_hours_and_degrees(12.0, -100.0, Equinox::ICRS),
+            Err(Error::OutOfRange(_))
+        ));
+        assert!(matches!(
+            Equatorial::from_radians(0.0, 2.0, Equinox::ICRS),
+            Err(Error::OutOfRange(_))
+        ));
+    }
+
+    #[test]
+    fn accepts_pole_declination() {
+        use core::f64::consts::FRAC_PI_2;
+        // The poles are valid, and π/2 rad must not be rejected by FP slack.
+        assert!(Equatorial::from_degrees(0.0, 90.0, Equinox::ICRS).is_ok());
+        assert!(Equatorial::from_degrees(0.0, -90.0, Equinox::ICRS).is_ok());
+        assert!(Equatorial::from_radians(0.0, FRAC_PI_2, Equinox::ICRS).is_ok());
+        assert!(Equatorial::from_radians(0.0, -FRAC_PI_2, Equinox::ICRS).is_ok());
     }
 
     #[test]

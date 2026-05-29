@@ -24,13 +24,13 @@ const KM_PER_AU: f64 = 1.495_978_707e8;
 const SEC_PER_DAY: f64 = sys::NOVAS_DAY;
 
 /// Process-global almanac. Populated by [`Backend::install`]; read by the
-/// `extern "C"` callbacks registered with SuperNOVAS.
+/// `extern "C"` callbacks registered with `SuperNOVAS`.
 static ALMANAC: OnceLock<Almanac> = OnceLock::new();
 
 /// An ANISE-backed planetary ephemeris.
 ///
 /// Load a JPL DE-series SPK file and install it as the process-global
-/// SuperNOVAS planet provider via [`EphemerisProvider::install`] or the
+/// `SuperNOVAS` planet provider via [`EphemerisProvider::install`] or the
 /// [`super::Ephemeris`] wrapper.
 ///
 /// # Example
@@ -128,7 +128,7 @@ unsafe extern "C" fn ephem_provider(
             // short-form DE files, silently breaking gravitational deflection.
             let n = unsafe { sys::novas_to_dexxx_planet(planet) };
             if n < 0 {
-                crate::error::set_provider_error(format!(
+                crate::error::set_provider_error(format_args!(
                     "novas_to_dexxx_planet returned -1 for novas_planet id {id}"
                 ));
                 return 2;
@@ -145,7 +145,7 @@ unsafe extern "C" fn ephem_provider(
         let state = match almanac.translate(target, observer, epoch, Aberration::NONE) {
             Ok(s) => s,
             Err(e) => {
-                crate::error::set_provider_error(format!(
+                crate::error::set_provider_error(format_args!(
                     "ANISE could not translate NAIF {naif}: {e}"
                 ));
                 return 3;
