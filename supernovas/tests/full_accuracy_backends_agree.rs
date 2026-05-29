@@ -52,7 +52,7 @@ fn epoch() -> Time {
 ///
 /// The test installs CALCEPH first, records the pointing, then overwrites the
 /// process-global planet provider with ANISE and records again. The ALMANAC
-/// OnceLock is unset at test start, so ANISE installs cleanly.
+/// `OnceLock` is unset at test start, so ANISE installs cleanly.
 #[test]
 fn backends_agree_to_uas() {
     let path = ephemeris_path();
