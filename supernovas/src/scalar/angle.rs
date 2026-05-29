@@ -25,7 +25,11 @@ use crate::{
 pub struct Angle(f64);
 
 impl Angle {
-    /// Construct from radians. Returns [`Error::NotFinite`] for NaN or infinity.
+    /// Construct from radians.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `rad` is NaN or infinite.
     pub fn from_radians(rad: f64) -> Result<Self> {
         if !rad.is_finite() {
             return Err(Error::NotFinite);
@@ -34,61 +38,88 @@ impl Angle {
     }
 
     /// Construct from degrees.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting angle is not finite.
     pub fn from_degrees(deg: f64) -> Result<Self> {
         Self::from_radians(deg * unit::DEG)
     }
 
     /// Construct from arc-minutes.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting angle is not finite.
     pub fn from_arcmin(arcmin: f64) -> Result<Self> {
         Self::from_radians(arcmin * unit::ARCMIN)
     }
 
     /// Construct from arc-seconds.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting angle is not finite.
     pub fn from_arcsec(arcsec: f64) -> Result<Self> {
         Self::from_radians(arcsec * unit::ARCSEC)
     }
 
     /// Construct from milli-arc-seconds.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting angle is not finite.
     pub fn from_mas(mas: f64) -> Result<Self> {
         Self::from_radians(mas * unit::MAS)
     }
 
     /// Construct from micro-arc-seconds.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting angle is not finite.
     pub fn from_uas(uas: f64) -> Result<Self> {
         Self::from_radians(uas * unit::UAS)
     }
 
     /// The angle in radians, in (-π, π].
+    #[must_use]
     pub fn rad(self) -> f64 {
         self.0
     }
 
     /// The angle in degrees, in (-180, 180].
+    #[must_use]
     pub fn deg(self) -> f64 {
         self.0 / unit::DEG
     }
 
     /// The angle in arc-minutes.
+    #[must_use]
     pub fn arcmin(self) -> f64 {
         self.0 / unit::ARCMIN
     }
 
     /// The angle in arc-seconds.
+    #[must_use]
     pub fn arcsec(self) -> f64 {
         self.0 / unit::ARCSEC
     }
 
     /// The angle in milli-arc-seconds.
+    #[must_use]
     pub fn mas(self) -> f64 {
         self.0 / unit::MAS
     }
 
     /// The angle in micro-arc-seconds.
+    #[must_use]
     pub fn uas(self) -> f64 {
         self.0 / unit::UAS
     }
 
     /// The angle as a fraction of a full turn, in [0, 1).
+    #[must_use]
     pub fn fraction(self) -> f64 {
         let f = self.0 / TAU;
         if f >= 0.0 { f } else { 1.0 + f }

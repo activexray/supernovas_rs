@@ -6,7 +6,7 @@
 //! `novas_timespec`.
 //!
 //! Construction takes a Julian date in a specified timescale plus the
-//! corresponding leap-second count and UT1−UTC offset; SuperNOVAS uses those
+//! corresponding leap-second count and UT1−UTC offset; `SuperNOVAS` uses those
 //! to derive the others.
 
 use core::{fmt, mem::MaybeUninit};
@@ -22,7 +22,7 @@ use crate::error::{Error, Result};
 /// An instant on the astronomical timeline.
 ///
 /// Construction is via Julian date plus leap-second count and UT1−UTC
-/// offset. Once you have a `Time`, SuperNOVAS can render it in any of the
+/// offset. Once you have a `Time`, `SuperNOVAS` can render it in any of the
 /// supported timescales.
 #[derive(Debug, Clone, Copy)]
 pub struct Time(novas_timespec);
@@ -108,12 +108,14 @@ impl Time {
     /// Precision: the underlying timespec stores integer and fractional
     /// parts separately, so sub-nanosecond information may be lost in this
     /// `f64` sum. Use [`Self::tt_split_jd`] when that matters.
+    #[must_use]
     pub fn tt_jd(self) -> f64 {
         self.0.ijd_tt as f64 + self.0.fjd_tt
     }
 
     /// The Terrestrial Time Julian date as a `(integer_jd, fractional_jd)`
     /// pair, preserving the full timespec precision.
+    #[must_use]
     pub fn tt_split_jd(self) -> (i64, f64) {
         // `c_long` is `i64` on 64-bit Unix and `i32` on Windows / 32-bit;
         // `i64::from` covers both (identity on the former, widening on the
@@ -125,6 +127,7 @@ impl Time {
 
     /// Borrow the underlying C representation, for passing to FFI functions
     /// that take a `*const novas_timespec`.
+    #[must_use]
     pub fn as_timespec(&self) -> &novas_timespec {
         &self.0
     }
@@ -404,5 +407,47 @@ mod hifitime_tests {
             "fjd diff {} days > 2 ns",
             (fjd - fjd2).abs()
         );
+    }
+
+    const NS_PER_DAY: f64 = 86_400e9;
+
+    /// Total round-trip error of `TT JD -> Epoch -> TT JD` in nanoseconds,
+    /// combining the integer-day and fractional-day differences (the C side
+    /// may re-normalize which integer day carries the fraction).
+    fn round_trip_err_ns(ijd: i64, frac: f64) -> f64 {
+        let t = Time::from_split_jd(NOVAS_TT, ijd, frac, 37, 0.0).unwrap();
+        let back = Time::from(t.to_epoch());
+        let (i0, f0) = t.tt_split_jd();
+        let (i1, f1) = back.tt_split_jd();
+        (((i0 - i1) as f64) + (f0 - f1)).abs() * NS_PER_DAY
+    }
+
+    #[test]
+    fn round_trip_preserves_ns_across_dates_and_fractions() {
+        // The only lossy step in to_epoch() is a single round-to-nearest-ns,
+        // so the full round-trip must close to <= 1 ns for every instant —
+        // across a wide span of dates and every part of the day.
+        for &ijd in &[2_400_001_i64, 2_451_545, 2_460_000, 2_500_000] {
+            for k in 0..=20 {
+                let frac = f64::from(k) / 20.0; // 0.00, 0.05, ..., 1.00
+                let err = round_trip_err_ns(ijd, frac);
+                assert!(
+                    err <= 1.0,
+                    "ijd={ijd} frac={frac}: round-trip off by {err} ns"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn large_jd_tiny_fraction_no_cancellation() {
+        // A naive `ijd as f64 + fjd` JDE loses ~40 µs of resolution at these
+        // magnitudes. The integer-nanosecond path must keep a 1 ns fractional
+        // offset intact rather than rounding it away.
+        let one_ns = 1.0 / NS_PER_DAY;
+        for &ijd in &[2_451_545_i64, 2_460_000, 2_500_000] {
+            let err = round_trip_err_ns(ijd, one_ns);
+            assert!(err <= 1.0, "ijd={ijd}: 1 ns fraction lost ({err} ns error)");
+        }
     }
 }

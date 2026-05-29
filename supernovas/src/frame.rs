@@ -1,6 +1,6 @@
 //! Observing frame: an observer × instant × Earth-orientation snapshot.
 //!
-//! A [`Frame`] bundles everything SuperNOVAS needs to compute apparent
+//! A [`Frame`] bundles everything `SuperNOVAS` needs to compute apparent
 //! positions: where the observer is, when, and (optionally) Earth's polar
 //! motion at that instant. Sky positions are then evaluated against the
 //! frame.
@@ -19,7 +19,7 @@ use crate::{
     source::Source,
 };
 
-/// Calculation accuracy. SuperNOVAS distinguishes a full-precision path
+/// Calculation accuracy. `SuperNOVAS` distinguishes a full-precision path
 /// (sub-microarcsecond, computationally heavier) from a reduced path
 /// (~milliarcsecond, faster).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -83,7 +83,7 @@ impl Frame {
         let rc = unsafe {
             novas_make_frame(
                 accuracy.to_sys(),
-                &obs,
+                &raw const obs,
                 time.as_timespec(),
                 xp_mas,
                 yp_mas,
@@ -97,14 +97,16 @@ impl Frame {
     }
 
     /// The accuracy mode this frame was built with.
+    #[must_use]
     pub fn accuracy(&self) -> Accuracy {
         match self.0.accuracy {
             NOVAS_FULL_ACCURACY => Accuracy::Full,
-            _ => Accuracy::Reduced,
+            NOVAS_REDUCED_ACCURACY => Accuracy::Reduced,
         }
     }
 
     /// The frame's instant as a TT-based Julian date.
+    #[must_use]
     pub fn tt_jd(&self) -> f64 {
         // novas_timespec stores integer + fractional TT JD parts.
         // `c_long` is `i64` on 64-bit Unix and `i32` on 32-bit / Windows;

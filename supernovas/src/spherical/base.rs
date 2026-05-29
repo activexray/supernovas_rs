@@ -21,6 +21,7 @@ pub struct Spherical {
 impl Spherical {
     /// Construct from typed longitude and latitude. Infallible: both inputs
     /// are already validated as finite by [`Angle`].
+    #[must_use]
     pub fn new(longitude: Angle, latitude: Angle) -> Self {
         Spherical {
             lon: longitude,
@@ -45,19 +46,22 @@ impl Spherical {
     }
 
     /// Longitude.
+    #[must_use]
     pub fn longitude(self) -> Angle {
         self.lon
     }
 
     /// Latitude.
+    #[must_use]
     pub fn latitude(self) -> Angle {
         self.lat
     }
 
     /// Great-circle angular separation between this direction and `other`.
     ///
-    /// Delegates to the SuperNOVAS C-side `novas_sep()`, which uses the
+    /// Delegates to the `SuperNOVAS` C-side `novas_sep()`, which uses the
     /// numerically-stable Vincenty formulation.
+    #[must_use]
     pub fn distance_to(self, other: Spherical) -> Angle {
         let sep_deg = unsafe {
             novas_sep(
@@ -72,6 +76,7 @@ impl Spherical {
 
     /// Cartesian position at the given distance along this direction:
     /// `(d·cos(lat)·cos(lon), d·cos(lat)·sin(lon), d·sin(lat))`.
+    #[must_use]
     pub fn xyz(self, distance: Coordinate) -> Position {
         let (lon, lat) = (self.lon.rad(), self.lat.rad());
         let (slat, clat) = lat.sin_cos();

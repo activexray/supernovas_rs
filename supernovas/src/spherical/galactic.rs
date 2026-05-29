@@ -22,6 +22,7 @@ pub struct Galactic(Spherical);
 
 impl Galactic {
     /// Construct from typed `l` and `b`.
+    #[must_use]
     pub fn new(l: Angle, b: Angle) -> Self {
         Galactic(Spherical::new(l, b))
     }
@@ -37,28 +38,33 @@ impl Galactic {
     }
 
     /// Galactic longitude.
+    #[must_use]
     pub fn l(self) -> Angle {
         self.0.longitude()
     }
 
     /// Galactic latitude.
+    #[must_use]
     pub fn b(self) -> Angle {
         self.0.latitude()
     }
 
     /// The bare [`Spherical`] view for cases that don't care about the
     /// reference system.
+    #[must_use]
     pub fn as_spherical(self) -> Spherical {
         self.0
     }
 
     /// Great-circle angular separation between this direction and `other`.
+    #[must_use]
     pub fn distance_to(self, other: Galactic) -> Angle {
         self.0.distance_to(other.0)
     }
 
     /// Cartesian position at the given distance along this direction, in
     /// galactic-aligned axes.
+    #[must_use]
     pub fn xyz(self, distance: Coordinate) -> Position {
         self.0.xyz(distance)
     }
@@ -72,7 +78,14 @@ impl Galactic {
         let mut ra_h = 0.0_f64;
         let mut dec_d = 0.0_f64;
         // SAFETY: gal2equ writes the two output doubles on a 0 return.
-        let rc = unsafe { gal2equ(self.l().deg(), self.b().deg(), &mut ra_h, &mut dec_d) };
+        let rc = unsafe {
+            gal2equ(
+                self.l().deg(),
+                self.b().deg(),
+                &raw mut ra_h,
+                &raw mut dec_d,
+            )
+        };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }

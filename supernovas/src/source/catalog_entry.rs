@@ -31,7 +31,7 @@ impl super::Source for CatalogEntry {
 impl fmt::Debug for CatalogEntry {
     /// Manual `Debug` impl — the underlying C `object` contains an `orbit`
     /// substructure that `make_cat_object` deliberately leaves
-    /// uninitialised (see SuperNOVAS upstream `target.c` for the
+    /// uninitialised (see `SuperNOVAS` upstream `target.c` for the
     /// `memset(source, 0, offsetof(object, orbit))` choice). Reading
     /// arbitrary bytes through the auto-derived `Debug` impl would trigger
     /// UB on the embedded `novas_*` enums; we sidestep that by formatting
@@ -53,7 +53,7 @@ impl CatalogEntry {
     /// and zero radial velocity.
     ///
     /// `name` must be ASCII (no interior NULs) and shorter than 50 bytes
-    /// (the SuperNOVAS catalog-entry name limit).
+    /// (the `SuperNOVAS` catalog-entry name limit).
     pub fn icrs(name: &str, ra: TimeAngle, dec: Angle) -> Result<Self> {
         Self::new(name, ra, dec, 0.0, 0.0, 0.0, 0.0)
     }
@@ -104,11 +104,13 @@ impl CatalogEntry {
     }
 
     /// ICRS right ascension.
+    #[must_use]
     pub fn ra(&self) -> TimeAngle {
         TimeAngle::from_hours(self.object.star.ra).expect("RA stored finite by construction")
     }
 
     /// ICRS declination.
+    #[must_use]
     pub fn dec(&self) -> Angle {
         Angle::from_degrees(self.object.star.dec).expect("Dec stored finite by construction")
     }
@@ -175,7 +177,7 @@ impl CatalogEntry {
 
         let mut obj = MaybeUninit::<object>::zeroed();
         // SAFETY: make_cat_object copies entry into *obj on a zero return.
-        let rc = unsafe { make_cat_object(&entry, obj.as_mut_ptr()) };
+        let rc = unsafe { make_cat_object(&raw const entry, obj.as_mut_ptr()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }

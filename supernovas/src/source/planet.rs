@@ -1,4 +1,7 @@
-use core::mem::MaybeUninit;
+use core::{
+    fmt::{Debug, Formatter},
+    mem::MaybeUninit,
+};
 
 use supernovas_ffi::{
     make_planet,
@@ -60,17 +63,20 @@ impl SolarBody {
 /// - `CalcephEphemeris` (`calceph` feature)
 /// - `AniseEphemeris` (`anise` feature)
 ///
-/// At `Accuracy::Reduced` SuperNOVAS uses built-in low-precision
+/// At `Accuracy::Reduced` `SuperNOVAS` uses built-in low-precision
 /// approximations and no external provider is needed.
 #[derive(Clone, Copy)]
+#[allow(clippy::missing_fields_in_debug)]
 pub struct Planet {
     body: SolarBody,
     object: object,
 }
 
-impl core::fmt::Debug for Planet {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Planet").field("body", &self.body).finish()
+impl Debug for Planet {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Planet")
+            .field("body", &self.body)
+            .finish_non_exhaustive()
     }
 }
 
@@ -97,6 +103,7 @@ impl Planet {
     }
 
     /// The solar-system body this source represents.
+    #[must_use]
     pub fn body(&self) -> SolarBody {
         self.body
     }

@@ -5,7 +5,7 @@
 //! - `calceph` — wraps the C CALCEPH library; fast, mature, requires a
 //!   system `libcalceph`. Exposes `CalcephEphemeris`.
 //! - `anise` — pure-Rust ANISE/SPK reader ([nyx-space/anise]); no C
-//!   dependency beyond SuperNOVAS itself. Exposes [`AniseEphemeris`].
+//!   dependency beyond `SuperNOVAS` itself. Exposes [`AniseEphemeris`].
 //!
 //! Both features may be enabled simultaneously; each backend is an
 //! independent type implementing [`EphemerisProvider`].
@@ -29,7 +29,7 @@
 //! floating-point rounding differently. For a typical stellar pointing
 //! (de440s.bsp, ~50–100 polynomial terms per body), the two backends agree to
 //! within **~2 µas** in azimuth and **~0.05 µas** in elevation — well inside
-//! SuperNOVAS's sub-µas full-accuracy guarantee and negligible for mm-wave
+//! `SuperNOVAS`'s sub-µas full-accuracy guarantee and negligible for mm-wave
 //! pointing. The residual divergence is irreducible rounding noise, not a bug.
 //!
 //! ```no_run
@@ -65,10 +65,10 @@ use crate::error::{Error, Result};
 
 // ── PlanetProvider ────────────────────────────────────────────────────────────
 
-/// The interface SuperNOVAS requires from a planetary ephemeris backend.
+/// The interface `SuperNOVAS` requires from a planetary ephemeris backend.
 ///
 /// Implement this on your data type to bridge any ephemeris source to
-/// SuperNOVAS without writing `unsafe` C callbacks or managing process-global
+/// `SuperNOVAS` without writing `unsafe` C callbacks or managing process-global
 /// state yourself. The framework handles all of that, and a blanket impl
 /// automatically gives your type [`EphemerisProvider`].
 ///
@@ -79,7 +79,7 @@ use crate::error::{Error, Result};
 ///
 /// # Arguments
 ///
-/// - `body`: which solar-system body SuperNOVAS needs.
+/// - `body`: which solar-system body `SuperNOVAS` needs.
 ///   Map to a NAIF integer ID with
 ///   `unsafe { supernovas::sys::novas_to_naif_planet(body) }`.
 /// - `origin`: [`sys::novas_origin::NOVAS_BARYCENTER`] (Solar System
@@ -90,13 +90,13 @@ use crate::error::{Error, Result};
 ///
 /// # Return value
 ///
-/// Return `None` if `body` is not covered by your ephemeris — SuperNOVAS will
+/// Return `None` if `body` is not covered by your ephemeris — `SuperNOVAS` will
 /// surface this as an ephemeris error. Return `Some(([x, y, z], [vx, vy, vz]))`.
 ///
 /// # Panics
 ///
 /// Panics inside `state` are caught at the C boundary and converted to a
-/// non-zero error code so SuperNOVAS can surface them cleanly. Nevertheless,
+/// non-zero error code so `SuperNOVAS` can surface them cleanly. Nevertheless,
 /// prefer returning `None` over panicking for unsupported bodies.
 ///
 /// # Example
@@ -195,7 +195,7 @@ fn generic_dispatch(
 /// Any [`PlanetProvider`] is automatically an [`EphemerisProvider`].
 ///
 /// The blanket impl stores the provider in a process-global [`OnceLock`] and
-/// registers the C dispatch callbacks with SuperNOVAS. At most one
+/// registers the C dispatch callbacks with `SuperNOVAS`. At most one
 /// `PlanetProvider` can be installed per process via this path; a second call
 /// returns [`Error::Ephemeris`].
 ///
@@ -220,7 +220,7 @@ impl<T: PlanetProvider> EphemerisProvider for T {
 // ── EphemerisProvider ─────────────────────────────────────────────────────────
 
 /// A planetary ephemeris backend that can be installed as the process-global
-/// SuperNOVAS planet provider.
+/// `SuperNOVAS` planet provider.
 ///
 /// Most users should implement [`PlanetProvider`] instead — it exposes the
 /// natural Rust interface (return a state vector) and the blanket impl here
@@ -229,7 +229,7 @@ impl<T: PlanetProvider> EphemerisProvider for T {
 /// Implement `EphemerisProvider` directly only when you need a non-standard
 /// registration path, as CALCEPH does via `novas_use_calceph`.
 pub trait EphemerisProvider: Send + 'static {
-    /// Install this provider as the process-global SuperNOVAS planet source.
+    /// Install this provider as the process-global `SuperNOVAS` planet source.
     ///
     /// Must call [`sys::set_planet_provider`] and/or
     /// [`sys::set_planet_provider_hp`] (for split-JD high-accuracy queries) to
@@ -248,7 +248,7 @@ pub trait EphemerisProvider: Send + 'static {
 // ── Ephemeris wrapper ─────────────────────────────────────────────────────────
 
 /// A loaded planetary ephemeris, ready to install as the process-global
-/// SuperNOVAS planet provider.
+/// `SuperNOVAS` planet provider.
 ///
 /// Construct via [`Ephemeris::open`] (when exactly one backend feature is
 /// enabled) or [`Ephemeris::from_provider`] (with any [`EphemerisProvider`],
@@ -297,13 +297,13 @@ impl Ephemeris {
         Ok(Ephemeris::from_provider(AniseEphemeris::open(path)?))
     }
 
-    /// Install as the process-global SuperNOVAS planet provider.
+    /// Install as the process-global `SuperNOVAS` planet provider.
     ///
     /// Call once at process start, before any
     /// [`crate::Frame::new`] with [`crate::Accuracy::Full`].
     ///
     /// *CALCEPH:* a second call replaces the previous handle, which is then
-    /// leaked because SuperNOVAS may still reference it.
+    /// leaked because `SuperNOVAS` may still reference it.
     ///
     /// *ANISE:* a second call returns [`crate::Error::Ephemeris`]; the
     /// almanac is stored in a `OnceLock`. Restart the process to switch

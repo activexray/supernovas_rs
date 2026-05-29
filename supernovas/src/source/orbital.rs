@@ -11,7 +11,7 @@ use crate::error::{Error, Result};
 ///
 /// Angles are in degrees; distances in AU; time in Julian days (TDB).
 /// The optional fields (`mean_daily_motion`, `apsis_precession_years`,
-/// `node_precession_years`) default to zero, which tells SuperNOVAS to
+/// `node_precession_years`) default to zero, which tells `SuperNOVAS` to
 /// either derive them from the semi-major axis or ignore the precession.
 ///
 /// # Example — Halley's comet (approximate)
@@ -168,8 +168,14 @@ impl OrbitalObject {
 
         let mut obj = MaybeUninit::<object>::zeroed();
         // SAFETY: make_orbital_object fully initializes *obj on a zero return.
-        let rc =
-            unsafe { make_orbital_object(name_cs.as_ptr(), num as _, &orbit, obj.as_mut_ptr()) };
+        let rc = unsafe {
+            make_orbital_object(
+                name_cs.as_ptr(),
+                num as _,
+                &raw const orbit,
+                obj.as_mut_ptr(),
+            )
+        };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
@@ -180,6 +186,7 @@ impl OrbitalObject {
 
     /// The object number this source was constructed with.
     #[allow(clippy::useless_conversion)] // c_long = i32 on 32-bit targets
+    #[must_use]
     pub fn number(&self) -> i64 {
         i64::from(self.object.number)
     }

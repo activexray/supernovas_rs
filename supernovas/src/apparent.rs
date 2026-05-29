@@ -2,7 +2,7 @@
 //!
 //! An [`Apparent`] bundles the frame the place was computed in, the chosen
 //! [`ReferenceSystem`], and the resulting `(α, δ, distance, rv)` from
-//! SuperNOVAS's `novas_sky_pos`. From there you can read out RA/Dec in the
+//! `SuperNOVAS`'s `novas_sky_pos`. From there you can read out RA/Dec in the
 //! source system or convert to horizontal coordinates.
 
 use core::mem::MaybeUninit;
@@ -79,31 +79,36 @@ pub struct Apparent {
 
 impl Apparent {
     /// The reference system the underlying RA/Dec are expressed in.
+    #[must_use]
     pub fn reference_system(self) -> ReferenceSystem {
         self.system
     }
 
     /// The frame this apparent place was computed in.
+    #[must_use]
     pub fn frame(self) -> Frame {
         self.frame
     }
 
     /// Right ascension in the apparent's reference system.
+    #[must_use]
     pub fn ra(self) -> TimeAngle {
         TimeAngle::from_hours(self.sky.ra).expect("sky_pos.ra is finite by construction")
     }
 
     /// Declination in the apparent's reference system.
+    #[must_use]
     pub fn dec(self) -> Angle {
         Angle::from_degrees(self.sky.dec).expect("sky_pos.dec is finite by construction")
     }
 
     /// Geometric distance to the source. Returns `0` (an unrepresentable
-    /// distance) for sidereal sources, matching the SuperNOVAS convention.
+    /// distance) for sidereal sources, matching the `SuperNOVAS` convention.
     ///
     /// For catalog stars, treat this as "not available" — the underlying C
     /// API doesn't carry parallax distance through `sky_pos`. Use
     /// `CatalogEntry`'s parallax accessor if you need the distance.
+    #[must_use]
     pub fn distance(self) -> Coordinate {
         // sky_pos.dis is in AU. NaN-safe via Coordinate's constructor.
         Coordinate::from_au(self.sky.dis)
@@ -111,6 +116,7 @@ impl Apparent {
     }
 
     /// Apparent radial velocity (positive = receding).
+    #[must_use]
     pub fn radial_velocity(self) -> ScalarVelocity {
         ScalarVelocity::from_km_per_s(self.sky.rv).expect("sky_pos.rv is finite by construction")
     }
@@ -121,6 +127,7 @@ impl Apparent {
     /// For date-dependent systems (MOD, TOD, CIRS) the equinox carries the
     /// frame's TT Julian date. For date-independent systems (ICRS, J2000,
     /// GCRS) the equinox is the pre-built constant.
+    #[must_use]
     pub fn equinox(self) -> Equinox {
         let jd = self.frame.tt_jd();
         match self.system {
@@ -142,6 +149,7 @@ impl Apparent {
     /// No transformation happens — this is just re-tagging the underlying
     /// RA/Dec with a typed equinox derived from
     /// [`Self::reference_system`] and the frame's TT date.
+    #[must_use]
     pub fn equatorial(self) -> Equatorial {
         Equatorial::new(self.ra(), self.dec(), self.equinox())
     }
@@ -194,8 +202,8 @@ impl Apparent {
                 self.sky.ra,
                 self.sky.dec,
                 refraction.to_sys(),
-                &mut az_deg as *mut f64,
-                &mut el_deg as *mut f64,
+                &raw mut az_deg,
+                &raw mut el_deg,
             )
         };
         if rc != 0 {

@@ -1,7 +1,7 @@
 //! Atmospheric refraction models.
 //!
 //! Refraction lifts the apparent elevation of sources above their geometric
-//! position. SuperNOVAS exposes a few built-in models; this module wraps
+//! position. `SuperNOVAS` exposes a few built-in models; this module wraps
 //! them as a simple enum, converting at the FFI boundary into the
 //! C-side function-pointer typedef.
 
@@ -23,7 +23,7 @@ pub enum Refraction {
     #[default]
     None,
 
-    /// SuperNOVAS' standard-atmosphere model. Independent of any per-site
+    /// `SuperNOVAS`' standard-atmosphere model. Independent of any per-site
     /// weather supplied through the [`crate::Frame`]'s observer — useful as
     /// a quick approximation when you don't have local measurements.
     Standard,
@@ -43,7 +43,7 @@ impl Refraction {
     /// Convert to the C-side `RefractionModel` function-pointer typedef.
     ///
     /// `None` maps to a null callback (no refraction); the other variants
-    /// map to the corresponding built-in SuperNOVAS function. The fn-item
+    /// map to the corresponding built-in `SuperNOVAS` function. The fn-item
     /// → fn-pointer coercion happens automatically in the `Some(_)` arms
     /// because the target type (`RefractionModel`) pins the signature.
     pub(crate) fn to_sys(self) -> RefractionModel {

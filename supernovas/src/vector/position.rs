@@ -20,11 +20,19 @@ pub struct Position([f64; 3]);
 
 impl Position {
     /// Construct from x, y, z in meters.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if any component is not finite.
     pub fn from_meters(x: f64, y: f64, z: f64) -> Result<Self> {
         Self::from_meters_array([x, y, z])
     }
 
     /// Construct from an `[x, y, z]` array in meters.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if any component is not finite.
     pub fn from_meters_array(c: [f64; 3]) -> Result<Self> {
         if c.iter().any(|v| !v.is_finite()) {
             return Err(Error::NotFinite);
@@ -33,47 +41,81 @@ impl Position {
     }
 
     /// Construct from x, y, z in astronomical units.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if any resulting component is not finite.
     pub fn from_au(x: f64, y: f64, z: f64) -> Result<Self> {
         Self::from_meters_array([x * unit::AU, y * unit::AU, z * unit::AU])
     }
 
     /// Construct from x, y, z in kilometers.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if any resulting component is not finite.
     pub fn from_km(x: f64, y: f64, z: f64) -> Result<Self> {
         Self::from_meters_array([x * unit::KM, y * unit::KM, z * unit::KM])
     }
 
     /// Construct from three typed [`Coordinate`] components. Infallible: the
     /// inputs are already validated as finite.
+    #[must_use]
     pub fn from_components(c: [Coordinate; 3]) -> Self {
         Position([c[0].m(), c[1].m(), c[2].m()])
     }
 
     /// The x component.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic: a `Position`'s components are always finite (enforced
+    /// at construction).
+    #[must_use]
     pub fn x(self) -> Coordinate {
         Coordinate::from_meters(self.0[0]).expect("Position components are finite by construction")
     }
 
     /// The y component.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic: a `Position`'s components are always finite (enforced
+    /// at construction).
+    #[must_use]
     pub fn y(self) -> Coordinate {
         Coordinate::from_meters(self.0[1]).expect("Position components are finite by construction")
     }
 
     /// The z component.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic: a `Position`'s components are always finite (enforced
+    /// at construction).
+    #[must_use]
     pub fn z(self) -> Coordinate {
         Coordinate::from_meters(self.0[2]).expect("Position components are finite by construction")
     }
 
     /// The three components as typed [`Coordinate`] values.
+    #[must_use]
     pub fn components(self) -> [Coordinate; 3] {
         [self.x(), self.y(), self.z()]
     }
 
     /// The raw `[x, y, z]` array in meters. Useful for FFI.
+    #[must_use]
     pub fn as_meters(self) -> [f64; 3] {
         self.0
     }
 
     /// Distance from the origin (vector magnitude).
+    ///
+    /// # Panics
+    ///
+    /// Does not panic: the magnitude of a finite vector is finite.
+    #[must_use]
     pub fn distance(self) -> Coordinate {
         let [x, y, z] = self.0;
         Coordinate::from_meters((x * x + y * y + z * z).sqrt())
@@ -81,6 +123,7 @@ impl Position {
     }
 
     /// Dot product with another position, in meters².
+    #[must_use]
     pub fn dot(self, other: Position) -> f64 {
         let a = self.0;
         let b = other.0;
@@ -88,6 +131,7 @@ impl Position {
     }
 
     /// Negate (returns the position vector pointing the opposite direction).
+    #[must_use]
     pub fn inv(self) -> Position {
         -self
     }

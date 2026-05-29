@@ -48,39 +48,46 @@ impl Velocity {
 
     /// Construct from three typed [`ScalarVelocity`] components. Infallible:
     /// the inputs are already validated as finite.
+    #[must_use]
     pub fn from_components(c: [ScalarVelocity; 3]) -> Self {
         Velocity([c[0].m_per_s(), c[1].m_per_s(), c[2].m_per_s()])
     }
 
     /// The x component.
+    #[must_use]
     pub fn x(self) -> ScalarVelocity {
         ScalarVelocity::from_m_per_s(self.0[0])
             .expect("Velocity components are finite by construction")
     }
 
     /// The y component.
+    #[must_use]
     pub fn y(self) -> ScalarVelocity {
         ScalarVelocity::from_m_per_s(self.0[1])
             .expect("Velocity components are finite by construction")
     }
 
     /// The z component.
+    #[must_use]
     pub fn z(self) -> ScalarVelocity {
         ScalarVelocity::from_m_per_s(self.0[2])
             .expect("Velocity components are finite by construction")
     }
 
     /// The three components as typed [`ScalarVelocity`] values.
+    #[must_use]
     pub fn components(self) -> [ScalarVelocity; 3] {
         [self.x(), self.y(), self.z()]
     }
 
     /// The raw `[x, y, z]` array in meters per second. Useful for FFI.
+    #[must_use]
     pub fn as_mps(self) -> [f64; 3] {
         self.0
     }
 
     /// Speed (vector magnitude).
+    #[must_use]
     pub fn speed(self) -> ScalarVelocity {
         let [x, y, z] = self.0;
         ScalarVelocity::from_m_per_s((x * x + y * y + z * z).sqrt())
@@ -88,6 +95,7 @@ impl Velocity {
     }
 
     /// Dot product with another velocity, in (m/s)².
+    #[must_use]
     pub fn dot(self, other: Velocity) -> f64 {
         let a = self.0;
         let b = other.0;
@@ -95,11 +103,13 @@ impl Velocity {
     }
 
     /// Negate (returns the velocity pointing the opposite direction).
+    #[must_use]
     pub fn inv(self) -> Velocity {
         -self
     }
 
     /// The position reached after travelling for the given interval.
+    #[must_use]
     pub fn travel(self, dt: Interval) -> Position {
         self * dt
     }

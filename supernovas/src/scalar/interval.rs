@@ -31,6 +31,10 @@ pub struct Interval {
 
 impl Interval {
     /// Construct from a number of seconds in the given timescale.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `seconds` is not finite.
     pub fn from_seconds(seconds: f64, timescale: novas_timescale) -> Result<Self> {
         if !seconds.is_finite() {
             return Err(Error::NotFinite);
@@ -39,81 +43,115 @@ impl Interval {
     }
 
     /// Construct from milliseconds (in TT).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_millis(ms: f64) -> Result<Self> {
         Self::from_seconds(ms * unit::MS, NOVAS_TT)
     }
 
     /// Construct from minutes (in TT).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_minutes(min: f64) -> Result<Self> {
         Self::from_seconds(min * unit::MIN, NOVAS_TT)
     }
 
     /// Construct from hours (in TT).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_hours(hours: f64) -> Result<Self> {
         Self::from_seconds(hours * unit::HOUR, NOVAS_TT)
     }
 
     /// Construct from days (in TT).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_days(days: f64) -> Result<Self> {
         Self::from_seconds(days * unit::DAY, NOVAS_TT)
     }
 
     /// Construct from Julian years (in TT).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_julian_years(years: f64) -> Result<Self> {
         Self::from_seconds(years * unit::JULIAN_YEAR, NOVAS_TT)
     }
 
     /// Construct from Julian centuries (in TT).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
     pub fn from_julian_centuries(cy: f64) -> Result<Self> {
         Self::from_seconds(cy * unit::JULIAN_CENTURY, NOVAS_TT)
     }
 
     /// The interval's timescale.
+    #[must_use]
     pub fn timescale(self) -> novas_timescale {
         self.timescale
     }
 
     /// The interval in milliseconds.
+    #[must_use]
     pub fn millis(self) -> f64 {
         self.seconds / unit::MS
     }
 
     /// The interval in seconds.
+    #[must_use]
     pub fn seconds(self) -> f64 {
         self.seconds
     }
 
     /// The interval in minutes.
+    #[must_use]
     pub fn minutes(self) -> f64 {
         self.seconds / unit::MIN
     }
 
     /// The interval in hours.
+    #[must_use]
     pub fn hours(self) -> f64 {
         self.seconds / unit::HOUR
     }
 
     /// The interval in days.
+    #[must_use]
     pub fn days(self) -> f64 {
         self.seconds / unit::DAY
     }
 
     /// The interval in weeks.
+    #[must_use]
     pub fn weeks(self) -> f64 {
         self.seconds / unit::WEEK
     }
 
     /// The interval in tropical years (at J2000).
+    #[must_use]
     pub fn years(self) -> f64 {
         self.seconds / unit::YEAR
     }
 
     /// The interval in Julian years.
+    #[must_use]
     pub fn julian_years(self) -> f64 {
         self.seconds / unit::JULIAN_YEAR
     }
 
     /// The interval in Julian centuries.
+    #[must_use]
     pub fn julian_centuries(self) -> f64 {
         self.seconds / unit::JULIAN_CENTURY
     }

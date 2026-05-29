@@ -22,6 +22,7 @@ pub struct Ecliptic {
 
 impl Ecliptic {
     /// Construct from typed longitude and latitude.
+    #[must_use]
     pub fn new(longitude: Angle, latitude: Angle, system: Equinox) -> Self {
         Ecliptic {
             sph: Spherical::new(longitude, latitude),
@@ -48,26 +49,31 @@ impl Ecliptic {
     }
 
     /// Ecliptic longitude `λ` (in `(-π, π]`).
+    #[must_use]
     pub fn longitude(self) -> Angle {
         self.sph.longitude()
     }
 
     /// Ecliptic latitude `β` (in `[-π/2, π/2]`).
+    #[must_use]
     pub fn latitude(self) -> Angle {
         self.sph.latitude()
     }
 
     /// The equinox these coordinates are measured in.
+    #[must_use]
     pub fn system(self) -> Equinox {
         self.system
     }
 
     /// The bare [`Spherical`] view.
+    #[must_use]
     pub fn as_spherical(self) -> Spherical {
         self.sph
     }
 
     /// Great-circle angular separation between this direction and `other`.
+    #[must_use]
     pub fn distance_to(self, other: Ecliptic) -> Angle {
         self.sph.distance_to(other.sph)
     }
@@ -92,8 +98,8 @@ impl Ecliptic {
                 accuracy.to_sys(),
                 self.longitude().deg(),
                 self.latitude().deg(),
-                &mut ra_h,
-                &mut dec_d,
+                &raw mut ra_h,
+                &raw mut dec_d,
             )
         };
         if rc != 0 {

@@ -17,6 +17,10 @@ pub struct Coordinate(f64);
 
 impl Coordinate {
     /// Construct from meters.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `m` is not finite.
     pub fn from_meters(m: f64) -> Result<Self> {
         if !m.is_finite() {
             return Err(Error::NotFinite);
@@ -25,41 +29,74 @@ impl Coordinate {
     }
 
     /// Construct from kilometers.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting distance is not finite.
     pub fn from_km(km: f64) -> Result<Self> {
         Self::from_meters(km * unit::KM)
     }
 
     /// Construct from astronomical units.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting distance is not finite.
     pub fn from_au(au: f64) -> Result<Self> {
         Self::from_meters(au * unit::AU)
     }
 
     /// Construct from light-years.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting distance is not finite.
     pub fn from_lyr(lyr: f64) -> Result<Self> {
         Self::from_meters(lyr * unit::LYR)
     }
 
     /// Construct from parsecs.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting distance is not finite.
     pub fn from_pc(pc: f64) -> Result<Self> {
         Self::from_meters(pc * unit::PC)
     }
 
     /// Construct from kiloparsecs.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting distance is not finite.
     pub fn from_kpc(kpc: f64) -> Result<Self> {
         Self::from_meters(kpc * unit::KPC)
     }
 
     /// Construct from megaparsecs.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting distance is not finite.
     pub fn from_mpc(mpc: f64) -> Result<Self> {
         Self::from_meters(mpc * unit::MPC)
     }
 
     /// Construct from gigaparsecs.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting distance is not finite.
     pub fn from_gpc(gpc: f64) -> Result<Self> {
         Self::from_meters(gpc * unit::GPC)
     }
 
     /// Construct from an annual parallax angle: `d = 1 AU / tan(parallax)`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `parallax` is zero or the resulting
+    /// distance is not finite.
     pub fn from_parallax(parallax: Angle) -> Result<Self> {
         let p = parallax.rad();
         if p == 0.0 {
@@ -69,51 +106,64 @@ impl Coordinate {
     }
 
     /// The distance in meters.
+    #[must_use]
     pub fn m(self) -> f64 {
         self.0
     }
 
     /// The distance in kilometers.
+    #[must_use]
     pub fn km(self) -> f64 {
         self.0 / unit::KM
     }
 
     /// The distance in astronomical units.
+    #[must_use]
     pub fn au(self) -> f64 {
         self.0 / unit::AU
     }
 
     /// The distance in light-years.
+    #[must_use]
     pub fn lyr(self) -> f64 {
         self.0 / unit::LYR
     }
 
     /// The distance in parsecs.
+    #[must_use]
     pub fn pc(self) -> f64 {
         self.0 / unit::PC
     }
 
     /// The distance in kiloparsecs.
+    #[must_use]
     pub fn kpc(self) -> f64 {
         self.0 / unit::KPC
     }
 
     /// The distance in megaparsecs.
+    #[must_use]
     pub fn mpc(self) -> f64 {
         self.0 / unit::MPC
     }
 
     /// The distance in gigaparsecs.
+    #[must_use]
     pub fn gpc(self) -> f64 {
         self.0 / unit::GPC
     }
 
     /// Absolute magnitude.
+    #[must_use]
     pub fn abs(self) -> Coordinate {
         Coordinate(self.0.abs())
     }
 
     /// The annual parallax angle implied by this distance.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the distance is zero.
     pub fn parallax(self) -> Result<Angle> {
         if self.0 == 0.0 {
             return Err(Error::NotFinite);

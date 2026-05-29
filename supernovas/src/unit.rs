@@ -61,7 +61,7 @@ pub const KM: f64 = NOVAS_KM;
 ///
 /// The upstream `NOVAS_AU` macro is not exposed in our bindings, so we mirror
 /// the literal from `include/novas.h`.
-pub const AU: f64 = 1.495978707e+11;
+pub const AU: f64 = 1.495_978_707e+11;
 
 /// 1 parsec in meters (= 1 AU / 1 arc-second).
 pub const PC: f64 = AU / ARCSEC;

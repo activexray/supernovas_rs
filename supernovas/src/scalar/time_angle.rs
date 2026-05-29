@@ -28,7 +28,11 @@ use crate::{
 pub struct TimeAngle(f64);
 
 impl TimeAngle {
-    /// Construct from radians. Returns [`Error::NotFinite`] for NaN or infinity.
+    /// Construct from radians.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `rad` is NaN or infinite.
     pub fn from_radians(rad: f64) -> Result<Self> {
         if !rad.is_finite() {
             return Err(Error::NotFinite);
@@ -37,46 +41,64 @@ impl TimeAngle {
     }
 
     /// Construct from hours of time (`[0, 24)` after normalization).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting value is not finite.
     pub fn from_hours(hours: f64) -> Result<Self> {
         Self::from_radians(hours * unit::HOUR_ANGLE)
     }
 
     /// Construct from minutes of time (`[0, 1440)` after normalization).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting value is not finite.
     pub fn from_minutes(minutes: f64) -> Result<Self> {
         Self::from_hours(minutes / 60.0)
     }
 
     /// Construct from seconds of time (`[0, 86400)` after normalization).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting value is not finite.
     pub fn from_seconds(seconds: f64) -> Result<Self> {
         Self::from_hours(seconds / 3600.0)
     }
 
     /// Convert an [`Angle`] (in `(-π, π]`) to a `TimeAngle` (in `[0, 2π)`).
+    #[must_use]
     pub fn from_angle(angle: Angle) -> Self {
         TimeAngle(normalize(angle.rad()))
     }
 
     /// The value in radians, in `[0, 2π)`.
+    #[must_use]
     pub fn rad(self) -> f64 {
         self.0
     }
 
     /// The value in degrees, in `[0, 360)`.
+    #[must_use]
     pub fn deg(self) -> f64 {
         self.0 / unit::DEG
     }
 
     /// The value as hours of time, in `[0, 24)`.
+    #[must_use]
     pub fn hours(self) -> f64 {
         self.0 / unit::HOUR_ANGLE
     }
 
     /// The value as minutes of time, in `[0, 1440)`.
+    #[must_use]
     pub fn minutes(self) -> f64 {
         self.hours() * 60.0
     }
 
     /// The value as seconds of time, in `[0, 86400)`.
+    #[must_use]
     pub fn seconds(self) -> f64 {
         self.hours() * 3600.0
     }

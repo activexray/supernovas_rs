@@ -15,6 +15,10 @@ pub struct Pressure(f64);
 
 impl Pressure {
     /// Construct from pascals.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `pa` is not finite.
     pub fn from_pa(pa: f64) -> Result<Self> {
         if !pa.is_finite() {
             return Err(Error::NotFinite);
@@ -23,83 +27,119 @@ impl Pressure {
     }
 
     /// Construct from hectopascals.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting pressure is not finite.
     pub fn from_hpa(hpa: f64) -> Result<Self> {
         Self::from_pa(hpa * unit::HPA)
     }
 
     /// Construct from millibars (= hectopascals).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting pressure is not finite.
     pub fn from_mbar(mbar: f64) -> Result<Self> {
         Self::from_pa(mbar * unit::MBAR)
     }
 
     /// Construct from bars.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting pressure is not finite.
     pub fn from_bar(bar: f64) -> Result<Self> {
         Self::from_pa(bar * unit::BAR)
     }
 
     /// Construct from kilopascals.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting pressure is not finite.
     pub fn from_kpa(kpa: f64) -> Result<Self> {
         Self::from_pa(kpa * unit::KPA)
     }
 
     /// Construct from megapascals.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting pressure is not finite.
     pub fn from_mpa(mpa: f64) -> Result<Self> {
         Self::from_pa(mpa * unit::MPA)
     }
 
     /// Construct from torr (millimeters of mercury).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting pressure is not finite.
     pub fn from_torr(torr: f64) -> Result<Self> {
         Self::from_pa(torr * unit::TORR)
     }
 
     /// Construct from standard atmospheres.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting pressure is not finite.
     pub fn from_atm(atm: f64) -> Result<Self> {
         Self::from_pa(atm * unit::ATM)
     }
 
     /// The pressure in pascals.
+    #[must_use]
     pub fn pa(self) -> f64 {
         self.0
     }
 
     /// The pressure in hectopascals.
+    #[must_use]
     pub fn hpa(self) -> f64 {
         self.0 / unit::HPA
     }
 
     /// The pressure in millibars (= hectopascals).
+    #[must_use]
     pub fn mbar(self) -> f64 {
         self.0 / unit::MBAR
     }
 
     /// The pressure in bars.
+    #[must_use]
     pub fn bar(self) -> f64 {
         self.0 / unit::BAR
     }
 
     /// The pressure in kilopascals.
+    #[must_use]
     pub fn kpa(self) -> f64 {
         self.0 / unit::KPA
     }
 
     /// The pressure in megapascals.
+    #[must_use]
     pub fn mpa(self) -> f64 {
         self.0 / unit::MPA
     }
 
     /// The pressure in torr.
+    #[must_use]
     pub fn torr(self) -> f64 {
         self.0 / unit::TORR
     }
 
     /// The pressure in standard atmospheres.
+    #[must_use]
     pub fn atm(self) -> f64 {
         self.0 / unit::ATM
     }
 }
 
 impl fmt::Display for Pressure {
-    /// Renders as millibars (≡ hectopascals), the convention SuperNOVAS
+    /// Renders as millibars (≡ hectopascals), the convention `SuperNOVAS`
     /// uses internally for atmospheric pressure. Use `{:.N}` to control
     /// decimal places (default 1).
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

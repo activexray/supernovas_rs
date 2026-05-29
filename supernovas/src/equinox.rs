@@ -103,11 +103,13 @@ impl Equinox {
     }
 
     /// The system's name (e.g. `"ICRS"`, `"J2000"`, `"B1950"`).
+    #[must_use]
     pub fn name(self) -> &'static str {
         self.name
     }
 
     /// The reference-system tag.
+    #[must_use]
     pub fn system(self) -> ReferenceSystem {
         self.system
     }
@@ -115,33 +117,39 @@ impl Equinox {
     /// The TT-based Julian date that pins down the system's date-dependent
     /// orientation. For date-independent systems (ICRS) this is a
     /// placeholder.
+    #[must_use]
     pub fn jd(self) -> f64 {
         self.jd_tt
     }
 
     /// The TT-based Modified Julian Date (`jd - 2400000.5`).
+    #[must_use]
     pub fn mjd(self) -> f64 {
         self.jd_tt - NOVAS_JD_MJD0
     }
 
     /// The Julian-year epoch (e.g. `2000.0` for J2000, `2026.5` for an
     /// equinox at mid-2026).
+    #[must_use]
     pub fn epoch(self) -> f64 {
         2000.0 + (self.jd_tt - NOVAS_JD_J2000) / NOVAS_JULIAN_YEAR_DAYS
     }
 
     /// `true` for ICRS-like systems (ICRS, GCRS).
+    #[must_use]
     pub fn is_icrs(self) -> bool {
         matches!(self.system, ReferenceSystem::Icrs | ReferenceSystem::Gcrs)
     }
 
     /// `true` for mean-of-date systems (MOD, J2000 — both use the
     /// dynamical *mean* equator).
+    #[must_use]
     pub fn is_mod(self) -> bool {
         matches!(self.system, ReferenceSystem::Mod | ReferenceSystem::J2000)
     }
 
     /// `true` for true-of-date systems (TOD; TIRS uses true equator too).
+    #[must_use]
     pub fn is_true(self) -> bool {
         matches!(self.system, ReferenceSystem::Tod | ReferenceSystem::Tirs)
     }

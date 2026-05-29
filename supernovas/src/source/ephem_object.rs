@@ -64,6 +64,7 @@ impl EphemObject {
 
     /// The NAIF ID this object was constructed with.
     #[allow(clippy::useless_conversion)] // c_long = i32 on 32-bit targets
+    #[must_use]
     pub fn naif_id(&self) -> i64 {
         i64::from(self.object.number)
     }

@@ -12,6 +12,10 @@ pub struct Temperature(f64);
 
 impl Temperature {
     /// Construct from degrees Celsius.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `c` is not finite.
     pub fn from_celsius(c: f64) -> Result<Self> {
         if !c.is_finite() {
             return Err(Error::NotFinite);
@@ -20,26 +24,37 @@ impl Temperature {
     }
 
     /// Construct from kelvin.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `k` is not finite.
     pub fn from_kelvin(k: f64) -> Result<Self> {
         Self::from_celsius(k - 273.15)
     }
 
     /// Construct from degrees Fahrenheit.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if `f` is not finite.
     pub fn from_fahrenheit(f: f64) -> Result<Self> {
         Self::from_celsius((f - 32.0) * 5.0 / 9.0)
     }
 
     /// The temperature in degrees Celsius.
+    #[must_use]
     pub fn celsius(self) -> f64 {
         self.0
     }
 
     /// The temperature in kelvin.
+    #[must_use]
     pub fn kelvin(self) -> f64 {
         self.0 + 273.15
     }
 
     /// The temperature in degrees Fahrenheit.
+    #[must_use]
     pub fn fahrenheit(self) -> f64 {
         self.0 * 9.0 / 5.0 + 32.0
     }

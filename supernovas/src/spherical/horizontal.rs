@@ -18,6 +18,7 @@ pub struct Horizontal(Spherical);
 
 impl Horizontal {
     /// Construct from typed azimuth and elevation.
+    #[must_use]
     pub fn new(azimuth: Angle, elevation: Angle) -> Self {
         Horizontal(Spherical::new(azimuth, elevation))
     }
@@ -33,17 +34,20 @@ impl Horizontal {
     }
 
     /// Azimuth (longitude analog).
+    #[must_use]
     pub fn azimuth(self) -> Angle {
         self.0.longitude()
     }
 
     /// Elevation (latitude analog).
+    #[must_use]
     pub fn elevation(self) -> Angle {
         self.0.latitude()
     }
 
     /// Zenith angle: complement of the elevation, in `[0, π]`. Zero looks
     /// straight up, π/2 is on the horizon.
+    #[must_use]
     pub fn zenith_angle(self) -> Angle {
         Angle::from_radians(FRAC_PI_2 - self.elevation().rad())
             .expect("FRAC_PI_2 minus a finite angle is finite")
@@ -51,11 +55,13 @@ impl Horizontal {
 
     /// The bare [`Spherical`] view for cases that don't care about the
     /// reference system.
+    #[must_use]
     pub fn as_spherical(self) -> Spherical {
         self.0
     }
 
     /// Great-circle angular separation between this direction and `other`.
+    #[must_use]
     pub fn distance_to(self, other: Horizontal) -> Angle {
         self.0.distance_to(other.0)
     }
@@ -64,6 +70,7 @@ impl Horizontal {
     /// horizon-aligned axes (x toward north, y toward east, z toward zenith
     /// — but be careful: the underlying transform uses the spherical
     /// convention with x toward `lon=0, lat=0`).
+    #[must_use]
     pub fn xyz(self, distance: Coordinate) -> Position {
         self.0.xyz(distance)
     }

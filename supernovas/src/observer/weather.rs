@@ -41,6 +41,7 @@ impl Weather {
 
     /// "Standard" atmosphere often used as a starting default: 15 °C,
     /// 1013.25 hPa, 50 % relative humidity.
+    #[must_use]
     pub fn standard() -> Self {
         Weather {
             temperature: Some(Temperature::from_celsius(15.0).expect("15 °C is finite")),
@@ -50,16 +51,19 @@ impl Weather {
     }
 
     /// Temperature at the site, if known.
+    #[must_use]
     pub fn temperature(self) -> Option<Temperature> {
         self.temperature
     }
 
     /// Atmospheric pressure at the site, if known.
+    #[must_use]
     pub fn pressure(self) -> Option<Pressure> {
         self.pressure
     }
 
     /// Relative humidity in percent (0–100), if known.
+    #[must_use]
     pub fn humidity_percent(self) -> Option<f64> {
         self.humidity_percent
     }
