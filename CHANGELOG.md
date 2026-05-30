@@ -9,12 +9,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Breaking
 
-- **`Error` is no longer `Copy`** — it now derives `Clone` only. The `Ffi` variant under `std`
-  carries a `String`, making `Copy` impossible. Code that relied on implicitly copying an `Error`
-  must be updated to `.clone()` explicitly.
+- **`Error` is no longer `Copy`** — it now derives `Clone` only. The `Ffi` variant carries a
+  `FfiMessage` (`heapless::String<128>`), which is not `Copy`. Code that relied on implicitly
+  copying an `Error` must be updated to `.clone()` explicitly.
 - **`Error::Ffi` shape changed** — previously `Ffi { code: i32, os_error: OsError }` (both
-  features), now `Ffi(String)` under `std` and `Ffi(i32)` under `no_std`. Match arms and
-  struct-update syntax referencing the old fields will fail. `OsError` is removed entirely.
+  features), now `Ffi { code: i32, message: FfiMessage }` for both `std` and `no_std`. Match
+  arms and struct-update syntax referencing the old fields will fail. `OsError` is removed
+  entirely.
 - **`supernovas-ffi` now requires SuperNOVAS ≥ 1.7.0** (up from ≥ 1.6.0) for system builds.
   Vendored builds automatically use the bundled v1.7 submodule.
 - **`Timescale` enum replaces `novas_timescale` in the public API** — `Time::from_jd`,
@@ -45,13 +46,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   (wraps `novas_offset_time`).
 - **`Time - Time → Interval`** — TT-second difference between two instants.
 
-- **`Error::Ffi` now carries a human-readable description** (under `std`). The display text is
+- **`Error::Ffi` now carries a human-readable description**. The `message` field is a
+  heap-free `FfiMessage` inline string, identical under `std` and `no_std`. The display text is
   the captured error description rather than a bare numeric code; e.g.
-  `"ANISE could not translate NAIF -31: …"` instead of `"FFI call failed (code 83): no errno"`.
-  The description is captured automatically from two sources:
+  `"ANISE could not translate NAIF -31: …"` instead of `"FFI call returned an error (code 83)"`.
+  Under `std`, the description is captured automatically from two sources:
   - Rust ephemeris callbacks (ANISE, CALCEPH) via `set_provider_error` — always available.
   - The SuperNOVAS C library via the new `novas_set_error_handler` hook — available when
     `enable_debug_mode(DebugMode::On)` is called before the failing operation.
+  Under `no_std`, the message falls back to a generic description (no capture sources exist).
 - **`enable_debug_mode(DebugMode)` / `get_debug_mode() -> DebugMode`** — new public API in
   `supernovas`. Calling `enable_debug_mode(DebugMode::On)` installs a silent capture handler
   (via SuperNOVAS 1.7's `novas_set_error_handler`) so that `novas_error()` descriptions are
@@ -74,6 +77,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `libc` feature.
 - **`track_ephem` example** — corrected observation date to 2020-01-01 (MJD 58849), within the
   bundled Voyager 1 SPK coverage window (1977–2020).
+- **`Error::OutOfRange(&'static str)`** — new public variant for values that are finite but
+  outside the physically valid range of a quantity (e.g. geodetic latitude beyond ±90°,
+  declination beyond ±90°). The payload names the offending quantity.
+- **`FFI_MSG_CAP: usize`** and **`FfiMessage`** — public constant and type alias
+  (`heapless::String<FFI_MSG_CAP>`) representing the inline, heap-free error message carried
+  inside `Error::Ffi`. Exposed so callers can allocate matching buffers or inspect the capacity.
+- **`set_provider_error(impl Display)`** / **`take_provider_error() -> Option<FfiMessage>`** —
+  public API for wiring Rust ephemeris callbacks into `Error::Ffi`. Call `set_provider_error`
+  inside a provider callback before returning a non-zero code; `Error::ffi` drains it
+  automatically. `take_provider_error` is also available for callers that need the description
+  separately from the error value.
 
 ### Changed
 
