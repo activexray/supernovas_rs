@@ -162,6 +162,59 @@ impl Time {
         Ok(Time(unsafe { ts.assume_init() }))
     }
 
+    /// Construct from a Julian date in the given timescale, automatically
+    /// fetching leap seconds and UT1−UTC from IERS.
+    ///
+    /// Equivalent to `from_jd` but passes the sentinel values (`leap = -1`,
+    /// `dut1 = NAN`) that tell SuperNOVAS to query the IERS servers. Requires
+    /// the `eop` feature (which compiles in CURL support) and network access.
+    ///
+    /// Pass the raw interpolated IERS Bulletin values for `dut1` if you supply
+    /// them manually; do **not** pre-apply diurnal libration or ocean-tide
+    /// corrections — `novas_set_time` applies those internally.
+    #[cfg(feature = "eop")]
+    pub fn from_jd_auto_eop(scale: Timescale, jd: f64) -> Result<Self> {
+        if !jd.is_finite() {
+            return Err(Error::NotFinite);
+        }
+        let ijd = jd.floor() as i64;
+        let fjd = jd - ijd as f64;
+        let mut ts = MaybeUninit::<novas_timespec>::zeroed();
+        // SAFETY: NAN dut1 is the sentinel for auto-fetch; -1 leap_seconds is
+        // ignored when dut1 is NAN (see SuperNOVAS novas_set_time docs).
+        let rc = unsafe {
+            novas_set_split_time(scale.to_sys(), ijd as _, fjd, -1, f64::NAN, ts.as_mut_ptr())
+        };
+        if rc != 0 {
+            return Err(Error::ffi(rc));
+        }
+        Ok(Time(unsafe { ts.assume_init() }))
+    }
+
+    /// Convenience: TT Julian date with IERS auto-fetch.
+    #[cfg(feature = "eop")]
+    pub fn from_tt_jd_auto_eop(jd_tt: f64) -> Result<Self> {
+        Self::from_jd_auto_eop(Timescale::Tt, jd_tt)
+    }
+
+    /// Construct from the system clock with IERS auto-fetch.
+    ///
+    /// Combines `now` and auto-fetch: passes `NAN` for `dut1` and `-1` for
+    /// `leap_seconds` so that SuperNOVAS fetches both from IERS. Requires the
+    /// `eop` feature and network access.
+    #[cfg(all(feature = "std", feature = "eop"))]
+    pub fn now_auto_eop() -> Result<Self> {
+        let mut ts = MaybeUninit::<novas_timespec>::zeroed();
+        // SAFETY: NAN dut1 triggers IERS auto-fetch; -1 leap_seconds is ignored.
+        let rc = unsafe {
+            supernovas_ffi::novas_set_current_time(-1, f64::NAN, ts.as_mut_ptr())
+        };
+        if rc != 0 {
+            return Err(Error::ffi(rc));
+        }
+        Ok(Time(unsafe { ts.assume_init() }))
+    }
+
     /// The Julian date in the requested timescale.
     ///
     /// Precision: the underlying timespec stores integer and fractional parts

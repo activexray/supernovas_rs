@@ -41,8 +41,8 @@
         supernovasC = pkgs.fetchFromGitHub {
           owner = "sigmyne";
           repo = "supernovas";
-          rev = "119e5e1276312a0ed69163c0e8dc2059b49259de";
-          hash = "sha256-+Tw7Zd4fmq6fw+1T1Abj51eJqy32Lwfuf8HMW+VbpY0=";
+          rev = "ea7e8f5cca16dd7704450ea94376ac4874b6348a";
+          hash = "sha256-D1rYXPrpCRw4Y1XpOyshPbJzLardD9yNGfVSEgUOtXw=";
         };
 
         # Include Rust/Cargo sources and headers (for bindgen).  The vendor
@@ -81,6 +81,7 @@
           ];
           buildInputs = with pkgs; [
             calceph
+            curl.dev # needed when building with the `eop` feature (CURL::libcurl)
           ];
         };
 
@@ -164,8 +165,9 @@
             cargo-msrv
           ];
 
-          # calceph is a shared library; expose it for the `calceph` cargo feature.
-          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.calceph];
+          # calceph and curl are shared libraries; expose them via LD_LIBRARY_PATH.
+          # curl is needed when building with the `eop` cargo feature.
+          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.calceph pkgs.curl];
           RUST_BACKTRACE = 1;
         };
       }

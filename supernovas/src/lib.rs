@@ -34,6 +34,8 @@ pub use supernovas_ffi as sys;
 
 pub mod apparent;
 pub mod debug;
+#[cfg(feature = "eop")]
+pub mod eop;
 #[cfg(any(feature = "calceph", feature = "anise"))]
 pub mod ephemeris;
 pub mod equinox;
@@ -46,11 +48,14 @@ pub mod source;
 pub mod spherical;
 pub mod time;
 pub mod timescale;
+pub mod track;
 pub mod unit;
 pub mod vector;
 
 pub use apparent::{Apparent, ReferenceSystem};
 pub use debug::{DebugMode, enable_debug_mode, get_debug_mode};
+#[cfg(feature = "eop")]
+pub use eop::{Eop, EopSeries};
 #[cfg(feature = "anise")]
 pub use ephemeris::AniseEphemeris;
 #[cfg(feature = "calceph")]
@@ -64,9 +69,11 @@ pub use observer::{Observer, Site, Weather};
 pub use refraction::Refraction;
 pub use scalar::{Angle, Coordinate, Interval, Pressure, ScalarVelocity, Temperature, TimeAngle};
 pub use source::{
-    CatalogEntry, EphemObject, OrbitalElements, OrbitalObject, Planet, SolarBody, Source,
+    CatalogEntry, CatalogSystem, EphemObject, OrbitalElements, OrbitalObject, Planet, SolarBody,
+    Source,
 };
 pub use spherical::{Ecliptic, Equatorial, Galactic, Horizontal, Spherical};
 pub use time::Time;
 pub use timescale::Timescale;
+pub use track::{EquatorialTrack, HorizontalTrack};
 pub use vector::{Position, Velocity};

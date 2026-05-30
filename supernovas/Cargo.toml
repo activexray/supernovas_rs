@@ -13,6 +13,8 @@ readme.workspace = true
 
 [package.metadata.docs.rs]
 features = ["vendored", "std", "hifitime", "anise"]
+# eop is intentionally excluded from docs.rs builds: it requires a system
+# libcurl which is not available in the docs.rs sandbox.
 
 [features]
 default = ["anise", "vendored"]
@@ -26,6 +28,10 @@ calceph = ["std", "supernovas-ffi/calceph"]
 # Pure-Rust planet-ephemeris support via the `anise` crate. Alternative to
 # `calceph` — same role (provider for `Accuracy::Full`), no C dependency.
 anise = ["std", "dep:anise"]
+# Enables live IERS EOP data fetching via CURL (removes WITHOUT_CURL=ON from
+# the vendored build) and exposes the `eop` module with Rust wrappers for
+# novas_fetch_eop, polar-wobble corrections, and related utilities.
+eop = ["std", "supernovas-ffi/curl"]
 
 [dependencies]
 supernovas-ffi = { workspace = true }
@@ -34,6 +40,10 @@ approx = { version = "0.5", default-features = false }
 heapless = { version = "0.8", default-features = false }
 hifitime = { version = "4", optional = true, default-features = false }
 anise = { git = "https://github.com/nyx-space/anise", package = "anise", optional = true } # switch to next version after 0.10.1
+
+[[example]]
+name = "full_precision"
+required-features = ["eop", "anise"]
 
 [lints]
 workspace = true

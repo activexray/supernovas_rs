@@ -66,6 +66,25 @@ impl Frame {
         Self::with_polar_motion_mas(accuracy, observer, time, xp.mas(), yp.mas())
     }
 
+    /// Construct with polar motion automatically fetched from IERS.
+    ///
+    /// Passes `NAN` for both `xp` and `yp`, which tells `novas_make_frame` to
+    /// query the IERS servers for interpolated polar offsets. Requires the
+    /// `eop` feature (CURL support) and network access.
+    ///
+    /// Pass raw IERS Bulletin values if you supply them manually via
+    /// [`with_polar_motion`](Self::with_polar_motion); do **not**
+    /// pre-apply libration or ocean-tide corrections — `novas_make_frame`
+    /// handles those internally for `Accuracy::Full` frames.
+    #[cfg(feature = "eop")]
+    pub fn with_auto_polar_motion(
+        accuracy: Accuracy,
+        observer: &Observer,
+        time: &Time,
+    ) -> Result<Self> {
+        Self::make_frame(accuracy, observer, time, f64::NAN, f64::NAN)
+    }
+
     fn with_polar_motion_mas(
         accuracy: Accuracy,
         observer: &Observer,
@@ -76,10 +95,21 @@ impl Frame {
         if !xp_mas.is_finite() || !yp_mas.is_finite() {
             return Err(Error::NotFinite);
         }
+        Self::make_frame(accuracy, observer, time, xp_mas, yp_mas)
+    }
+
+    fn make_frame(
+        accuracy: Accuracy,
+        observer: &Observer,
+        time: &Time,
+        xp_mas: f64,
+        yp_mas: f64,
+    ) -> Result<Self> {
         let obs = observer.as_novas_observer()?;
         let mut frame = MaybeUninit::<novas_frame>::zeroed();
         // SAFETY: novas_make_frame fully initializes `*frame` on a zero
         // return, which we check before assuming initialization.
+        // NAN xp/yp are the auto-fetch sentinel and are valid C API inputs.
         let rc = unsafe {
             novas_make_frame(
                 accuracy.to_sys(),

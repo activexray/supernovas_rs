@@ -75,8 +75,50 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `novas_offset_by`, `novas_equ_offset_by`, and other v1.7 additions. The vendored build
   passes `WITHOUT_CURL=ON` (no libcurl dependency) and respects `WITHOUT_LIBC` via the new
   `libc` feature.
+- **`eop` feature** — enables CURL in the vendored CMake build (removes `WITHOUT_CURL=ON`) and
+  exposes the `eop` module with Rust wrappers for live IERS data fetch and EOP correction
+  utilities: `eop::fetch_eop`, `eop::reset_eop`, `eop::set_auto_fetch_eop`,
+  `eop::diurnal_eop_at_time`, `eop::itrf_transform_eop`, `eop::set_leap_list`, and related
+  functions. Types: `Eop`, `EopSeries`. Polar-offset getters (`xp`, `xp_err`, `yp`, `yp_err`)
+  return typed `Angle` values; `diurnal_eop_at_time` and `itrf_transform_eop` likewise use
+  `Angle` for the polar-motion components.
+- **`eop::set_eop_file`** — convenience wrapper that configures an IERS data series to be read
+  from a pre-downloaded local file via a `file://` URL (CURL supports this natively), avoiding
+  network access while still using the full IERS parsing pipeline.
+- **`supernovas-ffi`: new `curl` feature** — signals the vendored CMake build to remove
+  `WITHOUT_CURL=ON`, compiling in the IERS EOP fetch functions. Implied by `supernovas/eop`.
+- **Track interpolation** — `track::EquatorialTrack` and `track::HorizontalTrack` provide fast
+  polynomial position evaluation for telescope drive control. `EquatorialTrack::compute` /
+  `HorizontalTrack::compute` run the full astrometric pipeline once; `pos_at(&Time)` evaluates
+  the stored polynomial in microseconds. Both types are also re-exported at the crate root.
 - **`track_ephem` example** — corrected observation date to 2020-01-01 (MJD 58849), within the
   bundled Voyager 1 SPK coverage window (1977–2020).
+- **`full_precision` example** — end-to-end `Accuracy::Full` demonstration using auto-IERS EOP
+  fetch (`Time::from_tt_jd_auto_eop`, `Frame::with_auto_polar_motion`) to achieve
+  sub-microarcsecond apparent positions for catalog stars and solar-system bodies.
+- **`CatalogSystem` enum** — `Icrs`, `J2000`, `B1950`, `Fk4`, `Fk5`; selects the input
+  coordinate system for catalog entry construction, with automatic conversion to ICRS.
+- **`CatalogEntry::in_system(name, ra, dec, CatalogSystem)`** — construct a source from
+  legacy catalog coordinates (B1950/FK4/FK5/J2000); SuperNOVAS converts to ICRS internally
+  via `make_cat_object_sys`.
+- **`CatalogEntry::redshifted_icrs(name, ra, dec, z)`** — construct a cosmological source
+  (quasar, galaxy) from ICRS coordinates and a spectroscopic redshift `z` via
+  `make_redshifted_object_sys`.
+- **`CatalogEntry::with_ssb_velocity(rv)`** — set the Solar System Barycenter radial velocity
+  (preferred for modern stellar catalogs such as Gaia/APOGEE); wraps `novas_set_ssb_vel`.
+- **`CatalogEntry::with_lsr_velocity(rv, epoch_jd)`** — set a Local Standard of Rest radial
+  velocity with an epoch Julian date; wraps `novas_set_lsr_vel`.
+- **`CatalogEntry::with_redshift(z)`** — set spectroscopic redshift on an existing entry;
+  wraps `novas_set_redshift`.
+- **`CatalogEntry::with_distance(d)`** — set distance in parsecs; wraps `novas_set_distance`.
+- **`Time::from_jd_auto_eop(scale, jd)`** / **`Time::from_tt_jd_auto_eop(jd_tt)`** /
+  **`Time::now_auto_eop()`** (`eop` feature) — auto-IERS constructors that pass the SuperNOVAS
+  sentinel values (`leap = -1`, `dut1 = NAN`) so that leap seconds and UT1−UTC are fetched from
+  IERS automatically. Do **not** pre-apply diurnal libration/ocean-tide corrections — the C
+  library handles that internally.
+- **`Frame::with_auto_polar_motion(accuracy, observer, time)`** (`eop` feature) — construct a
+  frame with polar offsets fetched automatically from IERS by passing `NAN`/`NAN` for `xp`/`yp`
+  to `novas_make_frame`.
 - **`Error::OutOfRange(&'static str)`** — new public variant for values that are finite but
   outside the physically valid range of a quantity (e.g. geodetic latitude beyond ±90°,
   declination beyond ±90°). The payload names the offending quantity.

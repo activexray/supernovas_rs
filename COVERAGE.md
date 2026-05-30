@@ -54,13 +54,16 @@ Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas
 
 - [x] `make_cat_entry` + `make_cat_object` → `CatalogEntry::icrs`
 - [x] proper motion, parallax, radial velocity → `CatalogEntry::with_*` builders
-- [ ] `novas_set_distance` / `novas_set_lsr_vel` / `novas_set_ssb_vel` — LSR/distance setters
-- [ ] `make_redshifted_cat_entry` / `make_redshifted_object` — cosmologically-redshifted point source
-- [ ] `make_cat_object_sys` — catalog object in a named coordinate system other than FK5
+- [x] `make_cat_object_sys` → `CatalogEntry::in_system(name, ra, dec, CatalogSystem)`
+- [x] `make_redshifted_object_sys` → `CatalogEntry::redshifted_icrs(name, ra, dec, z)`
+- [x] `novas_set_ssb_vel` → `CatalogEntry::with_ssb_velocity`
+- [x] `novas_set_lsr_vel` → `CatalogEntry::with_lsr_velocity(rv, epoch_jd)`
+- [x] `novas_set_redshift` → `CatalogEntry::with_redshift`
+- [x] `novas_set_distance` → `CatalogEntry::with_distance`
 - [ ] `transform_cat` — transform a `cat_entry` between catalog epochs
 - [ ] `transform_hip` — Hipparcos catalog → FK5 J2000
 - `novas_init_cat_entry` — internal zero-init helper
-- `novas_set_parallax` / `novas_set_proper_motion` / `novas_set_redshift` — redundant with `with_*` builders
+- `novas_set_parallax` / `novas_set_proper_motion` — covered by `with_parallax` / `with_proper_motion_mas_per_yr`
 
 ### Planets and solar-system bodies
 
@@ -79,7 +82,7 @@ Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas
 
 ## Frame and observation pipeline
 
-- [x] `novas_make_frame` → `Frame::new` / `Frame::with_polar_motion`
+- [x] `novas_make_frame` → `Frame::new` / `Frame::with_polar_motion` / `Frame::with_auto_polar_motion` (`eop` feature)
 - [x] `novas_sky_pos` → `Source::apparent_in` → `Apparent` (all source types)
 - [x] `novas_app_to_hor` → `Apparent::to_horizontal` / `to_horizontal_with_refraction`
 - [ ] `novas_change_observer` — rebuild a frame with a different observer at the same time
@@ -131,6 +134,23 @@ Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas
 - `get_ephem_provider` — process-global state readback; not useful to expose
 - `set_nutation_lp_provider` — custom low-precision nutation hook; won't wrap
 - `novas_calceph_use_ids` / `novas_use_calceph_planets` / `novas_calceph_is_thread_safe` — internal CALCEPH tuning; accessible via `sys`
+
+---
+
+## Earth Orientation Parameters (EOP)
+
+Requires the `eop` crate feature (enables CURL in the vendored build).
+
+- [x] `novas_fetch_eop` → `eop::fetch_eop` (`eop` feature)
+- [x] `novas_fetch_eop_unix` → `eop::fetch_eop_unix` (`eop` feature)
+- [x] `novas_reset_eop` → `eop::reset_eop` (`eop` feature)
+- [x] `novas_set_auto_fetch_eop` / `novas_is_auto_fetch_eop` → `eop::set_auto_fetch_eop` / `eop::is_auto_fetch_eop` (`eop` feature)
+- [x] `novas_set_eop_url` / `novas_get_eop_url` / `novas_get_eop_itrf_year` → `eop::set_eop_url` / `eop::get_eop_url` / `eop::get_eop_itrf_year` (`eop` feature)
+- [x] `novas_diurnal_eop_at_time` → `eop::diurnal_eop_at_time` (`eop` feature)
+- [x] `novas_itrf_transform_eop` → `eop::itrf_transform_eop` (`eop` feature)
+- [x] `novas_set_leap_list` → `eop::set_leap_list` (`eop` feature)
+- [ ] `novas_lookup_leap` — leap-second lookup by Unix timestamp
+- `novas_diurnal_eop` — takes raw GMST + `novas_delaunay_args`; accessible via `sys`
 
 ---
 
@@ -189,9 +209,9 @@ Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas
 
 ## Tracking
 
-- [ ] `novas_equ_track` — interpolation track for equatorial coordinates
-- [ ] `novas_hor_track` — interpolation track for horizontal coordinates
-- [ ] `novas_track_pos` — evaluate a `novas_track` at a given time
+- [x] `novas_equ_track` → `track::EquatorialTrack::compute`
+- [x] `novas_hor_track` → `track::HorizontalTrack::compute`
+- [x] `novas_track_pos` → `EquatorialTrack::pos_at` / `HorizontalTrack::pos_at`
 
 ---
 
@@ -216,7 +236,7 @@ Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas
 ## ITRF / EOP transforms
 
 - [ ] `novas_itrf_transform` / `novas_itrf_transform_site` — transform between ITRF realisations
-- [ ] `novas_itrf_transform_eop` — apply EOP corrections between ITRF frames
+- [x] `novas_itrf_transform_eop` → `eop::itrf_transform_eop` (`eop` feature)
 - [ ] `novas_geodetic_transform_site` — transform between reference ellipsoids
 
 ---
@@ -244,7 +264,7 @@ needed; they are accessible via `supernovas::sys` for advanced callers.
 - `novas_vdot` / `novas_vlen` / `novas_vdist` / `novas_vdist2` — vector math
 - `novas_cio_gcrs_ra` / `cio_location` / `cio_basis` / `cio_ra` / `cio_array` — CIO calculations
 - `novas_clock_skew` / `novas_mean_clock_skew` — relativistic clock corrections
-- `novas_diurnal_eop` / `novas_diurnal_libration` / `novas_diurnal_ocean_tides` — diurnal EOP corrections
+- `novas_diurnal_eop` / `novas_diurnal_libration` / `novas_diurnal_ocean_tides` — diurnal EOP corrections (note: `novas_diurnal_eop_at_time` is wrapped as `eop::diurnal_eop_at_time`)
 - `novas_gast` / `novas_gmst` / `novas_gmst_prec` — Greenwich sidereal/mean time
 - `obs_posvel` / `obs_planets` — observer position and planet bundle
 - `planet_lon` / `accum_prec` — planetary longitude / accumulated precession

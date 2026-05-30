@@ -62,16 +62,29 @@ supernovas/           # safe wrapper crate
   examples/
 ```
 
+## Features
+
+| Feature | Default | Description |
+|---------|---------|-------------|
+| `vendored` | yes | Build SuperNOVAS from the bundled C submodule via CMake |
+| `std` | yes | Link the standard library (required by `anise`, `eop`) |
+| `anise` | yes | Pure-Rust ANISE/SPK ephemeris backend for `Accuracy::Full` |
+| `calceph` | no | CALCEPH C library ephemeris backend (alternative to `anise`) |
+| `eop` | no | Live IERS EOP data fetch via CURL; exposes the `eop` module |
+| `hifitime` | no | `hifitime::Epoch` ↔ `Time` conversions |
+
+With `eop` enabled, pass `Time::from_tt_jd_auto_eop(jd)` and
+`Frame::with_auto_polar_motion(accuracy, observer, time)` to have SuperNOVAS fetch
+leap seconds, UT1−UTC, and polar offsets from IERS automatically.
+
 ## Remaining work
 
-These are known gaps that will be addressed in future releases:
+Known gaps that will be addressed in future releases:
 
 - **Observer variants**: airborne and near-Earth (satellite) observers are not yet wrapped.
-- **Solar-system body sources**: planets and other ephemeris-driven source types are not yet
-  exposed as first-class `Source` objects (though a raw `PlanetProvider` can be installed and
-  `Accuracy::Full` works end-to-end for stellar sources).
-- **`Interval` timescale**: `Interval::from_seconds` takes a raw `novas_timescale` FFI enum
-  directly; this will be replaced by a safe `Timescale` newtype.
+- **Rise / set / transit**: `novas_rises_above`, `novas_sets_below`, `novas_transit_time` are not yet exposed.
+- **ITRS transforms**: `cirs_to_itrs`, `itrs_to_cirs`, `hor_to_itrs`, and related functions are not yet wrapped.
+- **Interferometry**: UVW baseline utilities are not yet exposed.
 
 ## Note on LLM Usage
 
@@ -82,7 +95,7 @@ All code in this crate was at the very least validated manually by the author, i
 
 This project wraps [SuperNOVAS](https://github.com/sigmyne/supernovas), a C astrometry library authored by **Attila Kovács** ([@sigmyne](https://github.com/sigmyne)), itself derived from the original NOVAS library by the U.S. Naval Observatory.
 
-SuperNOVAS is released into the **public domain** under [The Unlicense](https://unlicense.org). The vendored copy in `supernovas-ffi/vendor/supernovas` is pinned to upstream v1.6.0 and its full license text is in `supernovas-ffi/vendor/supernovas/LICENSE`.
+SuperNOVAS is released into the **public domain** under [The Unlicense](https://unlicense.org). The vendored copy in `supernovas-ffi/vendor/supernovas` is pinned to upstream v1.7 and its full license text is in `supernovas-ffi/vendor/supernovas/LICENSE`.
 
 ## License
 

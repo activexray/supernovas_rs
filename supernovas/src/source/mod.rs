@@ -33,7 +33,7 @@ mod ephem_object;
 mod orbital;
 mod planet;
 
-pub use catalog_entry::CatalogEntry;
+pub use catalog_entry::{CatalogEntry, CatalogSystem};
 pub use ephem_object::EphemObject;
 pub use orbital::{OrbitalElements, OrbitalObject};
 pub use planet::{Planet, SolarBody};

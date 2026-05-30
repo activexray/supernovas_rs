@@ -37,6 +37,12 @@ calceph = []
 # Implied by the `std` feature in the `supernovas` safe-wrapper crate.
 libc = []
 
+# Only affects the `vendored` CMake build: remove WITHOUT_CURL=ON so that the
+# live EOP-fetch functions (novas_fetch_eop, novas_reset_eop, etc.) are compiled
+# in.  Has no effect on system-library builds (CURL linkage there is up to the
+# distro package).  Implied by the `eop` feature in the `supernovas` crate.
+curl = []
+
 [build-dependencies]
 bindgen = "0.72"
 pkg-config = "0.3"
