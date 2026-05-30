@@ -7,13 +7,13 @@
 //! 2. Construct a [`Time`] with automatic IERS dut1/leap-seconds lookup via
 //!    [`Time::from_tt_jd_auto_eop`].
 //! 3. Build a [`Frame`] with [`Accuracy::Full`], automatically fetching live
-//!    IERS polar-motion offsets (x_p, y_p) via [`Frame::with_auto_polar_motion`].
+//!    IERS polar-motion offsets (`x_p`, `y_p`) via [`Frame::with_auto_polar_motion`].
 //! 4. Compute ICRS apparent positions for catalog stars and solar-system
 //!    bodies.
 //! 5. Repeat at [`Accuracy::Reduced`] and report the angular separation.
 //!
 //! Both [`Time::from_tt_jd_auto_eop`] and [`Frame::with_auto_polar_motion`]
-//! pass sentinel `NAN` values to the underlying SuperNOVAS C functions, which
+//! pass sentinel `NAN` values to the underlying `SuperNOVAS` C functions, which
 //! then query the IERS servers automatically. The library applies diurnal
 //! libration and ocean-tide corrections to the fetched xp/yp internally — you
 //! should never pre-apply those corrections yourself.

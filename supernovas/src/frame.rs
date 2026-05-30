@@ -218,7 +218,7 @@ mod tests {
     /// northern-hemisphere site at geographic latitude L, its elevation is
     /// `L ± 0.74°`. This is the classic "Polaris altitude = your latitude"
     /// trick — and a tight end-to-end smoke test for the whole ICRS → az/el
-    /// pipeline (Frame::new + sky_pos + app_to_hor).
+    /// pipeline (`Frame::new` + `sky_pos` + `app_to_hor`).
     #[test]
     fn polaris_elevation_matches_observer_latitude() {
         let lat_deg = 34.0;

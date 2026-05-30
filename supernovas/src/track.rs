@@ -50,7 +50,7 @@ impl EquatorialTrack {
     ///
     /// # Errors
     ///
-    /// Returns an error if the underlying SuperNOVAS computation fails.
+    /// Returns an error if the underlying `SuperNOVAS` computation fails.
     pub fn compute(source: &dyn Source, frame: &Frame, dt_s: f64) -> Result<Self> {
         let mut track = novas_track::default();
         // SAFETY: object and frame pointers are valid for the call duration;
@@ -85,7 +85,7 @@ impl EquatorialTrack {
         // writes the four output doubles on a 0 return.
         let rc = unsafe {
             novas_track_pos(
-                &self.0,
+                &raw const self.0,
                 time.as_timespec(),
                 &raw mut lon,
                 &raw mut lat,
@@ -115,7 +115,7 @@ impl HorizontalTrack {
     ///
     /// # Errors
     ///
-    /// Returns an error if the underlying SuperNOVAS computation fails.
+    /// Returns an error if the underlying `SuperNOVAS` computation fails.
     pub fn compute(source: &dyn Source, frame: &Frame, refraction: Refraction) -> Result<Self> {
         let mut track = novas_track::default();
         // SAFETY: object and frame pointers are valid for the call duration;
@@ -150,7 +150,7 @@ impl HorizontalTrack {
         // writes the four output doubles on a 0 return.
         let rc = unsafe {
             novas_track_pos(
-                &self.0,
+                &raw const self.0,
                 time.as_timespec(),
                 &raw mut lon,
                 &raw mut lat,

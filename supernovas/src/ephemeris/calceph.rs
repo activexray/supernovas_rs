@@ -11,7 +11,7 @@ use crate::error::{Error, Result};
 /// A CALCEPH-backed planetary ephemeris.
 ///
 /// Load a JPL DE-series SPK file and install it as the process-global
-/// SuperNOVAS planet provider via [`EphemerisProvider::install`] or the
+/// `SuperNOVAS` planet provider via [`EphemerisProvider::install`] or the
 /// [`super::Ephemeris`] wrapper.
 ///
 /// # Example

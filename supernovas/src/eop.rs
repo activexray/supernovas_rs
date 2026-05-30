@@ -1,7 +1,7 @@
 //! Earth Orientation Parameters (EOP): live IERS data fetch and correction utilities.
 //!
 //! Requires the `eop` crate feature, which enables CURL in the vendored build
-//! so that the SuperNOVAS fetch functions are compiled in.
+//! so that the `SuperNOVAS` fetch functions are compiled in.
 //!
 //! # Quick start
 //!
@@ -104,28 +104,28 @@ impl Eop {
         self.0.dut1_err
     }
 
-    /// Polar offset x_p (ITRF x direction).
+    /// Polar offset `x_p` (ITRF x direction).
     #[must_use]
     pub fn xp(&self) -> Angle {
-        Angle::from_arcsec(self.0.xp as f64).expect("EOP xp from IERS is always finite")
+        Angle::from_arcsec(f64::from(self.0.xp)).expect("EOP xp from IERS is always finite")
     }
 
     /// 1-σ error on `xp`.
     #[must_use]
     pub fn xp_err(&self) -> Angle {
-        Angle::from_arcsec(self.0.xp_err as f64).expect("EOP xp_err from IERS is always finite")
+        Angle::from_arcsec(f64::from(self.0.xp_err)).expect("EOP xp_err from IERS is always finite")
     }
 
-    /// Polar offset y_p (ITRF y direction).
+    /// Polar offset `y_p` (ITRF y direction).
     #[must_use]
     pub fn yp(&self) -> Angle {
-        Angle::from_arcsec(self.0.yp as f64).expect("EOP yp from IERS is always finite")
+        Angle::from_arcsec(f64::from(self.0.yp)).expect("EOP yp from IERS is always finite")
     }
 
     /// 1-σ error on `yp`.
     #[must_use]
     pub fn yp_err(&self) -> Angle {
-        Angle::from_arcsec(self.0.yp_err as f64).expect("EOP yp_err from IERS is always finite")
+        Angle::from_arcsec(f64::from(self.0.yp_err)).expect("EOP yp_err from IERS is always finite")
     }
 
     /// Length-of-day differential in seconds.
@@ -170,7 +170,7 @@ pub fn fetch_eop_unix(unix_t: i64, timeout_ms: i64) -> Result<Eop> {
     Ok(Eop::from_raw(unsafe { out.assume_init() }))
 }
 
-/// Clear any cached EOP state inside SuperNOVAS.
+/// Clear any cached EOP state inside `SuperNOVAS`.
 pub fn reset_eop() {
     // SAFETY: no-arg void function with no preconditions.
     unsafe { novas_reset_eop() };
@@ -179,7 +179,7 @@ pub fn reset_eop() {
 /// Enable (`true`) or disable (`false`) automatic background EOP fetching.
 pub fn set_auto_fetch_eop(enabled: bool) -> Result<()> {
     // SAFETY: no preconditions beyond a valid bool → int conversion.
-    let rc = unsafe { novas_set_auto_fetch_eop(enabled as _) };
+    let rc = unsafe { novas_set_auto_fetch_eop(enabled.into()) };
     if rc != 0 { Err(Error::ffi(rc)) } else { Ok(()) }
 }
 
@@ -218,7 +218,7 @@ pub fn set_eop_url(series: EopSeries, itrf_year: i32, url: &str) -> Result<()> {
 /// - [`EopSeries::C01Iau2000`]: `EOP_C01_IAU2000_1846-now.txt`
 /// - [`EopSeries::LeapList`]: `leap-seconds.list` (prefer [`set_leap_list`] — no CURL needed)
 ///
-/// SuperNOVAS validates the file format on the first call and caches data
+/// `SuperNOVAS` validates the file format on the first call and caches data
 /// across calls, so subsequent EOP lookups for nearby dates are fast.
 pub fn set_eop_file(series: EopSeries, itrf_year: i32, path: &Path) -> Result<()> {
     let abs = path

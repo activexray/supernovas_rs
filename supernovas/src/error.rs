@@ -188,7 +188,7 @@ mod tests {
         assert!(format!("{err}").contains("bad ephemeris call"));
         // Slot is now empty — next ffi() falls back to numeric.
         let err2 = Error::ffi(7);
-        assert!(format!("{err2}").contains("7"));
+        assert!(format!("{err2}").contains('7'));
     }
 
     #[test]
@@ -232,7 +232,7 @@ mod tests {
         // must stay valid UTF-8 (guaranteed: `as_str()` would otherwise be UB)
         // and stop one byte short of capacity.
         let s: String = core::iter::once('a')
-            .chain(core::iter::repeat('é').take(FFI_MSG_CAP))
+            .chain(std::iter::repeat_n('é', FFI_MSG_CAP))
             .collect();
         set_provider_error(&s);
         let msg = take_provider_error().unwrap();

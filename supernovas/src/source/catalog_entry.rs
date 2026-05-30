@@ -20,7 +20,7 @@ use crate::{
 /// The catalog coordinate system that the source coordinates are expressed in.
 ///
 /// Used with [`CatalogEntry::in_system`] to create sources from non-ICRS
-/// catalog data. SuperNOVAS converts to ICRS internally via `make_cat_object_sys`.
+/// catalog data. `SuperNOVAS` converts to ICRS internally via `make_cat_object_sys`.
 ///
 /// The ICRS is the internal representation; all other systems are converted
 /// on construction.
@@ -191,7 +191,7 @@ impl CatalogEntry {
     pub fn with_distance(mut self, d: Coordinate) -> Result<Self> {
         // SAFETY: novas_set_distance writes to the cat_entry on a 0 return;
         // the pointer is valid for the duration of the call.
-        let rc = unsafe { novas_set_distance(&mut self.object.star, d.pc()) };
+        let rc = unsafe { novas_set_distance(&raw mut self.object.star, d.pc()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
@@ -208,7 +208,7 @@ impl CatalogEntry {
     /// catalogs that provide heliocentric/barycentric velocities.
     pub fn with_ssb_velocity(mut self, rv: ScalarVelocity) -> Result<Self> {
         // SAFETY: novas_set_ssb_vel writes to the cat_entry on a 0 return.
-        let rc = unsafe { novas_set_ssb_vel(&mut self.object.star, rv.km_per_s()) };
+        let rc = unsafe { novas_set_ssb_vel(&raw mut self.object.star, rv.km_per_s()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
@@ -225,7 +225,7 @@ impl CatalogEntry {
             return Err(Error::NotFinite);
         }
         // SAFETY: novas_set_lsr_vel writes to the cat_entry on a 0 return.
-        let rc = unsafe { novas_set_lsr_vel(&mut self.object.star, epoch_jd, rv.km_per_s()) };
+        let rc = unsafe { novas_set_lsr_vel(&raw mut self.object.star, epoch_jd, rv.km_per_s()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
@@ -243,7 +243,7 @@ impl CatalogEntry {
             return Err(Error::NotFinite);
         }
         // SAFETY: novas_set_redshift writes to the cat_entry on a 0 return.
-        let rc = unsafe { novas_set_redshift(&mut self.object.star, z) };
+        let rc = unsafe { novas_set_redshift(&raw mut self.object.star, z) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }

@@ -144,7 +144,7 @@ mod tests {
     fn debug_mode_eq_and_clone() {
         assert_eq!(DebugMode::On, DebugMode::On);
         assert_ne!(DebugMode::On, DebugMode::Extra);
-        let _ = DebugMode::Off.clone();
+        let _ = DebugMode::Off;
     }
 
     #[test]

@@ -166,7 +166,7 @@ impl Time {
     /// fetching leap seconds and UT1−UTC from IERS.
     ///
     /// Equivalent to `from_jd` but passes the sentinel values (`leap = -1`,
-    /// `dut1 = NAN`) that tell SuperNOVAS to query the IERS servers. Requires
+    /// `dut1 = NAN`) that tell `SuperNOVAS` to query the IERS servers. Requires
     /// the `eop` feature (which compiles in CURL support) and network access.
     ///
     /// Pass the raw interpolated IERS Bulletin values for `dut1` if you supply
@@ -200,7 +200,7 @@ impl Time {
     /// Construct from the system clock with IERS auto-fetch.
     ///
     /// Combines `now` and auto-fetch: passes `NAN` for `dut1` and `-1` for
-    /// `leap_seconds` so that SuperNOVAS fetches both from IERS. Requires the
+    /// `leap_seconds` so that `SuperNOVAS` fetches both from IERS. Requires the
     /// `eop` feature and network access.
     #[cfg(all(feature = "std", feature = "eop"))]
     pub fn now_auto_eop() -> Result<Self> {
