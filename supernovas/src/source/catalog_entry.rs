@@ -106,12 +106,7 @@ impl CatalogEntry {
     /// are converted on construction.
     ///
     /// `name` must be ASCII (no interior NULs) and shorter than 50 bytes.
-    pub fn in_system(
-        name: &str,
-        ra: TimeAngle,
-        dec: Angle,
-        system: CatalogSystem,
-    ) -> Result<Self> {
+    pub fn in_system(name: &str, ra: TimeAngle, dec: Angle, system: CatalogSystem) -> Result<Self> {
         let entry = make_raw_cat_entry(name, ra, dec, 0.0, 0.0, 0.0, 0.0)?;
         Self::from_cat_entry_sys(&entry, system)
     }
@@ -150,7 +145,9 @@ impl CatalogEntry {
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
-        Ok(CatalogEntry { object: unsafe { obj.assume_init() } })
+        Ok(CatalogEntry {
+            object: unsafe { obj.assume_init() },
+        })
     }
 
     // ── Refinement builders ───────────────────────────────────────────────
@@ -228,8 +225,7 @@ impl CatalogEntry {
             return Err(Error::NotFinite);
         }
         // SAFETY: novas_set_lsr_vel writes to the cat_entry on a 0 return.
-        let rc =
-            unsafe { novas_set_lsr_vel(&mut self.object.star, epoch_jd, rv.km_per_s()) };
+        let rc = unsafe { novas_set_lsr_vel(&mut self.object.star, epoch_jd, rv.km_per_s()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
@@ -319,27 +315,38 @@ impl CatalogEntry {
         parallax_mas: f64,
         radial_v_km_per_s: f64,
     ) -> Result<Self> {
-        let entry = make_raw_cat_entry(name, ra, dec, pm_ra, pm_dec, parallax_mas, radial_v_km_per_s)?;
+        let entry = make_raw_cat_entry(
+            name,
+            ra,
+            dec,
+            pm_ra,
+            pm_dec,
+            parallax_mas,
+            radial_v_km_per_s,
+        )?;
         let mut obj = MaybeUninit::<object>::zeroed();
         // SAFETY: make_cat_object copies entry into *obj on a zero return.
         let rc = unsafe { make_cat_object(&raw const entry, obj.as_mut_ptr()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
-        Ok(CatalogEntry { object: unsafe { obj.assume_init() } })
+        Ok(CatalogEntry {
+            object: unsafe { obj.assume_init() },
+        })
     }
 
     fn from_cat_entry_sys(entry: &cat_entry, system: CatalogSystem) -> Result<Self> {
         let mut obj = MaybeUninit::<object>::zeroed();
         // SAFETY: make_cat_object_sys converts entry to ICRS and writes *obj on
         // a zero return. The system pointer is a static C string literal.
-        let rc = unsafe {
-            make_cat_object_sys(&raw const *entry, system.as_ptr(), obj.as_mut_ptr())
-        };
+        let rc =
+            unsafe { make_cat_object_sys(&raw const *entry, system.as_ptr(), obj.as_mut_ptr()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
-        Ok(CatalogEntry { object: unsafe { obj.assume_init() } })
+        Ok(CatalogEntry {
+            object: unsafe { obj.assume_init() },
+        })
     }
 }
 
@@ -373,8 +380,7 @@ fn make_raw_cat_entry(
     }
     let mut name_buf = [0u8; 50];
     name_buf[..bytes.len()].copy_from_slice(bytes);
-    let name_cs =
-        CStr::from_bytes_with_nul(&name_buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
+    let name_cs = CStr::from_bytes_with_nul(&name_buf[..=bytes.len()]).map_err(|_| Error::Parse)?;
 
     let mut entry = MaybeUninit::<cat_entry>::zeroed();
     // SAFETY: make_cat_entry initializes *entry on a zero return.
@@ -441,10 +447,14 @@ mod tests {
         // After ICRS conversion the coordinates must differ (precession ~1 arcmin over 50 yr).
         let ra_b1950 = TimeAngle::from_hours(16.0 + 26.0 / 60.0 + 20.1918 / 3600.0).unwrap();
         let dec_b1950 = Angle::from_degrees(-26.0 - 19.0 / 60.0 - 23.138 / 3600.0).unwrap();
-        let entry = CatalogEntry::in_system("Antares", ra_b1950, dec_b1950, CatalogSystem::B1950).unwrap();
+        let entry =
+            CatalogEntry::in_system("Antares", ra_b1950, dec_b1950, CatalogSystem::B1950).unwrap();
         // ICRS RA should differ from B1950 RA by ~1 min of time or more.
         let delta_ra = (entry.ra().hours() - ra_b1950.hours()).abs();
-        assert!(delta_ra > 1e-3, "expected precession shift in RA, got {delta_ra}");
+        assert!(
+            delta_ra > 1e-3,
+            "expected precession shift in RA, got {delta_ra}"
+        );
     }
 
     #[test]

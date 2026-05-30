@@ -206,9 +206,7 @@ impl Time {
     pub fn now_auto_eop() -> Result<Self> {
         let mut ts = MaybeUninit::<novas_timespec>::zeroed();
         // SAFETY: NAN dut1 triggers IERS auto-fetch; -1 leap_seconds is ignored.
-        let rc = unsafe {
-            supernovas_ffi::novas_set_current_time(-1, f64::NAN, ts.as_mut_ptr())
-        };
+        let rc = unsafe { supernovas_ffi::novas_set_current_time(-1, f64::NAN, ts.as_mut_ptr()) };
         if rc != 0 {
             return Err(Error::ffi(rc));
         }

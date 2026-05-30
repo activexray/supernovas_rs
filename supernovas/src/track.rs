@@ -179,7 +179,12 @@ mod tests {
     }
 
     fn vega() -> CatalogEntry {
-        CatalogEntry::icrs("Vega", "18:36:56.336".parse().unwrap(), "+38:47:01.28".parse().unwrap()).unwrap()
+        CatalogEntry::icrs(
+            "Vega",
+            "18:36:56.336".parse().unwrap(),
+            "+38:47:01.28".parse().unwrap(),
+        )
+        .unwrap()
     }
 
     #[test]

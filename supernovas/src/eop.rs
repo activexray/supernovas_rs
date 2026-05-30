@@ -270,11 +270,7 @@ pub fn diurnal_eop_at_time(time: &Time) -> Result<(Angle, Angle, f64)> {
     if rc != 0 {
         return Err(Error::ffi(rc));
     }
-    Ok((
-        Angle::from_arcsec(dxp)?,
-        Angle::from_arcsec(dyp)?,
-        dut1,
-    ))
+    Ok((Angle::from_arcsec(dxp)?, Angle::from_arcsec(dyp)?, dut1))
 }
 
 /// Transform EOP parameters (polar motion + UT1) from one ITRF year to another.
