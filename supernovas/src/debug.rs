@@ -48,10 +48,17 @@ impl DebugMode {
 /// non-Off.  Captures the description part of every `novas_error()` call into
 /// the thread-local slot returned by [`crate::take_provider_error`].
 ///
-/// `SuperNOVAS` calls the handler three times per error:
-///   1. `"\n  ERROR! %s: "` (function name) — via `novas_emit`, skipped
+/// `SuperNOVAS` routes four kinds of lines through the handler:
+///   1. `"\n  ERROR! %s: "` (error prefix) — starts with `'\n'`, skipped
 ///   2. The actual description string — captured
-///   3. `" [=> %d]\n"` (return code) — via `novas_emit`, skipped
+///   3. `" [=> %d]\n"` (code suffix) — starts with `" [=>"`, skipped
+///   4. `"       @ %s [=> %d]\n"` (`novas_trace` lines) — starts with
+///      `"       @"`, skipped
+///
+/// All four forms pass the raw format string as `fmt`; the handler cannot
+/// expand `%s`/`%d` from the attached `va_list` in safe Rust.  Real error
+/// descriptions (form 2) are plain strings without format specifiers, so
+/// capturing `fmt` directly gives the correct text.
 #[cfg(feature = "std")]
 unsafe extern "C" fn capture_handler(
     fmt: *const ::std::os::raw::c_char,
@@ -59,12 +66,11 @@ unsafe extern "C" fn capture_handler(
 ) {
     use std::ffi::CStr;
     // SAFETY: SuperNOVAS guarantees fmt is a valid, non-NULL C string.
-    // SAFETY: fmt is a valid non-NULL C string per the handler contract.
     let Ok(s) = unsafe { CStr::from_ptr(fmt) }.to_str() else {
         return;
     };
-    // Skip the novas_emit() wrapper lines that bracket the real description.
-    if s.starts_with('\n') || s.starts_with(" [=>") {
+    // Skip the bracket lines and novas_trace lines; capture only the description.
+    if s.starts_with('\n') || s.starts_with(" [=>") || s.starts_with("       @") {
         return;
     }
     crate::error::set_provider_error(s);

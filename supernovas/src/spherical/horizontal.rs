@@ -33,7 +33,17 @@ impl Horizontal {
         Ok(Horizontal(Spherical::from_degrees(azimuth, elevation)?))
     }
 
-    /// Azimuth (longitude analog).
+    /// Azimuth, measured eastward from north.
+    ///
+    /// The underlying [`Angle`] is stored in `(-180°, 180°]` (the invariant of
+    /// `Angle`), so values in `(180°, 360°)` appear as negative. For the
+    /// conventional `[0°, 360°)` display, use:
+    ///
+    /// ```
+    /// # use supernovas::Horizontal;
+    /// # let h = Horizontal::from_degrees(270.0, 45.0).unwrap();
+    /// let az_deg = h.azimuth().deg().rem_euclid(360.0);
+    /// ```
     #[must_use]
     pub fn azimuth(self) -> Angle {
         self.0.longitude()
@@ -77,15 +87,15 @@ impl Horizontal {
 }
 
 impl fmt::Display for Horizontal {
-    /// Renders azimuth and elevation as decimal degrees — the convention for
-    /// observing logs and telescope control. Use `{:.N}` to control decimal
-    /// places (default 3).
+    /// Renders azimuth (normalized to `[0°, 360°)`) and elevation as decimal
+    /// degrees — the convention for observing logs and telescope control. Use
+    /// `{:.N}` to control decimal places (default 3).
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let decimals = f.precision().unwrap_or(3);
         write!(
             f,
             "az={:.decimals$}° el={:.decimals$}°",
-            self.azimuth().deg(),
+            self.azimuth().deg().rem_euclid(360.0),
             self.elevation().deg()
         )
     }
@@ -162,7 +172,16 @@ mod tests {
     fn display_contains_az_el() {
         let h = Horizontal::from_degrees(270.0, 30.0).unwrap();
         let s = format!("{h}");
-        assert!(s.contains("az="), "got: {s}");
-        assert!(s.contains("el="), "got: {s}");
+        assert!(s.contains("az=270"), "got: {s}");
+        assert!(s.contains("el=30"), "got: {s}");
+    }
+
+    #[test]
+    fn display_normalizes_azimuth_to_0_360() {
+        // SuperNOVAS returns azimuths in [0°, 360°); Angle wraps to (-180°, 180°].
+        // Display must re-normalize so west shows as 270°, not -90°.
+        let h = Horizontal::from_degrees(-90.0, 10.0).unwrap(); // stored as -90°
+        let s = format!("{h}");
+        assert!(s.contains("az=270"), "expected az=270, got: {s}");
     }
 }

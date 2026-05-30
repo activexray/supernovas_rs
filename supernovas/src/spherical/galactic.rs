@@ -94,13 +94,17 @@ impl Galactic {
 }
 
 impl fmt::Display for Galactic {
-    /// Renders as `l=<l> b=<b>` with both as DMS.
+    /// Renders as `l=<l>° b=<b>`.
+    ///
+    /// Galactic longitude is normalized to `[0°, 360°)` and shown in decimal
+    /// degrees. Latitude is shown in DMS via [`Angle`]'s display.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (l, b) = (self.l(), self.b());
+        let l_deg = self.l().deg().rem_euclid(360.0);
+        let b = self.b();
         if let Some(p) = f.precision() {
-            write!(f, "l={l:.p$} b={b:.p$}")
+            write!(f, "l={l_deg:.p$}° b={b:.p$}")
         } else {
-            write!(f, "l={l} b={b}")
+            write!(f, "l={l_deg:.3}° b={b}")
         }
     }
 }
@@ -174,7 +178,14 @@ mod tests {
     fn display_contains_l_and_b() {
         let g = Galactic::from_degrees(120.0, -10.0).unwrap();
         let s = format!("{g}");
-        assert!(s.contains("l="), "got: {s}");
+        assert!(s.contains("l=120."), "got: {s}");
         assert!(s.contains("b="), "got: {s}");
+    }
+
+    #[test]
+    fn display_normalizes_l_to_0_360() {
+        let g = Galactic::from_degrees(-45.0, 10.0).unwrap();
+        let s = format!("{g}");
+        assert!(s.contains("l=315."), "expected 315.xxx°, got: {s}");
     }
 }

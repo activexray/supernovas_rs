@@ -136,12 +136,19 @@ impl Ecliptic {
 }
 
 impl fmt::Display for Ecliptic {
+    /// Renders as `λ=<lon>° β=<lat> (<system>)`.
+    ///
+    /// Longitude is normalized to `[0°, 360°)` and shown in decimal degrees
+    /// (ecliptic longitude is conventionally unsigned). Latitude is shown in
+    /// DMS via [`Angle`]'s display.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let (lon, lat, sys) = (self.longitude(), self.latitude(), self.system);
+        let lon_deg = self.longitude().deg().rem_euclid(360.0);
+        let lat = self.latitude();
+        let sys = self.system;
         if let Some(p) = f.precision() {
-            write!(f, "λ={lon:.p$} β={lat:.p$} ({sys})")
+            write!(f, "λ={lon_deg:.p$}° β={lat:.p$} ({sys})")
         } else {
-            write!(f, "λ={lon} β={lat} ({sys})")
+            write!(f, "λ={lon_deg:.3}° β={lat} ({sys})")
         }
     }
 }
@@ -258,7 +265,7 @@ mod tests {
     fn display_with_precision() {
         let e = Ecliptic::from_degrees(90.0, 5.0, Equinox::J2000).unwrap();
         let s = format!("{e:.2}");
-        assert!(s.contains('λ'), "got: {s}");
+        assert!(s.contains("λ=90.00°"), "got: {s}");
         assert!(s.contains('β'), "got: {s}");
     }
 
@@ -268,5 +275,13 @@ mod tests {
         let s = format!("{e}");
         assert!(s.contains('λ'), "got: {s}");
         assert!(s.contains('β'), "got: {s}");
+    }
+
+    #[test]
+    fn display_normalizes_longitude_to_0_360() {
+        // λ = -74° is 286°; the display must show the positive form.
+        let e = Ecliptic::from_degrees(-74.0, 62.0, Equinox::J2000).unwrap();
+        let s = format!("{e}");
+        assert!(s.contains("286."), "expected 286.xxx°, got: {s}");
     }
 }
