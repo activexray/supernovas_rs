@@ -17,7 +17,10 @@
 
 use std::path::PathBuf;
 
-use supernovas::{Accuracy, CatalogEntry, Ephemeris, Frame, Observer, ReferenceSystem, Site, Time};
+use supernovas::{
+    Accuracy, CatalogEntry, EphemObject, Ephemeris, Frame, Observer, Planet, ReferenceSystem, Site,
+    SolarBody, Source, Time,
+};
 
 fn ephemeris_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -81,5 +84,37 @@ fn full_accuracy_matches_reduced_within_mas() {
         (h.elevation().deg() - 78.37).abs() < 0.1,
         "elevation {} should be near 78.37°",
         h.elevation().deg()
+    );
+
+    // EphemObject NAIF IDs must be honored literally. NAIF 3 is the
+    // Earth–Moon barycenter; the old planet_ephem_provider funnel
+    // misread small ids as novas_planet discriminants and remapped 3 to
+    // Earth (NAIF 399), ~4700 km away. The EphemObject path must agree
+    // with the Planet path for the same body.
+    let emb_planet = Planet::new(SolarBody::EarthMoonBarycenter).unwrap();
+    let emb_ephem = EphemObject::new("EMB", 3).unwrap();
+    let app_planet = emb_planet
+        .apparent_in(&frame_full, ReferenceSystem::Cirs)
+        .unwrap();
+    let app_ephem = emb_ephem
+        .apparent_in(&frame_full, ReferenceSystem::Cirs)
+        .unwrap();
+    let sep_mas = app_planet
+        .equatorial()
+        .distance_to(app_ephem.equatorial())
+        .mas();
+    assert!(
+        sep_mas < 1.0,
+        "EphemObject(NAIF 3) is {sep_mas} mas from Planet(EMB) — \
+         NAIF id was not honored literally"
+    );
+
+    // A Voyager 1 query (NAIF -31) without its kernel loaded must fail
+    // cleanly rather than panic across the FFI boundary.
+    let voyager = EphemObject::new("VOYAGER 1", -31).unwrap();
+    assert!(
+        voyager
+            .apparent_in(&frame_full, ReferenceSystem::Cirs)
+            .is_err()
     );
 }

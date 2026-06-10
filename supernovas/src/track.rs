@@ -35,7 +35,8 @@ use crate::{
     spherical::{Equatorial, Horizontal},
 };
 
-/// A polynomial track of equatorial (RA/Dec) apparent positions.
+/// A polynomial track of equatorial (RA/Dec) apparent positions in the
+/// true equator and equinox of date (TOD) system.
 ///
 /// Computed once by [`EquatorialTrack::compute`]; evaluated cheaply at any
 /// nearby time by [`pos_at`](EquatorialTrack::pos_at).
@@ -72,6 +73,10 @@ impl EquatorialTrack {
     /// Evaluate the track at `time`, returning the apparent equatorial
     /// position and distance.
     ///
+    /// The position is in the **true equator and equinox of date** (TOD)
+    /// system — that is what `novas_equ_track` computes — so the returned
+    /// [`Equatorial`] is tagged with a TOD equinox at the evaluation time.
+    ///
     /// # Errors
     ///
     /// Returns an error if extrapolation fails or if a coordinate value is
@@ -96,7 +101,7 @@ impl EquatorialTrack {
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
-        let eq = Equatorial::from_degrees(lon, lat, Equinox::ICRS)?;
+        let eq = Equatorial::from_degrees(lon, lat, Equinox::tod_at(time.tt_jd())?)?;
         let d = Coordinate::from_au(dist)?;
         Ok((eq, d))
     }
@@ -209,6 +214,30 @@ mod tests {
         // Vega RA ≈ 18.6 h at J2025; within 0.1 h is a reasonable sanity bound.
         let ra_h = eq.ra().hours();
         assert!((ra_h - 18.6).abs() < 0.1, "RA {ra_h} h far from Vega");
+    }
+
+    /// `novas_equ_track` works in TOD internally; the evaluated position
+    /// must match the apparent TOD place and carry a TOD equinox tag —
+    /// not ICRS, which is ~10 arcmin away at this epoch.
+    #[test]
+    fn equatorial_track_is_tagged_and_positioned_in_tod() {
+        use crate::ReferenceSystem;
+        let frame = frame();
+        let vega = vega();
+        let time = Time::from_tt_jd(2_460_676.5, 37, 0.0).unwrap();
+        let track = EquatorialTrack::compute(&vega, &frame, 1.0).unwrap();
+        let (eq, _) = track.pos_at(&time).unwrap();
+        assert_eq!(eq.system().system(), ReferenceSystem::Tod);
+        assert!((eq.system().jd() - time.tt_jd()).abs() < 1e-9);
+        let tod = vega.apparent_in(&frame, ReferenceSystem::Tod).unwrap();
+        let sep = eq
+            .as_spherical()
+            .distance_to(tod.equatorial().as_spherical());
+        assert!(
+            sep.arcsec() < 0.01,
+            "track position {} arcsec from apparent TOD place",
+            sep.arcsec()
+        );
     }
 
     #[test]

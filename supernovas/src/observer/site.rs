@@ -3,13 +3,16 @@
 //! A `Site` carries the geodetic (ITRS/GRS80) position of an observatory
 //! plus optional local weather for refraction.
 
-use core::fmt::{Display, Formatter};
+use core::{
+    fmt::{Display, Formatter},
+    mem::MaybeUninit,
+};
 
-use supernovas_ffi::novas_on_surface;
+use supernovas_ffi::{make_itrf_site, novas_on_surface};
 
 use super::Weather;
 use crate::{
-    Angle, Coordinate, Pressure, Temperature,
+    Angle, Coordinate,
     error::{Error, Result},
 };
 
@@ -94,20 +97,63 @@ impl Site {
 
     /// Build the C-side `novas_on_surface` representation for FFI calls.
     ///
-    /// Unset weather fields become `NAN`, matching the `SuperNOVAS` convention
-    /// of "skip the refraction component that depends on this value".
-    pub(crate) fn as_on_surface(self) -> novas_on_surface {
-        novas_on_surface {
-            latitude: self.latitude.deg(),
-            longitude: self.longitude.deg(),
-            height: self.height.m(),
-            temperature: self
-                .weather
-                .temperature()
-                .map_or(f64::NAN, Temperature::celsius),
-            pressure: self.weather.pressure().map_or(f64::NAN, Pressure::mbar),
-            humidity: self.weather.humidity_percent().unwrap_or(f64::NAN),
+    /// `make_itrf_site` populates the structure with `SuperNOVAS`'s mean
+    /// annual weather estimate for the location; fields the user supplied via
+    /// [`Weather`] then override those defaults. Unset fields keep the
+    /// location-based estimate, so refraction models always see a fully
+    /// defined (finite) weather state.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::OutOfRange`] for weather values outside the
+    /// physically plausible ranges that the C library enforces
+    /// (temperature `[-120, 70]` °C, pressure `[0, 1200]` mbar, relative
+    /// humidity `[0, 100]` %), or [`Error::Ffi`] if `make_itrf_site`
+    /// rejects the location.
+    pub(crate) fn as_on_surface(self) -> Result<novas_on_surface> {
+        // Same bounds make_on_surface enforces (plus humidity, which the C
+        // refraction models validate only at use time).
+        if let Some(t) = self.weather.temperature()
+            && !(-120.0..=70.0).contains(&t.celsius())
+        {
+            return Err(Error::OutOfRange("ambient temperature"));
         }
+        if let Some(p) = self.weather.pressure()
+            && !(0.0..=1200.0).contains(&p.mbar())
+        {
+            return Err(Error::OutOfRange("atmospheric pressure"));
+        }
+        if let Some(h) = self.weather.humidity_percent()
+            && !(0.0..=100.0).contains(&h)
+        {
+            return Err(Error::OutOfRange("relative humidity"));
+        }
+
+        let mut loc = MaybeUninit::<novas_on_surface>::zeroed();
+        // SAFETY: make_itrf_site fully initializes *loc on a zero return,
+        // including mean annual weather for the location.
+        let rc = unsafe {
+            make_itrf_site(
+                self.latitude.deg(),
+                self.longitude.deg(),
+                self.height.m(),
+                loc.as_mut_ptr(),
+            )
+        };
+        if rc != 0 {
+            return Err(Error::ffi(rc));
+        }
+        let mut loc = unsafe { loc.assume_init() };
+        if let Some(t) = self.weather.temperature() {
+            loc.temperature = t.celsius();
+        }
+        if let Some(p) = self.weather.pressure() {
+            loc.pressure = p.mbar();
+        }
+        if let Some(h) = self.weather.humidity_percent() {
+            loc.humidity = h;
+        }
+        Ok(loc)
     }
 }
 
@@ -173,15 +219,18 @@ mod tests {
     }
 
     #[test]
-    fn as_on_surface_uses_nan_for_missing_weather() {
+    fn as_on_surface_fills_missing_weather_with_location_defaults() {
+        // Unset weather fields fall back to SuperNOVAS's mean annual
+        // estimate for the location — finite and physically plausible,
+        // never NaN (which would poison the refraction models).
         let s = Site::from_degrees(34.0, -118.0, 100.0).unwrap();
-        let raw = s.as_on_surface();
+        let raw = s.as_on_surface().unwrap();
         assert!((raw.latitude - 34.0).abs() < 1e-12);
         assert!((raw.longitude - -118.0).abs() < 1e-12);
         assert!((raw.height - 100.0).abs() < 1e-12);
-        assert!(raw.temperature.is_nan());
-        assert!(raw.pressure.is_nan());
-        assert!(raw.humidity.is_nan());
+        assert!((-120.0..=70.0).contains(&raw.temperature));
+        assert!((0.0..=1200.0).contains(&raw.pressure));
+        assert!((0.0..=100.0).contains(&raw.humidity));
     }
 
     #[test]
@@ -189,9 +238,52 @@ mod tests {
         let s = Site::from_degrees(0.0, 0.0, 0.0)
             .unwrap()
             .with_weather(Weather::standard());
-        let raw = s.as_on_surface();
+        let raw = s.as_on_surface().unwrap();
         assert!((raw.temperature - 15.0).abs() < 1e-12);
         assert!((raw.pressure - 1013.25).abs() < 1e-12);
         assert!((raw.humidity - 50.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn as_on_surface_keeps_defaults_for_partially_set_weather() {
+        // Only temperature supplied: pressure and humidity keep the
+        // location-based defaults.
+        let w = Weather::new(
+            Some(crate::Temperature::from_celsius(-5.0).unwrap()),
+            None,
+            None,
+        )
+        .unwrap();
+        let s = Site::from_degrees(34.0, -118.0, 100.0)
+            .unwrap()
+            .with_weather(w);
+        let raw = s.as_on_surface().unwrap();
+        assert!((raw.temperature - -5.0).abs() < 1e-12);
+        assert!((0.0..=1200.0).contains(&raw.pressure));
+        assert!((0.0..=100.0).contains(&raw.humidity));
+    }
+
+    #[test]
+    fn as_on_surface_rejects_implausible_weather() {
+        let hot = Weather::new(
+            Some(crate::Temperature::from_celsius(200.0).unwrap()),
+            None,
+            None,
+        )
+        .unwrap();
+        let s = Site::from_degrees(0.0, 0.0, 0.0).unwrap().with_weather(hot);
+        assert!(matches!(
+            s.as_on_surface(),
+            Err(Error::OutOfRange("ambient temperature"))
+        ));
+
+        let soaked = Weather::new(None, None, Some(150.0)).unwrap();
+        let s = Site::from_degrees(0.0, 0.0, 0.0)
+            .unwrap()
+            .with_weather(soaked);
+        assert!(matches!(
+            s.as_on_surface(),
+            Err(Error::OutOfRange("relative humidity"))
+        ));
     }
 }

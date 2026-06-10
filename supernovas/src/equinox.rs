@@ -155,15 +155,16 @@ impl Equinox {
     }
 
     /// The equator type the C-side `equ2ecl` / `ecl2equ` need for this
-    /// equinox, or `None` if the system isn't a direct candidate
-    /// (currently CIRS and ITRS — callers route those through a supported
-    /// system first).
+    /// equinox, or `None` if the system isn't a direct candidate. CIRS is
+    /// routed through TOD by callers; TIRS and ITRS have no equinox-based
+    /// mapping at all (their longitudes are offset from TOD by the Earth
+    /// rotation angle, so an equator type alone can't describe them).
     pub(crate) fn equator_type_for_ecliptic(self) -> Option<novas_equator_type> {
         match self.system {
             ReferenceSystem::Icrs | ReferenceSystem::Gcrs => Some(NOVAS_GCRS_EQUATOR),
             ReferenceSystem::J2000 | ReferenceSystem::Mod => Some(NOVAS_MEAN_EQUATOR),
-            ReferenceSystem::Tod | ReferenceSystem::Tirs => Some(NOVAS_TRUE_EQUATOR),
-            ReferenceSystem::Cirs | ReferenceSystem::Itrs => None,
+            ReferenceSystem::Tod => Some(NOVAS_TRUE_EQUATOR),
+            ReferenceSystem::Cirs | ReferenceSystem::Tirs | ReferenceSystem::Itrs => None,
         }
     }
 }
@@ -289,9 +290,15 @@ mod tests {
     }
 
     #[test]
-    fn equator_type_for_ecliptic_returns_none_for_cirs() {
+    fn equator_type_for_ecliptic_returns_none_for_unmappable_systems() {
         let cirs = Equinox::cirs_at(NOVAS_JD_J2000).unwrap();
         assert!(cirs.equator_type_for_ecliptic().is_none());
+        // Earth-rotating systems: no equator type can describe them — their
+        // RA origin is offset from TOD by the Earth rotation angle.
+        let tirs = Equinox::at("TIRS", ReferenceSystem::Tirs, NOVAS_JD_J2000).unwrap();
+        assert!(tirs.equator_type_for_ecliptic().is_none());
+        let itrs = Equinox::at("ITRS", ReferenceSystem::Itrs, NOVAS_JD_J2000).unwrap();
+        assert!(itrs.equator_type_for_ecliptic().is_none());
     }
 
     #[test]

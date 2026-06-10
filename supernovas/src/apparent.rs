@@ -126,7 +126,12 @@ impl Apparent {
     ///
     /// For date-dependent systems (MOD, TOD, CIRS) the equinox carries the
     /// frame's TT Julian date. For date-independent systems (ICRS, J2000,
-    /// GCRS) the equinox is the pre-built constant.
+    /// GCRS) the equinox is the pre-built constant. The Earth-rotating
+    /// systems (TIRS, ITRS) keep their own tag — their longitudes differ
+    /// from any equinox-based system by the Earth rotation angle, so
+    /// re-labeling them would silently corrupt downstream conversions;
+    /// instead, conversions that need an equinox-based system return
+    /// [`crate::Error::UnsupportedSystem`].
     #[must_use]
     pub fn equinox(self) -> Equinox {
         let jd = self.frame.tt_jd();
@@ -136,10 +141,11 @@ impl Apparent {
             ReferenceSystem::Mod => Equinox::mod_at(jd).expect("frame TT JD is finite"),
             ReferenceSystem::Tod => Equinox::tod_at(jd).expect("frame TT JD is finite"),
             ReferenceSystem::Cirs => Equinox::cirs_at(jd).expect("frame TT JD is finite"),
-            // Earth-rotating systems aren't really "equinoxes"; pin them
-            // to TOD-at-time as the closest equatorial proxy.
-            ReferenceSystem::Tirs | ReferenceSystem::Itrs => {
-                Equinox::tod_at(jd).expect("frame TT JD is finite")
+            ReferenceSystem::Tirs => {
+                Equinox::at("TIRS", ReferenceSystem::Tirs, jd).expect("frame TT JD is finite")
+            }
+            ReferenceSystem::Itrs => {
+                Equinox::at("ITRS", ReferenceSystem::Itrs, jd).expect("frame TT JD is finite")
             }
         }
     }
@@ -157,8 +163,9 @@ impl Apparent {
     /// View this apparent place as an [`Ecliptic`] (λ, β, equinox).
     ///
     /// Routes through [`Self::equatorial`] then `Equatorial::to_ecliptic`.
-    /// For sources in CIRS this transparently re-routes via TOD; ITRS
-    /// sources return [`Error::UnsupportedSystem`].
+    /// For sources in CIRS this transparently re-routes via TOD; the
+    /// Earth-rotating systems (TIRS, ITRS) return
+    /// [`Error::UnsupportedSystem`].
     pub fn ecliptic(self, accuracy: Accuracy) -> Result<Ecliptic> {
         self.equatorial().to_ecliptic(accuracy)
     }
@@ -166,7 +173,8 @@ impl Apparent {
     /// View this apparent place as a [`Galactic`] (l, b).
     ///
     /// Routes through ICRS via [`Self::equatorial`] then
-    /// [`Equatorial::to_galactic`].
+    /// [`Equatorial::to_galactic`]. The Earth-rotating systems (TIRS, ITRS)
+    /// have no ICRS mapping and return an error.
     pub fn galactic(self, accuracy: Accuracy) -> Result<Galactic> {
         self.equatorial().to_galactic(accuracy)
     }
@@ -457,6 +465,93 @@ mod tests {
             radio.elevation().deg() > geometric.elevation().deg(),
             "radio refraction should lift elevation"
         );
+    }
+
+    /// TIRS/ITRS longitudes are offset from every equinox-based system by
+    /// the Earth rotation angle, so re-tagging them (e.g. as TOD) would
+    /// silently corrupt conversions. They must keep their own system tag,
+    /// and ecliptic conversion must refuse rather than produce garbage.
+    #[test]
+    fn earth_rotating_systems_keep_their_own_tag_and_refuse_ecliptic() {
+        let frame = ovro_frame();
+        let vega = vega();
+        for system in [ReferenceSystem::Tirs, ReferenceSystem::Itrs] {
+            let app = vega.apparent_in(&frame, system).unwrap();
+            assert_eq!(app.equinox().system(), system);
+            assert_eq!(app.equatorial().system().system(), system);
+            assert!(matches!(
+                app.ecliptic(Accuracy::Reduced),
+                Err(crate::Error::UnsupportedSystem)
+            ));
+        }
+    }
+
+    /// The humidity stored in [`Weather`] must reach the C-side observer:
+    /// radio refraction includes a water-vapor term, so dry vs. saturated
+    /// air must give measurably different elevations.
+    #[test]
+    fn radio_refraction_responds_to_humidity() {
+        let t = crate::Time::from_utc_jd(2_461_236.75, 37, 0.0).unwrap();
+        let polaris = CatalogEntry::icrs(
+            "Polaris",
+            "02:31:49.10".parse().unwrap(),
+            "+89:15:50.79".parse().unwrap(),
+        )
+        .unwrap();
+        let el_at_humidity = |rh: f64| {
+            let w = Weather::new(
+                Some(crate::Temperature::from_celsius(15.0).unwrap()),
+                Some(crate::Pressure::from_hpa(1013.25).unwrap()),
+                Some(rh),
+            )
+            .unwrap();
+            let site = crate::Site::from_degrees(37.234, -118.282, 1222.0)
+                .unwrap()
+                .with_weather(w);
+            let frame = Frame::new(Accuracy::Reduced, &Observer::Geodetic(site), &t).unwrap();
+            polaris
+                .apparent_in(&frame, ReferenceSystem::Cirs)
+                .unwrap()
+                .to_horizontal_with_refraction(Refraction::Radio)
+                .unwrap()
+                .elevation()
+                .arcsec()
+        };
+        let dry = el_at_humidity(0.0);
+        let wet = el_at_humidity(100.0);
+        // ~9% of the total refraction (a few arcsec at 37° elevation).
+        assert!(
+            (wet - dry).abs() > 1.0,
+            "humidity had no effect on radio refraction: Δel = {} arcsec",
+            (wet - dry).abs()
+        );
+    }
+
+    /// A site with no explicit weather uses `SuperNOVAS`'s location-based
+    /// mean annual estimate, so the weather-dependent refraction models
+    /// must still produce a finite, physically sensible result (previously
+    /// NaN weather poisoned them into an error).
+    #[test]
+    fn weather_refraction_works_without_explicit_weather() {
+        let t = crate::Time::from_utc_jd(2_461_236.75, 37, 0.0).unwrap();
+        let site = crate::Site::from_degrees(37.234, -118.282, 1222.0).unwrap();
+        let frame = Frame::new(Accuracy::Reduced, &Observer::Geodetic(site), &t).unwrap();
+        let polaris = CatalogEntry::icrs(
+            "Polaris",
+            "02:31:49.10".parse().unwrap(),
+            "+89:15:50.79".parse().unwrap(),
+        )
+        .unwrap();
+        let apparent = polaris.apparent_in(&frame, ReferenceSystem::Cirs).unwrap();
+        let geometric = apparent.to_horizontal().unwrap();
+        for model in [Refraction::Optical, Refraction::Radio] {
+            let refracted = apparent.to_horizontal_with_refraction(model).unwrap();
+            let lift_arcsec = (refracted.elevation().deg() - geometric.elevation().deg()) * 3600.0;
+            assert!(
+                (10.0..300.0).contains(&lift_arcsec),
+                "{model:?} refraction with default weather looks wrong: Δel = {lift_arcsec} arcsec"
+            );
+        }
     }
 
     #[test]

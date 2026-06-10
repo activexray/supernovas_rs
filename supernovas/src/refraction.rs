@@ -30,12 +30,15 @@ pub enum Refraction {
 
     /// Optical-wavelength refraction using the per-site temperature and
     /// pressure stored in the observer's [`crate::Weather`]. The standard
-    /// choice for visible-band telescopes.
+    /// choice for visible-band telescopes. Weather fields left unset fall
+    /// back to `SuperNOVAS`'s mean annual estimate for the site location.
     Optical,
 
     /// Radio-wavelength refraction (Berman & Rockwell 1976) using the
     /// per-site weather; includes water-vapor effects so the humidity
-    /// field of [`crate::Weather`] matters here.
+    /// field of [`crate::Weather`] matters here. Weather fields left unset
+    /// fall back to `SuperNOVAS`'s mean annual estimate for the site
+    /// location.
     Radio,
 }
 

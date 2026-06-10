@@ -141,6 +141,45 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   still provided by nix for the optional `calceph` feature tests. The coverage derivation now
   exercises the default feature set (vendored + anise + std).
 
+### Fixed
+
+- **`EquatorialTrack::pos_at` mislabeled its output as ICRS** — `novas_equ_track` computes
+  true-of-date (TOD) positions, but the returned `Equatorial` was tagged `Equinox::ICRS`,
+  off from real ICRS by the full precession since J2000 (~10 arcmin in 2026, growing
+  ~50″/yr) for anyone converting onward via the tag. The result is now tagged with a TOD
+  equinox at the evaluation time.
+- **`Weather` humidity never reached the observer** — `Observer::as_novas_observer` went
+  through `make_observer_on_surface`, which has no humidity parameter; the C side substituted
+  a location-based default, so `Refraction::Radio` silently ignored the user's humidity
+  (RH 0% and 100% gave bit-identical elevations). The observer is now built via
+  `make_observer_at_site` with the fully populated `on_surface` struct.
+- **Unset weather fields poisoned weather-dependent refraction with NaN** — fields left
+  `None` were passed to C as `NAN`, which slipped past the C range checks and made
+  `Refraction::Optical`/`Radio` fail with an opaque `Error::NotFinite` (the docs incorrectly
+  claimed a `None` field "disables the refraction contribution"). Unset fields now fall back
+  to SuperNOVAS's mean annual weather estimate for the site location (the C library's own
+  `make_itrf_site` defaults). User-supplied values are range-checked
+  (temperature `[-120, 70]` °C, pressure `[0, 1200]` mbar, humidity `[0, 100]` %) and
+  rejected with `Error::OutOfRange`, matching the checks `make_on_surface` performed.
+- **TIRS/ITRS apparent places were re-tagged as TOD** — `Apparent::equinox()` mapped the
+  Earth-rotating systems to a TOD equinox, so `equatorial()`/`ecliptic()` on a TIRS/ITRS
+  apparent produced coordinates wrong by the Earth rotation angle while looking valid
+  (and `Apparent::ecliptic`'s documented `UnsupportedSystem` error for ITRS was unreachable).
+  TIRS/ITRS apparents now keep their own system tag, and ecliptic conversion of either
+  system returns `Error::UnsupportedSystem` instead of garbage.
+- **ANISE backend misread small `EphemObject` NAIF IDs as planet numbers** — the backend
+  registered SuperNOVAS's `planet_ephem_provider` built-ins, which funnel major-planet
+  queries into the generic ephemeris callback with `novas_planet` IDs (0–13). The callback
+  therefore had to guess whether a small `id` was a planet discriminant or a NAIF ID, and
+  guessed planet: an `EphemObject` with NAIF 3 (Earth–Moon barycenter) was silently remapped
+  to Earth (NAIF 399), ~4700 km away. The backend now mirrors the structure of the C
+  `solsys-calceph` plugin: dedicated planet-provider callbacks handle `novas_planet` IDs
+  (mapped via `novas_to_dexxx_planet`), and the generic callback treats `id` strictly as a
+  NAIF ID. The NOVAS `id == -1` name-lookup convention now returns a descriptive error
+  (ANISE lookups are ID-based) instead of querying NAIF −1, and the callbacks honor the
+  provider contract's allowance for NULL position/velocity output pointers instead of
+  writing unconditionally.
+
 ## [0.4.0] — 2026-05-28
 
 ### Added

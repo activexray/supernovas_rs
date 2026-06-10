@@ -6,7 +6,7 @@
 
 use core::{fmt, mem::MaybeUninit};
 
-use supernovas_ffi::{make_observer_at_geocenter, make_observer_on_surface, observer};
+use supernovas_ffi::{make_observer_at_geocenter, make_observer_at_site, observer};
 
 use crate::error::{Error, Result};
 
@@ -50,19 +50,14 @@ impl Observer {
         let mut obs = MaybeUninit::<observer>::zeroed();
         let rc = match self {
             Observer::Geodetic(site) => {
-                let on_surf = site.as_on_surface();
-                // SAFETY: make_observer_on_surface fully initializes *obs on
-                // a zero return.
-                unsafe {
-                    make_observer_on_surface(
-                        on_surf.latitude,
-                        on_surf.longitude,
-                        on_surf.height,
-                        on_surf.temperature,
-                        on_surf.pressure,
-                        obs.as_mut_ptr(),
-                    )
-                }
+                // make_observer_at_site copies the whole on_surface struct —
+                // including humidity, which make_observer_on_surface has no
+                // parameter for and would silently replace with a location
+                // default.
+                let on_surf = site.as_on_surface()?;
+                // SAFETY: make_observer_at_site fully initializes *obs on a
+                // zero return; the site struct is valid for the call.
+                unsafe { make_observer_at_site(&raw const on_surf, obs.as_mut_ptr()) }
             }
             Observer::Geocenter => unsafe { make_observer_at_geocenter(obs.as_mut_ptr()) },
         };

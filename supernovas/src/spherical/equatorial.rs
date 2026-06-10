@@ -216,14 +216,17 @@ impl Equatorial {
     ///
     /// Uses `equ2ecl`, dispatching the equator type from the equinox.
     /// CIRS sources are auto-routed through TOD (CIRS has no direct
-    /// equator-type mapping); ITRS sources return [`Error::UnsupportedSystem`]
-    /// since they aren't a valid equatorial-to-ecliptic input. Returns
-    /// [`Error::Ffi`] if the underlying C call fails.
+    /// equator-type mapping); the Earth-rotating systems (TIRS, ITRS)
+    /// return [`Error::UnsupportedSystem`] since their longitudes are
+    /// offset from any equinox-based system by the Earth rotation angle.
+    /// Returns [`Error::Ffi`] if the underlying C call fails.
     pub fn to_ecliptic(self, accuracy: Accuracy) -> Result<Ecliptic> {
         // CIRS → TOD as a preprocessing step.
         let eq = match self.system.system() {
             ReferenceSystem::Cirs => self.to_tod(self.system.jd(), accuracy)?,
-            ReferenceSystem::Itrs => return Err(Error::UnsupportedSystem),
+            ReferenceSystem::Tirs | ReferenceSystem::Itrs => {
+                return Err(Error::UnsupportedSystem);
+            }
             _ => self,
         };
         let coord_sys = eq

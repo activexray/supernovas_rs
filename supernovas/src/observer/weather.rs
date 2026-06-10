@@ -1,7 +1,12 @@
 //! Local weather data, used for refraction at an observing site.
 //!
 //! All three fields are independently optional (any may be `None`); a `None`
-//! field disables the refraction contribution that depends on it.
+//! field falls back to `SuperNOVAS`'s mean annual weather estimate for the
+//! site location, so the weather-dependent refraction models
+//! ([`crate::Refraction::Optical`] and [`crate::Refraction::Radio`]) always
+//! see a complete, finite weather state. Weather only matters for those two
+//! models — refraction itself is enabled or disabled by the
+//! [`crate::Refraction`] choice at the conversion call site, not here.
 
 use core::fmt;
 
