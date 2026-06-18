@@ -45,6 +45,8 @@ cargo run --example icrs_to_horizontal
 
 Requires a C compiler and CMake (for the vendored build). With [Nix](https://nixos.org/) and `direnv`, the dev environment is provided automatically via `flake.nix`.
 
+For system-library builds (i.e. `--no-default-features`, without `vendored`), SuperNOVAS ≥ 1.7.0 must be installed and discoverable via `pkg-config`, or the `SUPERNOVAS_INCLUDE_DIR` / `SUPERNOVAS_LIB_DIR` environment variables must point to a local install.
+
 ```sh
 cargo build
 cargo test

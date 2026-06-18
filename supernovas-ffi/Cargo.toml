@@ -18,7 +18,7 @@ features = ["vendored"]
 [features]
 default = []
 
-# Build SuperNOVAS from the bundled git submodule (vendor/supernovas, tracking v1.7).
+# Build SuperNOVAS from the bundled git submodule (vendor/supernovas, tracking v1.7.x).
 # Enable this if no system supernovas >= 1.7.0 is available via pkg-config.
 vendored = ["dep:cmake"]
 

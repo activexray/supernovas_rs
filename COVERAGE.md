@@ -1,6 +1,6 @@
 # SuperNOVAS C API Coverage
 
-Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas` crate.
+Tracks which parts of the SuperNOVAS v1.7.x C API are wrapped by the `supernovas` crate.
 
 - `[x]` — implemented
 - `[ ]` — planned
