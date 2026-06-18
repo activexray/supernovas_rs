@@ -29,7 +29,7 @@
         # rust-toolchain.toml is bumped to a new nightly.
         toolchain = pkgs.fenix.fromToolchainFile {
           file = ./rust-toolchain.toml;
-          sha256 = "sha256-T9bAi9MXgNomhnt7+2UwSQY9YWyYFZx6ZsxnU3KLEjI=";
+          sha256 = "sha256-harDJpyo10S3/I0bxdvAX05J4pd4uOVmqMHVljSO83M=";
         };
 
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
@@ -41,8 +41,8 @@
         supernovasC = pkgs.fetchFromGitHub {
           owner = "sigmyne";
           repo = "supernovas";
-          rev = "ea7e8f5cca16dd7704450ea94376ac4874b6348a";
-          hash = "sha256-D1rYXPrpCRw4Y1XpOyshPbJzLardD9yNGfVSEgUOtXw=";
+          rev = "v1.7.1";
+          hash = "";
         };
 
         # Include Rust/Cargo sources and headers (for bindgen).  The vendor
