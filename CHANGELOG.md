@@ -119,6 +119,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **`Frame::with_auto_polar_motion(accuracy, observer, time)`** (`eop` feature) — construct a
   frame with polar offsets fetched automatically from IERS by passing `NAN`/`NAN` for `xp`/`yp`
   to `novas_make_frame`.
+- **`Frame::update_observer(&mut self, obs: &Observer)`** — swap the observer in an existing
+  frame while keeping the time and accuracy unchanged (wraps `novas_change_observer`). The
+  underlying C function handles the in-place aliased case (`orig == out`) correctly, so no
+  intermediate allocation is needed.
 - **`Error::OutOfRange(&'static str)`** — new public variant for values that are finite but
   outside the physically valid range of a quantity (e.g. geodetic latitude beyond ±90°,
   declination beyond ±90°). The payload names the offending quantity.

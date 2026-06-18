@@ -85,7 +85,7 @@ Tracks which parts of the SuperNOVAS v1.7.0 C API are wrapped by the `supernovas
 - [x] `novas_make_frame` → `Frame::new` / `Frame::with_polar_motion` / `Frame::with_auto_polar_motion` (`eop` feature)
 - [x] `novas_sky_pos` → `Source::apparent_in` → `Apparent` (all source types)
 - [x] `novas_app_to_hor` → `Apparent::to_horizontal` / `to_horizontal_with_refraction`
-- [ ] `novas_change_observer` — rebuild a frame with a different observer at the same time
+- [x] `novas_change_observer` → `Frame::update_observer`
 - [ ] `novas_hor_to_app` — inverse: horizontal → apparent equatorial
 - [ ] `novas_geom_posvel` — geometric (astrometric) position+velocity of a source
 - [ ] `novas_make_transform` / `novas_transform_sky_pos` / `novas_transform_vector` — pre-built rotation matrix for fast repeated transforms

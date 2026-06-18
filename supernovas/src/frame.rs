@@ -9,7 +9,7 @@ use core::mem::MaybeUninit;
 
 use supernovas_ffi::{
     novas_accuracy::{NOVAS_FULL_ACCURACY, NOVAS_REDUCED_ACCURACY},
-    novas_frame, novas_make_frame,
+    novas_change_observer, novas_frame, novas_make_frame,
 };
 
 use crate::{
@@ -52,6 +52,19 @@ impl Frame {
     /// accuracy or coarser.
     pub fn new(accuracy: Accuracy, observer: &Observer, time: &Time) -> Result<Self> {
         Self::with_polar_motion_mas(accuracy, observer, time, 0.0, 0.0)
+    }
+
+    /// Updates the [`Observer`] for this [`Frame`]
+    pub fn update_observer(&mut self, obs: &Observer) -> Result<()> {
+        let c_obs = obs.as_novas_observer()?;
+        // SAFETY: novas_change_observer explicitly handles orig==out aliasing
+        // (it skips the `*out = *orig` copy when the pointers are equal).
+        let rc =
+            unsafe { novas_change_observer(&raw const self.0, &raw const c_obs, &raw mut self.0) };
+        if rc != 0 {
+            return Err(Error::ffi(rc));
+        }
+        Ok(())
     }
 
     /// Construct with explicit Earth-orientation polar offsets (typically
@@ -212,6 +225,26 @@ mod tests {
         let xp = Angle::from_mas(120.5).unwrap();
         let yp = Angle::from_mas(-85.3).unwrap();
         let _ = Frame::with_polar_motion(Accuracy::Reduced, &obs, &t, xp, yp).unwrap();
+    }
+
+    #[test]
+    fn update_observer_replaces_location() {
+        use supernovas_ffi::novas_observer_place::NOVAS_OBSERVER_ON_EARTH;
+
+        let t = j2000();
+        let geodetic = Observer::geodetic(34.0, -118.0, 100.0).unwrap();
+        let mut frame = Frame::new(Accuracy::Reduced, &Observer::Geocenter, &t).unwrap();
+
+        // After construction the internal observer is at geocenter.
+        assert_ne!(frame.0.observer.where_, NOVAS_OBSERVER_ON_EARTH);
+
+        frame.update_observer(&geodetic).unwrap();
+
+        // After the update the observer should be the on-surface type.
+        assert_eq!(frame.0.observer.where_, NOVAS_OBSERVER_ON_EARTH);
+        // Accuracy and time must be unchanged.
+        assert_eq!(frame.accuracy(), Accuracy::Reduced);
+        assert!((frame.tt_jd() - 2_451_545.0).abs() < 1e-9);
     }
 
     /// Polaris sits ~0.74° from the true celestial pole, so from any
