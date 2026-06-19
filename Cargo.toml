@@ -3,7 +3,7 @@ resolver = "3"
 members = ["supernovas-ffi", "supernovas"]
 
 [workspace.package]
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 rust-version = "1.89"
 license = "MIT OR Apache-2.0"
@@ -12,7 +12,7 @@ authors = ["Kiran Shila"]
 readme = "README.md"
 
 [workspace.dependencies]
-supernovas-ffi = { path = "supernovas-ffi", version = "0.4.0", default-features = false }
+supernovas-ffi = { path = "supernovas-ffi", version = "0.5.0", default-features = false }
 
 [workspace.lints.clippy]
 pedantic = "deny"
