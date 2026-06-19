@@ -42,7 +42,7 @@
           owner = "sigmyne";
           repo = "supernovas";
           rev = "v1.7.1";
-          hash = "";
+          hash = "sha256-KHxLyCRKzJ9urLUk6IJlCpZ2oFHG96u+Ykwi/5/UKy0=";
         };
 
         # Include Rust/Cargo sources and headers (for bindgen).  The vendor
@@ -165,9 +165,6 @@
             cargo-msrv
           ];
 
-          # calceph and curl are shared libraries; expose them via LD_LIBRARY_PATH.
-          # curl is needed when building with the `eop` cargo feature.
-          LD_LIBRARY_PATH = lib.makeLibraryPath [pkgs.calceph pkgs.curl];
           RUST_BACKTRACE = 1;
         };
       }
