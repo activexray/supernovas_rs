@@ -80,10 +80,10 @@ impl EphemerisProvider for AniseEphemeris {
     /// Registers the ANISE callbacks with `SuperNOVAS`, mirroring the
     /// structure of the C `solsys-calceph` plugin:
     ///
-    /// - [`planet_provider`] / [`planet_provider_hp`] handle major-planet
+    /// - `planet_provider` / `planet_provider_hp` handle major-planet
     ///   queries, which arrive with `novas_planet` IDs (0–13) and map them
     ///   to NAIF IDs internally.
-    /// - [`ephem_provider`] handles [`crate::EphemObject`] queries, whose
+    /// - `ephem_provider` handles [`crate::EphemObject`] queries, whose
     ///   `id` is always the NAIF ID the object was constructed with.
     ///
     /// Keeping the two interfaces separate (rather than funneling planet
