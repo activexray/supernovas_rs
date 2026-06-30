@@ -57,6 +57,7 @@ fn wrapper_apparent() -> Apparent {
 }
 
 /// Build the same frame + `sky_pos` the wrapper builds, but via raw FFI.
+#[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
 unsafe fn raw_frame_and_sky() -> (sys::novas_frame, sys::sky_pos) {
     let name = c"Vega";
     let mut entry = MaybeUninit::<sys::cat_entry>::zeroed();

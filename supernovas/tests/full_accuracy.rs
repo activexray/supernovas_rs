@@ -20,7 +20,10 @@
 
 use std::path::PathBuf;
 
-use supernovas::{Accuracy, CatalogEntry, Ephemeris, Frame, Observer, ReferenceSystem, Site, Time};
+use supernovas::{
+    Accuracy, CalcephEphemeris, CatalogEntry, Ephemeris, Frame, Observer, ReferenceSystem, Site,
+    Time,
+};
 
 fn ephemeris_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -37,8 +40,7 @@ fn full_accuracy_matches_reduced_within_mas() {
         return;
     }
 
-    Ephemeris::open(&path)
-        .expect("ephemeris file readable")
+    Ephemeris::from_provider(CalcephEphemeris::open(&path).expect("ephemeris file readable"))
         .install()
         .expect("install succeeded");
 

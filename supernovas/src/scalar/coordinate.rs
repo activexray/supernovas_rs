@@ -225,7 +225,7 @@ mod tests {
     #[test]
     fn round_trip_au() {
         let d = Coordinate::from_au(1.0).unwrap();
-        assert!((d.m() - 1.495978707e11).abs() < 1.0);
+        assert!((d.m() - 1.495_978_707e11).abs() < 1.0);
         assert!((d.au() - 1.0).abs() < 1e-12);
     }
 

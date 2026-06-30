@@ -213,10 +213,10 @@ pub fn set_eop_url(series: EopSeries, itrf_year: i32, url: &str) -> Result<()> {
 /// still used internally — the `eop` feature is required.
 ///
 /// The file must be in the official IERS format for the given series:
-/// - [`EopSeries::RapidIau2000`]: `finals.all.iau2000.txt`
-/// - [`EopSeries::C04Iau2000`]: `EOP_20u24_C04_one_file_1962-now.txt`
-/// - [`EopSeries::C01Iau2000`]: `EOP_C01_IAU2000_1846-now.txt`
-/// - [`EopSeries::LeapList`]: `leap-seconds.list` (prefer [`set_leap_list`] — no CURL needed)
+/// - [`EopSeries::RapidIau2000`][]: `finals.all.iau2000.txt`
+/// - [`EopSeries::C04Iau2000`][]: `EOP_20u24_C04_one_file_1962-now.txt`
+/// - [`EopSeries::C01Iau2000`][]: `EOP_C01_IAU2000_1846-now.txt`
+/// - [`EopSeries::LeapList`][]: `leap-seconds.list` (prefer [`set_leap_list`] — no CURL needed)
 ///
 /// `SuperNOVAS` validates the file format on the first call and caches data
 /// across calls, so subsequent EOP lookups for nearby dates are fast.
@@ -276,6 +276,7 @@ pub fn diurnal_eop_at_time(time: &Time) -> Result<(Angle, Angle, f64)> {
 /// Transform EOP parameters (polar motion + UT1) from one ITRF year to another.
 ///
 /// Returns `(to_xp, to_yp, to_dut1_s)`.
+#[allow(clippy::similar_names)]
 pub fn itrf_transform_eop(
     from_year: i32,
     from_xp: Angle,
@@ -355,6 +356,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::similar_names)]
     fn itrf_transform_eop_identity_same_year() {
         let xp = Angle::from_arcsec(0.1).unwrap();
         let yp = Angle::from_arcsec(0.2).unwrap();

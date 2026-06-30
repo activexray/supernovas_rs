@@ -16,6 +16,7 @@
 
 use supernovas::{Interval, Time, Timescale};
 
+#[allow(clippy::similar_names)]
 fn main() -> Result<(), Box<dyn core::error::Error>> {
     // ── Construct from UTC ────────────────────────────────────────────────
     // 2025-01-01 00:00:00 UTC = JD 2 460 676.5 UTC.

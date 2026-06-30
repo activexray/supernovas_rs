@@ -18,8 +18,8 @@
 use std::path::PathBuf;
 
 use supernovas::{
-    Accuracy, CatalogEntry, EphemObject, Ephemeris, Frame, Observer, Planet, ReferenceSystem, Site,
-    SolarBody, Source, Time,
+    Accuracy, AniseEphemeris, CatalogEntry, EphemObject, Ephemeris, Frame, Observer, Planet,
+    ReferenceSystem, Site, SolarBody, Source, Time,
 };
 
 fn ephemeris_path() -> PathBuf {
@@ -37,8 +37,7 @@ fn full_accuracy_matches_reduced_within_mas() {
         return;
     }
 
-    Ephemeris::open(&path)
-        .expect("ephemeris file readable")
+    Ephemeris::from_provider(AniseEphemeris::open(&path).expect("ephemeris file readable"))
         .install()
         .expect("install succeeded");
 
