@@ -133,6 +133,9 @@ pub const KM_PER_S: f64 = KM;
 /// 1 AU/day in m/s.
 pub const AU_PER_DAY: f64 = AU / DAY;
 
+/// The speed of light in m/s (IAU 2012 definition, matching `NOVAS_C`).
+pub const C: f64 = 299_792_458.0;
+
 // -- Pressure ---------------------------------------------------------------
 
 /// 1 pascal (the SI unit of pressure).

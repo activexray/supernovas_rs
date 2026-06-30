@@ -44,7 +44,7 @@ Tracks which parts of the SuperNOVAS v1.7.x C API are wrapped by the `supernovas
 - [ ] `novas_geodetic_to_cartesian` / `novas_cartesian_to_geodetic` — geodetic ↔ ECEF
 - `make_on_surface` — redundant with `Site::new`
 - `novas_set_default_weather` — internal C helper
-- `novas_site_gcrs_posvel` — internal; accessible via `sys`
+- [x] `novas_site_gcrs_posvel` → `Frame::site_gcrs_posvel` (see also Interferometry section)
 
 ---
 
@@ -86,11 +86,11 @@ Tracks which parts of the SuperNOVAS v1.7.x C API are wrapped by the `supernovas
 - [x] `novas_sky_pos` → `Source::apparent_in` → `Apparent` (all source types)
 - [x] `novas_app_to_hor` → `Apparent::to_horizontal` / `to_horizontal_with_refraction`
 - [x] `novas_change_observer` → `Frame::update_observer`
-- [ ] `novas_hor_to_app` — inverse: horizontal → apparent equatorial
-- [ ] `novas_geom_posvel` — geometric (astrometric) position+velocity of a source
-- [ ] `novas_make_transform` / `novas_transform_sky_pos` / `novas_transform_vector` — pre-built rotation matrix for fast repeated transforms
-- [ ] `novas_invert_transform` — invert a `novas_transform`
-- [ ] `novas_frame_lst` — local sidereal time of the frame's observer
+- [x] `novas_hor_to_app` → `Frame::horizontal_to_apparent` (partial `Apparent`: `dis`/`rv` zeroed)
+- [x] `novas_geom_posvel` → `Source::geometric_in` → `Geometric`
+- [x] `novas_make_transform` / `novas_transform_sky_pos` / `novas_transform_vector` → `Transform::new` / `apply_sky_pos` / `apply_vector` (also `Frame::transform`)
+- [x] `novas_invert_transform` → `Transform::invert` (swaps system tags the C call leaves stale)
+- [x] `novas_frame_lst` → `Frame::lst` (`TimeAngle`, `[0, 24h)`)
 - `novas_geom_to_app` / `novas_app_to_geom` — internal unit-vector ↔ sky-pos conversions; accessible via `sys`
 - `novas_frame_is_initialized` — unnecessary: Rust construction guarantees a valid frame
 
@@ -102,12 +102,14 @@ Tracks which parts of the SuperNOVAS v1.7.x C API are wrapped by the `supernovas
 - [x] `equ2ecl` / `ecl2equ` → `Equatorial::to_ecliptic` / `Ecliptic::to_equatorial`
 - [x] `novas_sys_to_icrs` / `novas_icrs_to_sys` → `Equatorial::to_system`
 - [x] `radec2vector` / `vector2radec` — internal to `Equatorial::to_system`
-- [ ] `cirs_to_itrs` / `tod_to_itrs` / `itrs_to_cirs` / `itrs_to_tod` — ITRS ↔ celestial transforms
-- [ ] `hor_to_itrs` / `itrs_to_hor` — horizontal ↔ ITRS
+- [x] `cirs_to_itrs` / `itrs_to_cirs` → `Frame::cirs_to_itrs` / `Frame::itrs_to_cirs` (IAU 2000 path)
+- [ ] `tod_to_itrs` / `itrs_to_tod` — **not wrapped**: the pre-IAU-2000 legacy path. `Transform` covers any system pair (including TOD) when needed, and CIRS is the modern default.
+- [x] `hor_to_itrs` / `itrs_to_hor` → `Frame::horizontal_to_itrs` / `Frame::itrs_to_horizontal`
 - `frame_tie` — internal ICRS ↔ dynamical-frame tie rotation; accessible via `sys`
 - `gcrs_to_cirs` / `cirs_to_gcrs` and the full pairwise family (`gcrs_to_j2000`, `gcrs_to_mod`,
   `gcrs_to_tod`, `j2000_to_gcrs`, `j2000_to_tod`, `tod_to_cirs`, `tod_to_gcrs`, `tod_to_j2000`,
   `cirs_to_tod`, `mod_to_gcrs`) — internal frame-rotation building blocks; accessible via `sys`
+  (the public `Transform` API builds the same rotation chains as needed)
 - `wobble` / `nutation` / `precession` — internal rotation steps; accessible via `sys`
 
 ---
@@ -183,10 +185,12 @@ Requires the `eop` crate feature (enables CURL in the vendored build).
 
 ## Interferometry (UVW baselines)
 
-- [ ] `novas_uvw` / `novas_site_uvw` — baseline UVW from station positions
-- [ ] `novas_uvw_to_xyz` / `novas_xyz_to_uvw` — UVW ↔ XYZ
-- [ ] `novas_enu_to_itrs` / `novas_itrs_to_enu` — ENU ↔ ITRS
-- [ ] `novas_los_to_xyz` / `novas_xyz_to_los` — line-of-sight ↔ XYZ
+- [x] `novas_uvw` → `uvw::uvw` (generic; any shared coordinate system, station positions relative to the array reference)
+- [ ] `novas_site_uvw` — **not wrapped**: it is the geocentric-only convenience for `novas_uvw` (it calls `novas_site_gcrs_posvel` + `novas_uvw` internally, referenced to the geocenter). The Rust API exposes those two building blocks directly so callers get the higher-precision array-reference model the C docs recommend, without the geocentric limitation or the TOD-only input contract.
+- [x] `novas_uvw_to_xyz` / `novas_xyz_to_uvw` → `uvw::uvw_to_xyz` / `uvw::xyz_to_uvw`
+- [x] `novas_enu_to_itrs` / `novas_itrs_to_enu` → `Site::enu_to_itrs` / `Site::itrs_to_enu`
+- [x] `novas_los_to_xyz` / `novas_xyz_to_los` → `uvw::los_to_xyz` / `uvw::xyz_to_los`
+- [x] `novas_site_gcrs_posvel` → `Frame::site_gcrs_posvel` (GCRS position+velocity of a geodetic site; the building block that turns a ground station into the GCRS station vector `uvw::uvw` consumes)
 
 ---
 

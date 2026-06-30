@@ -7,6 +7,54 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+#### `supernovas`
+
+- `Transform` — pre-computed coordinate-transform matrix between two
+  `ReferenceSystem`s anchored to a `Frame`; `Transform::new` /
+  `invert` / `apply_vector` / `apply_sky_pos`. `Frame::transform` is a
+  convenience constructor. `invert` swaps the system tags that the C
+  `novas_invert_transform` leaves stale.
+- `Frame::cirs_to_itrs` / `Frame::itrs_to_cirs` — IAU 2000 ITRS ↔ CIRS
+  3-vector rotations (polar motion and `UT1−TT` sourced from the frame).
+  The legacy TOD path (`tod_to_itrs` / `itrs_to_tod`) is intentionally
+  not wrapped; `Transform` covers any system pair when needed.
+- `Frame::itrs_to_horizontal` / `Frame::horizontal_to_itrs` — local
+  horizontal ↔ ITRS for an Earth-bound observer.
+- `Frame::lst` — local apparent sidereal time as a `TimeAngle` in
+  `[0, 24h)`; refuses non-Earth-bound observers.
+- `Geometric` + `Source::geometric_in` — geometric (astrometric, no
+  aberration / no deflection) position+velocity of a source; distinct
+  from `Apparent`.
+- `Frame::horizontal_to_apparent` — inverse of
+  `Apparent::to_horizontal_with_refraction`; returns a partial `Apparent`
+  (`dis` / `rv` zeroed, `r_hat` reconstructed).
+- `Apparent::r_hat` — public unit-direction accessor.
+- `Error::UnsupportedObserver` — typed error for operations that require
+  an Earth-bound observer (LST, ITRS ↔ horizontal, site UVW).
+- `uvw` module — interferometry: `Uvw` (meters, with `delay()` =
+  `w / c`, `delay_ns()`, and `delay_rate_ns_per_s()`), `uvw::uvw` (generic,
+  array-reference, phase centre as `[f64; 3]` direction), `Frame::site_gcrs_posvel`
+  (the building block that turns a ground station into the GCRS station
+  vector `uvw::uvw` consumes), and the low-level `xyz_to_uvw` /
+  `uvw_to_xyz` / `los_to_xyz` / `xyz_to_los` helpers — all taking/returning
+  typed `Position` / `Uvw` instead of raw `[f64; 3]`. The geocentric
+  `novas_site_uvw` is intentionally not wrapped — `site_gcrs_posvel` +
+  `uvw::uvw` give the higher-precision array-reference model the C docs
+  recommend, without the geocentric limitation or TOD-only input contract.
+- `Frame::source_gcrs_direction` — one-call convenience to get the GCRS
+  unit-direction to a source for UVW projections.
+- `Site::itrs_to_enu` / `Site::enu_to_itrs` — ENU ↔ ITRS at a site,
+  with `Position` in/out.
+- `Interval::from_nanos` / `Interval::nanos` — nanosecond constructor and
+  accessor.
+- `examples/interferometry.rs` — F-engine delay tracker for a 10-antenna
+  array (Ely, NV, 2.4 GSPS): per-antenna coarse/fine delays and delay
+  rates (fringe rates) via the array-reference `site_gcrs_posvel` +
+  `uvw::uvw` path.
+- `unit::C` — speed of light in m/s.
+
 ## [0.5.0] — 2026-06-19
 
 ### Breaking

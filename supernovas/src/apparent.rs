@@ -84,6 +84,33 @@ impl Apparent {
         self.system
     }
 
+    /// Borrow the underlying C `sky_pos` for FFI calls inside the
+    /// safe-wrapper crate (e.g. [`crate::Transform::apply_sky_pos`]).
+    pub(crate) fn as_sky_pos(&self) -> &sky_pos {
+        &self.sky
+    }
+
+    /// The unit direction vector `r_hat` toward the source, in the
+    /// apparent's [`ReferenceSystem`].
+    ///
+    /// This is the dimensionless unit vector `[x, y, z]` with
+    /// `x = cos(dec) cos(ra)`, `y = cos(dec) sin(ra)`, `z = sin(dec)`. Use
+    /// it as the phase-center direction for interferometric UVW projections
+    /// (see [`crate::Frame::source_gcrs_direction`]).
+    #[must_use]
+    pub fn r_hat(self) -> [f64; 3] {
+        self.sky.r_hat
+    }
+
+    /// Reassemble an [`Apparent`] from its three constituent parts.
+    ///
+    /// Used by [`crate::Transform::apply_sky_pos`] to re-tag a transformed
+    /// sky position with the destination system and the transform's frame.
+    #[allow(clippy::large_types_passed_by_value)]
+    pub(crate) fn from_parts(frame: Frame, system: ReferenceSystem, sky: sky_pos) -> Self {
+        Apparent { frame, system, sky }
+    }
+
     /// The frame this apparent place was computed in.
     #[must_use]
     pub fn frame(self) -> Frame {
@@ -569,6 +596,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::similar_names)]
     fn equinox_for_date_dependent_systems() {
         let frame = ovro_frame();
         let vega = vega();

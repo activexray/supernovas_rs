@@ -34,6 +34,15 @@ impl Interval {
         Ok(Interval { seconds, timescale })
     }
 
+    /// Construct from nanoseconds (in TT).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NotFinite`] if the resulting interval is not finite.
+    pub fn from_nanos(ns: f64) -> Result<Self> {
+        Self::from_seconds(ns * unit::NS, Timescale::Tt)
+    }
+
     /// Construct from milliseconds (in TT).
     ///
     /// # Errors
@@ -92,6 +101,12 @@ impl Interval {
     #[must_use]
     pub fn timescale(self) -> Timescale {
         self.timescale
+    }
+
+    /// The interval in nanoseconds.
+    #[must_use]
+    pub fn nanos(self) -> f64 {
+        self.seconds / unit::NS
     }
 
     /// The interval in milliseconds.
@@ -255,6 +270,10 @@ mod tests {
 
     #[test]
     fn remaining_constructors_and_getters() {
+        let dt = Interval::from_nanos(500.0).unwrap();
+        assert!((dt.nanos() - 500.0).abs() < 1e-9);
+        assert!((dt.millis() - 0.0005).abs() < 1e-12);
+
         let dt = Interval::from_millis(500.0).unwrap();
         assert!((dt.millis() - 500.0).abs() < 1e-9);
 

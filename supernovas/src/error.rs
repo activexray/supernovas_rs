@@ -141,6 +141,14 @@ pub enum Error {
     #[error("unsupported coordinate system for this operation")]
     UnsupportedSystem,
 
+    /// The requested operation requires an Earth-bound (geodetic or
+    /// airborne) observer but the frame's observer is not — for example
+    /// [`crate::Observer::Geocenter`] has no local horizon or sidereal
+    /// time, so [`crate::Frame::lst`], [`crate::Frame::itrs_to_horizontal`],
+    /// and [`crate::Frame::site_gcrs_posvel`] all refuse it.
+    #[error("observer is not Earth-bound for this operation")]
+    UnsupportedObserver,
+
     /// Loading or installing a planetary ephemeris failed.
     ///
     /// Triggered by ephemeris file-open errors, unsupported formats, or

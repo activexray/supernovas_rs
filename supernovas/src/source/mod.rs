@@ -26,6 +26,20 @@ pub trait Source: sealed::Sealed {
     ) -> crate::error::Result<crate::Apparent> {
         crate::apparent::apparent_of_source_in(self, frame, system)
     }
+
+    /// Compute the geometric place (position + velocity, no aberration or
+    /// gravitational deflection) of this source in the given [`crate::Frame`]
+    /// and [`crate::ReferenceSystem`].
+    ///
+    /// See [`crate::Geometric`] for the contract and the difference from
+    /// [`Self::apparent_in`].
+    fn geometric_in(
+        &self,
+        frame: &crate::Frame,
+        system: crate::ReferenceSystem,
+    ) -> crate::error::Result<crate::Geometric> {
+        crate::geometric::geometric_of_source_in(self, frame, system)
+    }
 }
 
 mod catalog_entry;
