@@ -16,7 +16,7 @@ readme.workspace = true
 features = ["vendored"]
 
 [features]
-default = []
+default = ["vendored"]
 
 # Build SuperNOVAS from the bundled git submodule (vendor/supernovas, tracking v1.7.x).
 # Enable this if no system supernovas >= 1.7.0 is available via pkg-config.
