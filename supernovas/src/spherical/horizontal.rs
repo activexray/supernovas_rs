@@ -2,8 +2,14 @@
 
 use core::{f64::consts::FRAC_PI_2, fmt};
 
+use supernovas_ffi::novas_offset_by;
+
 use super::Spherical;
-use crate::{Angle, Coordinate, Position, error::Result, unit};
+use crate::{
+    Angle, Coordinate, Position,
+    error::{Error, Result},
+    unit,
+};
 
 /// A direction on the local sky, expressed as azimuth and elevation.
 ///
@@ -74,6 +80,59 @@ impl Horizontal {
     #[must_use]
     pub fn distance_to(self, other: Horizontal) -> Angle {
         self.0.distance_to(other.0)
+    }
+
+    /// Offset along a great-circle arc.
+    ///
+    /// `direction` is measured from north through east (the standard position
+    /// angle convention). `distance` is the great-circle angular distance to
+    /// travel.
+    ///
+    /// Zero distance returns `self` unchanged. Returns an error at the poles
+    /// (longitude is undefined) or on internal failure.
+    pub fn offset(self, direction: Angle, distance: Angle) -> Result<Horizontal> {
+        if distance.rad() == 0.0 {
+            return Ok(self);
+        }
+        let mut out_lon = 0.0f64;
+        let mut out_lat = 0.0f64;
+        let rc = unsafe {
+            novas_offset_by(
+                self.azimuth().deg(),
+                self.elevation().deg(),
+                direction.deg(),
+                distance.deg(),
+                &raw mut out_lon,
+                &raw mut out_lat,
+            )
+        };
+        if rc != 0 {
+            return Err(Error::ffi(rc));
+        }
+        Horizontal::from_degrees(out_lon, out_lat)
+    }
+
+    /// Offset by cross-elevation and elevation amounts in the sky frame.
+    ///
+    /// Converts `(xel, el)` to a great-circle `(direction, distance)` and
+    /// delegates to [`Self::offset`]. The mapping is:
+    ///
+    /// ```text
+    /// distance = acos(cos(xel) * cos(el))
+    /// direction = atan2(sin(xel) * cos(el), sin(el))
+    /// ```
+    ///
+    /// This makes it a drop-in replacement for the common ``offset_by_sky``
+    /// / ``apply_sky_offset`` pattern used for telescope raster scans and
+    /// pointing-model corrections.
+    pub fn offset_by_sky(self, xel: Angle, el: Angle) -> Result<Horizontal> {
+        let (x, y) = (xel.rad(), el.rad());
+        let cos_d = (x.cos() * y.cos()).clamp(-1.0, 1.0);
+        let distance = Angle::from_radians(cos_d.acos())
+            .expect("acos of a clamped value in [-1, 1] is always finite");
+        let direction = Angle::from_radians((y.cos() * x.sin()).atan2(y.sin()))
+            .expect("atan2 of finite values is finite");
+        self.offset(direction, distance)
     }
 
     /// Cartesian position at the given distance along this direction, in
@@ -183,5 +242,150 @@ mod tests {
         let h = Horizontal::from_degrees(-90.0, 10.0).unwrap(); // stored as -90°
         let s = format!("{h}");
         assert!(s.contains("az=270"), "expected az=270, got: {s}");
+    }
+
+    // ---------- offset tests ----------
+
+    #[test]
+    fn offset_zero_distance_is_identity() {
+        let h = Horizontal::from_degrees(45.0, 30.0).unwrap();
+        let h2 = h
+            .offset(
+                Angle::from_degrees(0.0).unwrap(),
+                Angle::from_degrees(0.0).unwrap(),
+            )
+            .unwrap();
+        assert_abs_diff_eq!(h, h2, epsilon = unit::UAS);
+    }
+
+    #[test]
+    fn offset_pure_elevation() {
+        let h = Horizontal::from_degrees(45.0, 30.0).unwrap();
+        let h2 = h
+            .offset(
+                Angle::from_degrees(0.0).unwrap(),
+                Angle::from_degrees(10.0).unwrap(),
+            )
+            .unwrap();
+        assert_abs_diff_eq!(h2.azimuth().deg(), 45.0, epsilon = unit::UAS);
+        assert_abs_diff_eq!(h2.elevation().deg(), 40.0, epsilon = unit::UAS);
+    }
+
+    #[test]
+    fn offset_pure_cross_elevation() {
+        let h = Horizontal::from_degrees(0.0, 45.0).unwrap();
+        let h2 = h
+            .offset(
+                Angle::from_degrees(90.0).unwrap(),
+                Angle::from_degrees(5.0).unwrap(),
+            )
+            .unwrap();
+        // At az=0, el=45, a 5° eastward offset gives some azimuth east
+        assert!(h2.azimuth().deg() > 0.0);
+        // Elevation should decrease slightly (moving east from north at 45° el
+        // curves down toward the horizon for large offsets)
+        assert!(h2.elevation().deg() < 45.0);
+        assert!(h2.elevation().deg() > 40.0);
+    }
+
+    #[test]
+    fn offset_by_sky_zero_is_identity() {
+        let h = Horizontal::from_degrees(45.0, 30.0).unwrap();
+        let zero = Angle::from_degrees(0.0).unwrap();
+        let h2 = h.offset_by_sky(zero, zero).unwrap();
+        assert_abs_diff_eq!(h, h2, epsilon = unit::UAS);
+    }
+
+    #[test]
+    fn offset_by_sky_pure_el() {
+        let h = Horizontal::from_degrees(0.0, 30.0).unwrap();
+        let h2 = h
+            .offset_by_sky(
+                Angle::from_degrees(0.0).unwrap(),
+                Angle::from_degrees(5.0).unwrap(),
+            )
+            .unwrap();
+        assert_abs_diff_eq!(h2.azimuth().deg(), 0.0, epsilon = unit::UAS);
+        assert_abs_diff_eq!(h2.elevation().deg(), 35.0, epsilon = unit::UAS);
+    }
+
+    #[test]
+    fn offset_by_sky_pure_xel() {
+        let h = Horizontal::from_degrees(0.0, 30.0).unwrap();
+        let h2 = h
+            .offset_by_sky(
+                Angle::from_degrees(5.0).unwrap(),
+                Angle::from_degrees(0.0).unwrap(),
+            )
+            .unwrap();
+        // 5° cross-elevation east from north at el=30°
+        assert!(h2.azimuth().deg() > 0.0);
+    }
+
+    #[test]
+    fn offset_by_sky_compound_matches_direct() {
+        let h = Horizontal::from_degrees(0.0, 30.0).unwrap();
+        // (xel, el) = (5°, 5°) should produce same result whether decomposed
+        // via offset_by_sky or computed manually and fed to offset.
+        let xel = Angle::from_degrees(5.0).unwrap();
+        let el = Angle::from_degrees(5.0).unwrap();
+
+        let via_sky = h.offset_by_sky(xel, el).unwrap();
+
+        let (x, y) = (xel.rad(), el.rad());
+        let cos_d = (x.cos() * y.cos()).clamp(-1.0, 1.0);
+        let distance = Angle::from_radians(cos_d.acos()).unwrap();
+        let direction = Angle::from_radians((y.cos() * x.sin()).atan2(y.sin())).unwrap();
+        let via_manual = h.offset(direction, distance).unwrap();
+
+        assert_abs_diff_eq!(via_sky, via_manual, epsilon = unit::UAS);
+    }
+
+    #[test]
+    fn offset_by_sky_distance_correct() {
+        let h = Horizontal::from_degrees(123.0, 45.0).unwrap();
+        let xel = Angle::from_degrees(7.0).unwrap();
+        let el = Angle::from_degrees(12.0).unwrap();
+
+        let fwd = h.offset_by_sky(xel, el).unwrap();
+
+        let expected_dist_rad = (xel.rad().cos() * el.rad().cos()).acos();
+        assert_abs_diff_eq!(
+            h.distance_to(fwd).rad(),
+            expected_dist_rad,
+            epsilon = unit::UAS,
+        );
+    }
+
+    #[test]
+    fn offset_by_sky_azimuth_direction() {
+        // Starting from az=0 (north), pure cross-elevation offsets
+        // should move eastward (positive azimuth).
+        let h = Horizontal::from_degrees(0.0, 30.0).unwrap();
+        let fwd = h
+            .offset_by_sky(
+                Angle::from_degrees(10.0).unwrap(),
+                Angle::from_degrees(0.0).unwrap(),
+            )
+            .unwrap();
+        assert!(fwd.azimuth().deg() > 0.0);
+        // Pure elevation offset should NOT change azimuth.
+        let fwd = h
+            .offset_by_sky(
+                Angle::from_degrees(0.0).unwrap(),
+                Angle::from_degrees(10.0).unwrap(),
+            )
+            .unwrap();
+        assert_abs_diff_eq!(fwd.azimuth().deg(), 0.0, epsilon = unit::UAS);
+    }
+
+    #[test]
+    fn offset_near_pole_errors() {
+        let h = Horizontal::from_degrees(0.0, 90.0).unwrap();
+        let result = h.offset(
+            Angle::from_degrees(0.0).unwrap(),
+            Angle::from_degrees(1.0).unwrap(),
+        );
+        assert!(result.is_err());
     }
 }

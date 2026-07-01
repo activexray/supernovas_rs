@@ -173,8 +173,9 @@ Requires the `eop` crate feature (enables CURL in the vendored build).
 
 ## Angular and spherical utilities
 
-- [ ] `novas_sep` — great-circle separation between two (lon, lat) pairs
-- [ ] `novas_equ_sep` — great-circle separation between two (RA, Dec) pairs
+- [x] `novas_sep` → `Spherical::distance_to` / `Horizontal::distance_to`
+- [x] `novas_offset_by` → `Horizontal::offset` (great-circle arc; also `Horizontal::offset_by_sky` for sky-frame offsets)
+- `novas_equ_sep` — `novas_sep(15.0 * ra, dec, ...)` thin wrapper. Redundant: `Equatorial` already has `as_spherical()` → `Spherical::distance_to` (and we'd need only a `Distance` impl to avoid duplicating the method). Not worth wrapping.
 - [ ] `novas_object_sep` — angular separation between two `object`s in a frame
 - [ ] `novas_moon_angle` / `novas_sun_angle` — proximity to Moon / Sun from a frame
 - [ ] `novas_e2h_offset` / `novas_h2e_offset` — equatorial ↔ horizontal small-angle offset

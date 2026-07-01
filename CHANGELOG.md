@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-07-01
+
 ### Added
 
 #### `supernovas`
@@ -54,6 +56,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   rates (fringe rates) via the array-reference `site_gcrs_posvel` +
   `uvw::uvw` path.
 - `unit::C` — speed of light in m/s.
+- `Horizontal::offset(direction, distance)` — offset along a great-circle
+  arc (wraps `novas_offset_by`). Zero distance is identity; at the poles
+  returns an `Error` since longitude is undefined.
+- `Horizontal::offset_by_sky(xel, el)` — sky-frame offset to great-circle
+  conversion. Decomposes a cross-elevation / elevation pair into
+  `(direction, distance)` and calls `offset`. Convenient for telescope
+  raster scans and pointing-model corrections.
 
 ## [0.5.0] — 2026-06-19
 
@@ -355,7 +364,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
   `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
-[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/kiranshila/supernovas_rs/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kiranshila/supernovas_rs/compare/v0.2.1...v0.3.0
