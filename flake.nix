@@ -163,6 +163,7 @@
             cmake # for local vendored builds
             rust-analyzer-nightly
             cargo-msrv
+	    cargo-release
           ];
 
           RUST_BACKTRACE = 1;
