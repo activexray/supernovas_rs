@@ -7,11 +7,11 @@
 //! 1. Define 10 geodetic antenna sites (a ~km-scale E-W / N-S grid).
 //! 2. Build a `Frame` at a chosen epoch with antenna 0 as the array
 //!    reference observer.
-//! 3. Get the GCRS unit-direction to the target source (Cygnus A) via
-//!    `Frame::source_gcrs_direction`.
+//! 3. Get the GCRS apparent position of the target source (Cygnus A) via
+//!    `Frame::source_gcrs_position`.
 //! 4. For each antenna, compute the GCRS position+velocity relative to the
 //!    array reference via `Frame::site_gcrs_posvel`, then feed the relative
-//!    position and the source direction to `uvw::uvw` to get the baseline
+//!    position and the source position to `uvw::uvw` to get the baseline
 //!    projection `Uvw`.
 //! 5. Read the geometric delay and delay rate directly from the `Uvw`:
 //!    `delay_ns()` and `delay_rate_ns_per_s()`.
@@ -91,7 +91,9 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
     // ── Source: Cygnus A (a bright radio calibrator) ─────────────────────
     let cyg_a = CatalogEntry::icrs("Cyg A", "19:59:28.36".parse()?, "+40:44:02.1".parse()?)?;
 
-    // GCRS unit-direction to the source (phase centre).
+    // GCRS apparent position of the source (phase center) in AU, and the
+    // unit direction (for the delay-rate dot product).
+    let source_pos = frame.source_gcrs_position(&cyg_a)?;
     let source_dir = frame.source_gcrs_direction(&cyg_a)?;
 
     // ── Reference antenna GCRS pos/vel ──────────────────────────────────
@@ -116,7 +118,7 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
         let rel_vel = vel - ref_vel;
 
         // Geometric delay and delay rate from the UVW baseline projection.
-        let u = uvw::uvw(&rel_pos, Some(&rel_vel), source_dir)?;
+        let u = uvw::uvw(&rel_pos, Some(&rel_vel), source_pos)?;
         let tau_ns = u.delay_ns();
         let rate_ns_per_s = u.delay_rate_ns_per_s(source_dir, &rel_vel);
 

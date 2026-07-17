@@ -7,11 +7,30 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-07-17
+
+### Added
+
+- `Frame::source_gcrs_position` — apparent GCRS position vector of a source
+  in AU, scaled to the source's actual distance (or the NOVAS 1-GPC
+  convention for stars without parallax). Use this as the `phase_center`
+  argument to `uvw::uvw`.
+
+### Fixed
+
+- **`uvw::uvw` docs incorrectly claimed the phase-center magnitude was
+  irrelevant** — `novas_uvw` treats `phase_center` as a position in AU and
+  computes parallax from its magnitude. Passing a unit vector (as
+  `source_gcrs_direction` returns) places the source at 1 AU, corrupting
+  `w` by `baseline² / AU` (~420 m on an 8000 km baseline). The parameter
+  is now documented as a position in AU; use `source_gcrs_position` to
+  obtain it. `source_gcrs_direction` is retained for
+  `Uvw::delay_rate_ns_per_s`, which takes a unit direction.
+
 ## [0.6.0] — 2026-07-01
 
 ### Added
 
-#### `supernovas`
 
 - `Transform` — pre-computed coordinate-transform matrix between two
   `ReferenceSystem`s anchored to a `Frame`; `Transform::new` /
@@ -37,7 +56,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   an Earth-bound observer (LST, ITRS ↔ horizontal, site UVW).
 - `uvw` module — interferometry: `Uvw` (meters, with `delay()` =
   `w / c`, `delay_ns()`, and `delay_rate_ns_per_s()`), `uvw::uvw` (generic,
-  array-reference, phase centre as `[f64; 3]` direction), `Frame::site_gcrs_posvel`
+  array-reference, phase center as `[f64; 3]` direction), `Frame::site_gcrs_posvel`
   (the building block that turns a ground station into the GCRS station
   vector `uvw::uvw` consumes), and the low-level `xyz_to_uvw` /
   `uvw_to_xyz` / `los_to_xyz` / `xyz_to_los` helpers — all taking/returning
@@ -337,7 +356,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-#### `supernovas`
 
 - `Frame` — observer × time snapshot; `Frame::observe` converts a `CatalogEntry`
   to an apparent `Horizontal` (az/el) position.
@@ -357,14 +375,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `FromStr` / `Display` implementations on `Angle` (DMS) and `TimeAngle` (HMS).
 - `approx::AbsDiffEq` on all scalar and aggregate types.
 
-#### `supernovas-ffi`
 
 - Raw bindgen FFI bindings to SuperNOVAS v1.6.0.
 - `vendored` feature: builds the bundled C library statically via CMake (opt-in).
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
   `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
-[Unreleased]: https://github.com/activexray/supernovas_rs/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/activexray/supernovas_rs/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/activexray/supernovas_rs/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/activexray/supernovas_rs/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/activexray/supernovas_rs/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/activexray/supernovas_rs/compare/v0.3.0...v0.4.0
