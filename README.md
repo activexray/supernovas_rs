@@ -83,12 +83,11 @@ leap seconds, UT1−UTC, and polar offsets from IERS automatically.
 
 Known gaps that will be addressed in future releases:
 
-- **Frame and observation pipeline**: `Frame::source_gcrs_direction` for interferometry; `novas_app_to_hor` / `novas_hor_to_app` round-trip; `novas_sky_pos` output access for intermediate CIRS/GCRS positions.
+- **Frame and observation pipeline**: `novas_app_to_hor` / `novas_hor_to_app` round-trip; `novas_sky_pos` output access for intermediate CIRS/GCRS positions.
 - **Angular and spherical utilities**: `FromStr` for `Equatorial`, `Horizontal`, `Ecliptic`, `Galactic`; typed proper-motion newtype (mas/yr instead of bare `f64`); `Angle::great_circle_distance` wrapping `novas_sep`; more between-system conversion helpers.
-- **Interferometry**: `novas_site_uvw` convenience; per-baseline F-engine FIFO/rotator splits (currently demonstrated in the `interferometry` example).
+- **Interferometry**: per-baseline F-engine FIFO/rotator splits (currently demonstrated in the `interferometry` example).
 - **Observer variants**: airborne and near-Earth (satellite) observers are not yet wrapped.
 - **Rise / set / transit**: `novas_rises_above`, `novas_sets_below`, `novas_transit_time` are not yet exposed.
-- **ITRS transforms**: `cirs_to_itrs`, `itrs_to_cirs`, `hor_to_itrs`, and related functions are not yet wrapped.
 
 ## Note on LLM Usage
 
