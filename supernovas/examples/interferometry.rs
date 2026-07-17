@@ -41,7 +41,7 @@ const REF_HEIGHT: f64 = 1909.0;
 
 /// ADC sample clock (samples per second)
 const SAMPLE_RATE_HZ: f64 = 2.4e9;
-const SAMPLE_S: f64 = 1.0 / SAMPLE_RATE_HZ;
+const SAMPLE_PERIOD: f64 = 1.0 / SAMPLE_RATE_HZ;
 
 /// Subband bandwidth (Hz) for the fringe-rotator output. The fractional
 /// delay translates to a per-subband phase rotation of
@@ -102,7 +102,7 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
     println!("  reference : antenna 0 at ({REF_LAT}°, {REF_LON}°, {REF_HEIGHT} m)");
     println!("  source    : Cygnus A");
     println!("  epoch     : JD 2461236.750 UTC");
-    println!("  ADC clock : {SAMPLE_RATE_HZ:.1e} Hz  ({SAMPLE_S:.3e} s/sample)");
+    println!("  ADC clock : {SAMPLE_RATE_HZ:.1e} Hz  ({SAMPLE_PERIOD:.3e} s/sample)");
     println!("  subband   : {SUBBAND_BW_HZ:.0} Hz");
     println!();
     println!("ant  τ [ns]        rate [ns/s]    samples  frac    φ_sub [°]");
@@ -122,10 +122,10 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
         let rate_s_per_s = u.delay_rate(&source_pos, &rel_vel);
 
         // Split into coarse (integer-sample) and fine (fractional) delay.
-        let n_samples = tau_s / SAMPLE_S;
+        let n_samples = tau_s / SAMPLE_PERIOD;
         let n_int = n_samples.floor();
         let frac = n_samples - n_int;
-        let phase_deg = 360.0 * SUBBAND_BW_HZ * (frac * SAMPLE_S);
+        let phase_deg = 360.0 * SUBBAND_BW_HZ * (frac * SAMPLE_PERIOD);
 
         // Display in nanoseconds for readability.
         let tau_ns = tau_s * 1e9;
