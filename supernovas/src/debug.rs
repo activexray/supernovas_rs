@@ -2,7 +2,7 @@
 //!
 //! When debug mode is [`DebugMode::On`] or [`DebugMode::Extra`], `SuperNOVAS`
 //! routes every `novas_error()` / `novas_set_errno()` description through a
-//! custom handler.  The default behaviour is to write to `stderr`; this crate
+//! custom handler.  The default behavior is to write to `stderr`; this crate
 //! replaces that with silent capture into the same thread-local slot used by
 //! [`crate::take_provider_error`], so all error context — whether from a Rust
 //! ephemeris callback or from deep inside the C library — is retrievable with

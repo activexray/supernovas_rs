@@ -108,7 +108,7 @@ impl Velocity {
         -self
     }
 
-    /// The position reached after travelling for the given interval.
+    /// The position reached after traveling for the given interval.
     #[must_use]
     pub fn travel(self, dt: Interval) -> Position {
         self * dt

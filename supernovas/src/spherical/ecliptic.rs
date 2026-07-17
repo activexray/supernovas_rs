@@ -200,8 +200,8 @@ mod tests {
     #[test]
     fn ecliptic_to_galactic_via_equatorial() {
         use crate::Accuracy;
-        // Ecliptic position near the galactic centre direction (l=0).
-        // The galactic centre is at roughly RA 17h45m, Dec -29° (ICRS).
+        // Ecliptic position near the galactic center direction (l=0).
+        // The galactic center is at roughly RA 17h45m, Dec -29° (ICRS).
         // Picking a known ecliptic position and verifying the resulting
         // galactic l/b are finite and in their valid ranges.
         let e = Ecliptic::from_degrees(0.0, 0.0, Equinox::J2000).unwrap();

@@ -72,7 +72,7 @@ impl Galactic {
     /// Convert to equatorial coordinates in ICRS.
     ///
     /// The galactic ↔ ICRS rotation is fixed (defined by the galactic pole
-    /// and centre directions in ICRS), so no date / accuracy parameter is
+    /// and center directions in ICRS), so no date / accuracy parameter is
     /// needed.
     pub fn to_equatorial_icrs(self) -> Result<Equatorial> {
         let mut ra_h = 0.0_f64;

@@ -9,7 +9,7 @@ use crate::error::{Error, Result};
 ///
 /// Use this for bodies not in the fixed [`crate::SolarBody`] list — comets,
 /// asteroids, spacecraft, or any object your ephemeris knows by name or NAIF
-/// ID. The installed provider must recognise the name/ID at observation time;
+/// ID. The installed provider must recognize the name/ID at observation time;
 /// if it doesn't, `novas_sky_pos` will return an error.
 ///
 /// Configure a provider before use:

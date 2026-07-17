@@ -6,7 +6,7 @@
 //! computation:
 //!
 //!   * the IAU galactic-coordinate definition (the north galactic pole and the
-//!     galactic-centre direction are fixed ICRS points), and
+//!     galactic-center direction are fixed ICRS points), and
 //!   * the physical magnitude of annual aberration (bounded by the aberration
 //!     constant κ ≈ 20.4955″).
 //!
@@ -22,7 +22,7 @@ use supernovas::{
 /// IAU 1958 north galactic pole, J2000/ICRS: α = 192.85948°, δ = +27.12825°.
 const NGP_RA_DEG: f64 = 192.859_48;
 const NGP_DEC_DEG: f64 = 27.128_25;
-/// IAU galactic-centre direction (l = 0, b = 0), J2000/ICRS.
+/// IAU galactic-center direction (l = 0, b = 0), J2000/ICRS.
 const GC_RA_DEG: f64 = 266.404_99;
 const GC_DEC_DEG: f64 = -28.936_17;
 
@@ -45,22 +45,22 @@ fn north_galactic_pole_maps_to_b_plus_90() {
 }
 
 #[test]
-fn galactic_centre_maps_to_origin() {
+fn galactic_center_maps_to_origin() {
     let gc = Equatorial::from_degrees(GC_RA_DEG, GC_DEC_DEG, Equinox::ICRS).unwrap();
     let g = gc.to_galactic(Accuracy::Reduced).unwrap();
-    // The galactic centre is l=0, b=0 by definition. l is sensitive here (the
+    // The galactic center is l=0, b=0 by definition. l is sensitive here (the
     // point is on the galactic equator), so this exercises both the rotation
     // and the longitude zero-point.
     let l_off = deg_diff(g.l().deg(), 0.0);
     let b_off = g.b().deg().abs();
     assert!(
         l_off < 0.05,
-        "galactic centre should map to l=0, got l={}° ({l_off}° off)",
+        "galactic center should map to l=0, got l={}° ({l_off}° off)",
         g.l().deg()
     );
     assert!(
         b_off < 0.05,
-        "galactic centre should map to b=0, got b={}°",
+        "galactic center should map to b=0, got b={}°",
         g.b().deg()
     );
 }
