@@ -14,7 +14,7 @@
 //!    position and the source position to `uvw::uvw` to get the baseline
 //!    projection `Uvw`.
 //! 5. Read the geometric delay and delay rate directly from the `Uvw`:
-//!    `delay_ns()` and `delay_rate()`.
+//!    `delay()` and `delay_rate()`.
 //! 6. Express each delay as integer ADC samples (coarse delay, applied by
 //!    a FIFO) plus a fractional remainder (fine delay, applied by a
 //!    per-subband phase rotation in the polyphase filterbank).
@@ -41,7 +41,7 @@ const REF_HEIGHT: f64 = 1909.0;
 
 /// ADC sample clock (samples per second)
 const SAMPLE_RATE_HZ: f64 = 2.4e9;
-const SAMPLE_NS: f64 = 1e9 / SAMPLE_RATE_HZ;
+const SAMPLE_S: f64 = 1.0 / SAMPLE_RATE_HZ;
 
 /// Subband bandwidth (Hz) for the fringe-rotator output. The fractional
 /// delay translates to a per-subband phase rotation of
@@ -102,7 +102,7 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
     println!("  reference : antenna 0 at ({REF_LAT}°, {REF_LON}°, {REF_HEIGHT} m)");
     println!("  source    : Cygnus A");
     println!("  epoch     : JD 2461236.750 UTC");
-    println!("  ADC clock : {SAMPLE_RATE_HZ:.1e} Hz  ({SAMPLE_NS:.3} ns/sample)");
+    println!("  ADC clock : {SAMPLE_RATE_HZ:.1e} Hz  ({SAMPLE_S:.3e} s/sample)");
     println!("  subband   : {SUBBAND_BW_HZ:.0} Hz");
     println!();
     println!("ant  τ [ns]        rate [ns/s]    samples  frac    φ_sub [°]");
@@ -115,17 +115,21 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
         let rel_pos = pos - ref_pos;
         let rel_vel = vel - ref_vel;
 
-        // Geometric delay and delay rate from the UVW baseline projection.
+        // Geometric delay (seconds) and delay rate (s/s) from the UVW
+        // baseline projection.
         let u = uvw::uvw(&rel_pos, Some(&rel_vel), &source_pos)?;
-        let tau_ns = u.delay_ns();
-        let rate_ns_per_s = u.delay_rate(&source_pos, &rel_vel) * 1e9;
+        let tau_s = u.delay();
+        let rate_s_per_s = u.delay_rate(&source_pos, &rel_vel);
 
         // Split into coarse (integer-sample) and fine (fractional) delay.
-        let n_samples = tau_ns / SAMPLE_NS;
+        let n_samples = tau_s / SAMPLE_S;
         let n_int = n_samples.floor();
         let frac = n_samples - n_int;
-        let phase_deg = 360.0 * SUBBAND_BW_HZ * (frac * SAMPLE_NS) * 1e-9;
+        let phase_deg = 360.0 * SUBBAND_BW_HZ * (frac * SAMPLE_S);
 
+        // Display in nanoseconds for readability.
+        let tau_ns = tau_s * 1e9;
+        let rate_ns_per_s = rate_s_per_s * 1e9;
         println!(
             " {i:>2}  {tau_ns:>13.3}  {rate_ns_per_s:>13.4}  {n_int:>7.0}  {frac:>6.3}  {phase_deg:>10.3}"
         );
