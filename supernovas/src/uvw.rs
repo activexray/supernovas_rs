@@ -9,17 +9,17 @@
 //! the raw building blocks for callers that already have hour-angle /
 //! declination or a local ENU frame.
 //!
-//! All UVW coordinates are in **meters** (the C side's AU inputs are scaled
-//! by `NOVAS_AU` on output). The `xyz`/`los` helpers pass units through
-//! unchanged — they're pure rotations.
+//! All UVW coordinates are in **meters**. The `xyz`/`los` helpers pass units
+//! through unchanged - they're pure rotations.
 
 use supernovas_ffi::{
-    novas_enu_to_itrs, novas_itrs_to_enu, novas_los_to_xyz, novas_site_gcrs_posvel, novas_uvw,
+    novas_enu_to_itrs, novas_itrs_to_enu, novas_los_to_xyz,
+    novas_observer_place::NOVAS_OBSERVER_ON_EARTH, novas_site_gcrs_posvel, novas_uvw,
     novas_uvw_to_xyz, novas_xyz_to_los, novas_xyz_to_uvw,
 };
 
 use crate::{
-    Angle, Coordinate, Frame, Position, Site, TimeAngle, Velocity,
+    Angle, Coordinate, Frame, Position, ReferenceSystem, Site, Source, TimeAngle, Velocity,
     error::{Error, Result},
     unit,
 };
@@ -91,29 +91,36 @@ impl Uvw {
         self.delay() * 1e9
     }
 
-    /// The delay rate `dτ/dt = (v · ŝ) / c` in nanoseconds per second.
+    /// The delay rate `dτ/dt = (v · ŝ) / c` (dimensionless, s/s).
     ///
-    /// `source_dir` is the GCRS unit-direction to the phase center;
-    /// `station_vel` is the station's GCRS velocity relative to the array
-    /// reference. The result is the fringe rate — how fast the geometric
-    /// delay changes per unit time.
+    /// `phase_center` is the same [`Position`] passed to [`uvw`] (obtain
+    /// via [`Frame::source_gcrs_position`](crate::Frame::source_gcrs_position));
+    /// it is normalized internally. `station_vel` is the station's GCRS
+    /// velocity relative to the array reference.
+    ///
+    /// This is the plane-wave (far-field) delay rate - the rate of change of
+    /// the geometric delay assuming the source is effectively at infinity.
+    /// For near-field sources (spacecraft VLBI) the true delay rate includes
+    /// additional terms from the changing source distance.
     #[must_use]
-    pub fn delay_rate_ns_per_s(self, source_dir: [f64; 3], station_vel: &Velocity) -> f64 {
-        let v = station_vel.as_mps();
-        let v_dot_s = v[0] * source_dir[0] + v[1] * source_dir[1] + v[2] * source_dir[2];
-        v_dot_s / unit::C * 1e9
+    pub fn delay_rate(self, phase_center: &Position, station_vel: &Velocity) -> f64 {
+        let [pc_x, pc_y, pc_z] = phase_center.as_meters();
+        let norm = (pc_x * pc_x + pc_y * pc_y + pc_z * pc_z).sqrt();
+        let vel = station_vel.as_mps();
+        let v_dot_s = (vel[0] * pc_x + vel[1] * pc_y + vel[2] * pc_z) / norm;
+        v_dot_s / unit::C
     }
 }
 
 /// Compute `(u, v, w)` for a station relative to an array reference, given
-/// the station's position/velocity and the source's apparent position — all
-/// in the **same** reference system.
+/// the station's position/velocity and the source's apparent position.
 ///
-/// Wraps `novas_uvw`. `phase_center` is a `[x, y, z]` position vector in
-/// **AU** — obtain it via
+/// Wraps `novas_uvw`. All three inputs must be expressed in the **same**
+/// reference system (typically GCRS). `phase_center` is the source's
+/// apparent position - obtain it via
 /// [`Frame::source_gcrs_position`](crate::Frame::source_gcrs_position).
-/// Do **not** pass a unit vector: `novas_uvw` treats `phase_center` as a
-/// position and computes parallax from its magnitude.
+/// `station_pos` and `station_vel` are relative to the array reference
+/// (e.g. via differencing [`Frame::site_gcrs_posvel`] results).
 ///
 /// # Errors
 ///
@@ -122,13 +129,15 @@ impl Uvw {
 /// # Examples
 ///
 /// See `examples/interferometry.rs` for a 10-antenna delay calculation.
+///
+/// [`Frame::site_gcrs_posvel`]: crate::Frame::site_gcrs_posvel
 pub fn uvw(
     station_pos: &Position,
     station_vel: Option<&Velocity>,
-    phase_center: [f64; 3],
+    phase_center: &Position,
 ) -> Result<Uvw> {
     let pos_au = station_pos.components().map(Coordinate::au);
-    let pc_au = phase_center;
+    let pc_au = phase_center.components().map(Coordinate::au);
     let vel_au_per_day =
         station_vel.map(|v| v.components().map(|c| c.m_per_s() / unit::AU_PER_DAY));
     let mut out = [0.0_f64; 3];
@@ -153,7 +162,7 @@ pub fn uvw(
 /// Convert a position vector in the Pseudo-Earth-Frame (PEF) to a `(u, v, w)`
 /// projection for a given hour angle and declination.
 ///
-/// Wraps `novas_xyz_to_uvw`. Units pass through unchanged — the input
+/// Wraps `novas_xyz_to_uvw`. Units pass through unchanged - the input
 /// [`Position`] and returned [`Uvw`] are in the same units. For
 /// arcsecond-level work, PEF and ITRS positions are interchangeable; for
 /// higher precision, de-wobble ITRS to PEF first.
@@ -189,9 +198,15 @@ pub fn uvw_to_xyz(uvw: Uvw, ha: TimeAngle, dec: Angle) -> Result<Position> {
     Position::from_meters_array(out)
 }
 
-/// Convert a line-of-sight `(\deltaφ, \deltaθ, \delta r)` vector to a
-/// rectangular equatorial [`Position`] vector along the given
-/// direction. Units pass through unchanged.
+/// Convert a `(u, v, w)` line-of-sight vector to a rectangular equatorial
+/// [`Position`] vector along the given direction. Units pass through
+/// unchanged.
+///
+/// The three components are the Cartesian projections onto the local East,
+/// North, and line-of-sight axes defined by `(lon, lat)` — the same
+/// representation used by [`xyz_to_uvw`], just parameterized by
+/// longitude/latitude instead of hour angle/declination. The position
+/// vector and `(lon, lat)` must be in the same coordinate frame.
 ///
 /// # Errors
 ///
@@ -206,9 +221,12 @@ pub fn los_to_xyz(los: [f64; 3], lon: Angle, lat: Angle) -> Result<Position> {
     Position::from_meters_array(out)
 }
 
-/// Convert a rectangular equatorial [`Position`] vector to a line-of-sight
-/// `(\deltaφ, \deltaθ, \delta r)` vector along the given
-/// direction. Inverse of [`los_to_xyz`].
+/// Convert a rectangular equatorial [`Position`] vector to a `(u, v, w)`
+/// line-of-sight vector along the given direction. Inverse of [`los_to_xyz`].
+/// Units pass through unchanged.
+///
+/// The position vector and `(lon, lat)` must be in the same coordinate
+/// frame.
 ///
 /// # Errors
 ///
@@ -242,7 +260,7 @@ impl Frame {
     /// Returns [`Error::UnsupportedObserver`] if the frame's observer is not
     /// on Earth, or [`Error::Ffi`] if the C call fails.
     pub fn site_gcrs_posvel(&self, site: &Site) -> Result<(Position, Velocity)> {
-        if self.observer_place() != supernovas_ffi::novas_observer_place::NOVAS_OBSERVER_ON_EARTH {
+        if self.observer_place() != NOVAS_OBSERVER_ON_EARTH {
             return Err(Error::UnsupportedObserver);
         }
         let on_surf = site.as_on_surface()?;
@@ -266,83 +284,40 @@ impl Frame {
         if rc != 0 {
             return Err(Error::ffi(rc));
         }
-        let pos_m = [
-            pos_au[0] * unit::AU,
-            pos_au[1] * unit::AU,
-            pos_au[2] * unit::AU,
-        ];
-        let vel_mps = [
-            vel_au_per_day[0] * unit::AU_PER_DAY,
-            vel_au_per_day[1] * unit::AU_PER_DAY,
-            vel_au_per_day[2] * unit::AU_PER_DAY,
-        ];
         Ok((
-            Position::from_meters_array(pos_m)?,
-            Velocity::from_mps_array(vel_mps)?,
+            Position::from_au(pos_au[0], pos_au[1], pos_au[2])?,
+            Velocity::from_au_per_day(vel_au_per_day[0], vel_au_per_day[1], vel_au_per_day[2])?,
         ))
     }
 
-    /// The GCRS unit-direction to a source at this frame's epoch.
-    ///
-    /// Use this when you only need the direction (e.g. for
-    /// [`Uvw::delay_rate_ns_per_s`]); for the UVW projection itself use
-    /// [`Self::source_gcrs_position`], which carries the distance
-    /// information `novas_uvw` requires.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::Ffi`] if the underlying C calls fail.
-    pub fn source_gcrs_direction(
-        &self,
-        source: &(impl crate::source::Source + ?Sized),
-    ) -> Result<[f64; 3]> {
-        let app = source.apparent_in(self, crate::apparent::ReferenceSystem::Tod)?;
-        let tod_rhat = app.r_hat();
-        let gcrs_dir = self
-            .transform(
-                crate::apparent::ReferenceSystem::Tod,
-                crate::apparent::ReferenceSystem::Gcrs,
-            )?
-            .apply_vector(tod_rhat)?;
-        let n = (gcrs_dir[0].powi(2) + gcrs_dir[1].powi(2) + gcrs_dir[2].powi(2)).sqrt();
-        Ok([gcrs_dir[0] / n, gcrs_dir[1] / n, gcrs_dir[2] / n])
-    }
-
-    /// The GCRS apparent position vector to a source at this frame's epoch,
-    /// in **AU**.
+    /// The GCRS apparent [`Position`] of a source at this frame's epoch.
     ///
     /// For solar-system sources the actual geometric distance is used; for
     /// sidereal sources (stars) the NOVAS convention of 1 gigaparsec is
     /// used, placing the source effectively at infinity. Pass the result as
-    /// the `phase_center` argument to [`uvw`].
+    /// the `phase_center` argument to [`uvw`] and to
+    /// [`Uvw::delay_rate`].
     ///
     /// # Errors
     ///
     /// Returns [`Error::Ffi`] if the underlying C calls fail.
-    pub fn source_gcrs_position(
-        &self,
-        source: &(impl crate::source::Source + ?Sized),
-    ) -> Result<[f64; 3]> {
-        let app = source.apparent_in(self, crate::apparent::ReferenceSystem::Tod)?;
+    pub fn source_gcrs_position<S>(&self, source: &S) -> Result<Position>
+    where
+        S: Source + ?Sized,
+    {
+        let app = source.apparent_in(self, ReferenceSystem::Tod)?;
         let tod_rhat = app.r_hat();
-        let dist_au = app.distance().au();
-        let dist_au = if dist_au > 0.0 {
-            dist_au
-        } else {
-            unit::GPC / unit::AU
-        };
+        let dist_m = app.distance().m();
+        let dist_m = if dist_m > 0.0 { dist_m } else { unit::GPC };
         let gcrs_dir = self
-            .transform(
-                crate::apparent::ReferenceSystem::Tod,
-                crate::apparent::ReferenceSystem::Gcrs,
-            )?
+            .transform(ReferenceSystem::Tod, ReferenceSystem::Gcrs)?
             .apply_vector(tod_rhat)?;
         let n = (gcrs_dir[0].powi(2) + gcrs_dir[1].powi(2) + gcrs_dir[2].powi(2)).sqrt();
-        Ok([
-            gcrs_dir[0] / n * dist_au,
-            gcrs_dir[1] / n * dist_au,
-            gcrs_dir[2] / n * dist_au,
-        ])
+        Position::from_meters(
+            gcrs_dir[0] / n * dist_m,
+            gcrs_dir[1] / n * dist_m,
+            gcrs_dir[2] / n * dist_m,
+        )
     }
 }
 
@@ -421,8 +396,8 @@ mod tests {
     fn uvw_source_at_pole_ew_baseline_is_v() {
         let b = 100.0;
         let station = Position::from_meters(b / 2.0, 0.0, 0.0).unwrap();
-        let pc = [0.0, 0.0, STAR_AU];
-        let out = uvw(&station, None, pc).unwrap();
+        let pc = Position::from_au(0.0, 0.0, STAR_AU).unwrap();
+        let out = uvw(&station, None, &pc).unwrap();
         assert!(
             (out.v().m() - b / 2.0).abs() < 1e-3,
             "v = {} m, expected {}",
@@ -445,8 +420,8 @@ mod tests {
     fn uvw_source_on_x_axis_baseline_along_x_is_w() {
         let b = 100.0;
         let station = Position::from_meters(b / 2.0, 0.0, 0.0).unwrap();
-        let pc = [STAR_AU, 0.0, 0.0];
-        let out = uvw(&station, None, pc).unwrap();
+        let pc = Position::from_au(STAR_AU, 0.0, 0.0).unwrap();
+        let out = uvw(&station, None, &pc).unwrap();
         assert!(out.u().m().abs() < 1e-3, "u = {}", out.u().m());
         assert!(out.v().m().abs() < 1e-3, "v = {}", out.v().m());
         assert!(
@@ -461,8 +436,8 @@ mod tests {
     fn uvw_source_on_x_axis_baseline_along_y_is_u() {
         let b = 100.0;
         let station = Position::from_meters(0.0, b / 2.0, 0.0).unwrap();
-        let pc = [STAR_AU, 0.0, 0.0];
-        let out = uvw(&station, None, pc).unwrap();
+        let pc = Position::from_au(STAR_AU, 0.0, 0.0).unwrap();
+        let out = uvw(&station, None, &pc).unwrap();
         assert!(out.v().m().abs() < 1e-3, "v = {}", out.v().m());
         assert!(out.w().m().abs() < 1e-3, "w = {}", out.w().m());
         assert!(
@@ -479,8 +454,8 @@ mod tests {
         // the source at 1 GPC (stellar distance), w must be ~0.
         let b = 8.0e6;
         let station = Position::from_meters(0.0, b, 0.0).unwrap();
-        let pc = [STAR_AU, 0.0, 0.0];
-        let out = uvw(&station, None, pc).unwrap();
+        let pc = Position::from_au(STAR_AU, 0.0, 0.0).unwrap();
+        let out = uvw(&station, None, &pc).unwrap();
         assert!(
             out.w().m().abs() < 1.0e-3,
             "w = {} m, expected ~0 for {} m baseline",
@@ -497,15 +472,15 @@ mod tests {
 
     #[test]
     fn uvw_unit_vector_fails_on_long_baseline() {
-        // Same geometry, but with a unit vector (1 AU) instead of a stellar
-        // distance — demonstrates the parallax bug.
+        // Same geometry, but with a 1 AU position instead of a stellar
+        // distance - demonstrates the parallax bug.
         let b = 8.0e6;
         let station = Position::from_meters(0.0, b, 0.0).unwrap();
-        let pc = [1.0, 0.0, 0.0];
-        let out = uvw(&station, None, pc).unwrap();
+        let pc = Position::from_au(1.0, 0.0, 0.0).unwrap();
+        let out = uvw(&station, None, &pc).unwrap();
         assert!(
             out.w().m().abs() > 100.0,
-            "w = {} m, expected >100 m with unit vector",
+            "w = {} m, expected >100 m with 1 AU position",
             out.w().m()
         );
     }
@@ -513,7 +488,8 @@ mod tests {
     #[test]
     fn uvw_station_vel_none_runs() {
         let station = Position::from_meters(10.0, 0.0, 0.0).unwrap();
-        assert!(uvw(&station, None, [0.0, 0.0, STAR_AU]).is_ok());
+        let pc = Position::from_au(0.0, 0.0, STAR_AU).unwrap();
+        assert!(uvw(&station, None, &pc).is_ok());
     }
 
     #[test]
@@ -544,20 +520,23 @@ mod tests {
 
     #[test]
     fn uvw_delay_rate_matches_manual_dot() {
-        let source = [0.6, 0.8, 0.0];
+        // A unit-direction scaled to stellar distance - normalization
+        // inside delay_rate must recover the original direction.
+        let star_au = unit::GPC / unit::AU;
+        let phase_center = Position::from_au(0.6 * star_au, 0.8 * star_au, 0.0).unwrap();
         let vel = Velocity::from_mps(100.0, 0.0, 0.0).unwrap();
         let uvw = Uvw::from_meters_array([1.0, 2.0, 3.0]).unwrap();
-        let rate = uvw.delay_rate_ns_per_s(source, &vel);
-        let expected = (100.0 * 0.6 + 0.0 * 0.8 + 0.0 * 0.0) / unit::C * 1e9;
-        assert!((rate - expected).abs() < 1e-6);
+        let rate = uvw.delay_rate(&phase_center, &vel);
+        let expected = (100.0 * 0.6 + 0.0 * 0.8 + 0.0 * 0.0) / unit::C;
+        assert!((rate - expected).abs() < 1e-15);
     }
 
     #[test]
     fn uvw_with_position_direction_works() {
         let b = 100.0;
         let station = Position::from_meters(0.0, b / 2.0, 0.0).unwrap();
-        let pc = [0.0, 0.0, STAR_AU];
-        let out = uvw(&station, None, pc).unwrap();
+        let pc = Position::from_au(0.0, 0.0, STAR_AU).unwrap();
+        let out = uvw(&station, None, &pc).unwrap();
         assert!(out.u().m().abs() < 1e-3, "u = {}", out.u().m());
         assert!((out.v().m() - b / 2.0).abs() < 1e-3, "v = {}", out.v().m());
         assert!(out.w().m().abs() < 1e-3, "w = {}", out.w().m());
@@ -669,7 +648,7 @@ mod tests {
         .unwrap();
         let (pos, vel) = f.site_gcrs_posvel(&site()).unwrap();
         let source_pos = f.source_gcrs_position(&vega).unwrap();
-        let out = uvw(&pos, Some(&vel), source_pos).unwrap();
+        let out = uvw(&pos, Some(&vel), &source_pos).unwrap();
         let m = {
             let v = out.as_meters();
             (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt()
@@ -678,7 +657,7 @@ mod tests {
     }
 
     #[test]
-    fn source_gcrs_direction_is_unit_length() {
+    fn source_gcrs_position_is_stellar_distance() {
         let f = frame();
         let vega = CatalogEntry::icrs(
             "Vega",
@@ -686,8 +665,13 @@ mod tests {
             "+38:47:01.28".parse().unwrap(),
         )
         .unwrap();
-        let dir = f.source_gcrs_direction(&vega).unwrap();
-        let n = (dir[0].powi(2) + dir[1].powi(2) + dir[2].powi(2)).sqrt();
-        assert!((n - 1.0).abs() < 1e-9, "norm = {n}");
+        let pos = f.source_gcrs_position(&vega).unwrap();
+        let dist = pos.distance().au();
+        // Stars use the 1-GPC convention.
+        let gpc_au = unit::GPC / unit::AU;
+        assert!(
+            (dist - gpc_au).abs() / gpc_au < 1e-9,
+            "dist = {dist} AU, expected {gpc_au}"
+        );
     }
 }

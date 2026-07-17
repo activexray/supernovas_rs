@@ -14,7 +14,7 @@
 //!    position and the source position to `uvw::uvw` to get the baseline
 //!    projection `Uvw`.
 //! 5. Read the geometric delay and delay rate directly from the `Uvw`:
-//!    `delay_ns()` and `delay_rate_ns_per_s()`.
+//!    `delay_ns()` and `delay_rate()`.
 //! 6. Express each delay as integer ADC samples (coarse delay, applied by
 //!    a FIFO) plus a fractional remainder (fine delay, applied by a
 //!    per-subband phase rotation in the polyphase filterbank).
@@ -91,16 +91,14 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
     // ── Source: Cygnus A (a bright radio calibrator) ─────────────────────
     let cyg_a = CatalogEntry::icrs("Cyg A", "19:59:28.36".parse()?, "+40:44:02.1".parse()?)?;
 
-    // GCRS apparent position of the source (phase center) in AU, and the
-    // unit direction (for the delay-rate dot product).
+    // GCRS apparent position of the source (phase center).
     let source_pos = frame.source_gcrs_position(&cyg_a)?;
-    let source_dir = frame.source_gcrs_direction(&cyg_a)?;
 
     // ── Reference antenna GCRS pos/vel ──────────────────────────────────
     let (ref_pos, ref_vel) = frame.site_gcrs_posvel(&sites[0])?;
 
     // ── Per-antenna delays and delay rates ──────────────────────────────
-    println!("F-engine delay tracking — 10-antenna array");
+    println!("F-engine delay tracking - 10-antenna array");
     println!("  reference : antenna 0 at ({REF_LAT}°, {REF_LON}°, {REF_HEIGHT} m)");
     println!("  source    : Cygnus A");
     println!("  epoch     : JD 2461236.750 UTC");
@@ -118,9 +116,9 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
         let rel_vel = vel - ref_vel;
 
         // Geometric delay and delay rate from the UVW baseline projection.
-        let u = uvw::uvw(&rel_pos, Some(&rel_vel), source_pos)?;
+        let u = uvw::uvw(&rel_pos, Some(&rel_vel), &source_pos)?;
         let tau_ns = u.delay_ns();
-        let rate_ns_per_s = u.delay_rate_ns_per_s(source_dir, &rel_vel);
+        let rate_ns_per_s = u.delay_rate(&source_pos, &rel_vel) * 1e9;
 
         // Split into coarse (integer-sample) and fine (fractional) delay.
         let n_samples = tau_ns / SAMPLE_NS;
