@@ -14,7 +14,7 @@ use crate::error::{Error, Result};
 /// `node_precession_years`) default to zero, which tells `SuperNOVAS` to
 /// either derive them from the semi-major axis or ignore the precession.
 ///
-/// # Example — Halley's comet (approximate)
+/// # Example - Halley's comet (approximate)
 /// ```no_run
 /// use supernovas::OrbitalElements;
 ///
@@ -85,7 +85,7 @@ impl OrbitalElements {
 
 /// A solar-system source defined by Keplerian orbital elements.
 ///
-/// Apparent positions are propagated analytically from the elements — no
+/// Apparent positions are propagated analytically from the elements - no
 /// external ephemeris provider is needed. Accuracy degrades for highly
 /// perturbed orbits (Jupiter-family comets, near-Earth asteroids) compared to
 /// a full N-body ephemeris, but this is ideal for newly discovered objects or

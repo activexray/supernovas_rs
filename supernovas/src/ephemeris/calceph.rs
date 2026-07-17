@@ -63,7 +63,7 @@ impl EphemerisProvider for CalcephEphemeris {
 
 impl Drop for CalcephEphemeris {
     fn drop(&mut self) {
-        // Only runs if `install()` was not called — we still own the handle.
+        // Only runs if `install()` was not called - we still own the handle.
         // SAFETY: self.handle came from calceph_open and was not yet closed.
         unsafe { calceph_close(self.handle.as_ptr()) }
     }

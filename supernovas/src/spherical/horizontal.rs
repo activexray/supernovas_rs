@@ -136,8 +136,8 @@ impl Horizontal {
     }
 
     /// Cartesian position at the given distance along this direction, in
-    /// horizon-aligned axes (x toward north, y toward east, z toward zenith
-    /// — but be careful: the underlying transform uses the spherical
+    /// horizon-aligned axes (x toward north, y toward east, z toward zenith;
+    /// but be careful: the underlying transform uses the spherical
     /// convention with x toward `lon=0, lat=0`).
     #[must_use]
     pub fn xyz(self, distance: Coordinate) -> Position {
@@ -147,7 +147,7 @@ impl Horizontal {
 
 impl fmt::Display for Horizontal {
     /// Renders azimuth (normalized to `[0°, 360°)`) and elevation as decimal
-    /// degrees — the convention for observing logs and telescope control. Use
+    /// degrees - the convention for observing logs and telescope control. Use
     /// `{:.N}` to control decimal places (default 3).
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let decimals = f.precision().unwrap_or(3);

@@ -19,7 +19,7 @@ use supernovas::{Accuracy, Angle, CatalogEntry, Frame, Interval, Observer, Scala
 
 fn main() -> Result<(), Box<dyn core::error::Error>> {
     // ── Catalog entry ─────────────────────────────────────────────────────
-    // Barnard's Star (GJ 699) — ICRS J2000 position from the Hipparcos
+    // Barnard's Star (GJ 699) - ICRS J2000 position from the Hipparcos
     // catalogue. Proper motion components are in mas/yr of arc (RA×cos δ, Dec).
     let barnard = CatalogEntry::icrs(
         "Barnard's Star",
@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
     let eq_2025 = app_2025.equatorial();
 
     // ── Print results ─────────────────────────────────────────────────────
-    println!("Barnard's Star — apparent ICRS position\n");
+    println!("Barnard's Star - apparent ICRS position\n");
     println!(
         "  Epoch J2000  RA {:.6}  Dec {:+.5}°",
         eq_2000.ra(),

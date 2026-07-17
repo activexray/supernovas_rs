@@ -35,7 +35,7 @@ pub struct Equinox {
 }
 
 impl Equinox {
-    /// ICRS — the fixed extragalactic frame. JD is unused but kept at
+    /// ICRS - the fixed extragalactic frame. JD is unused but kept at
     /// J2000 by convention.
     pub const ICRS: Equinox = Equinox {
         name: "ICRS",
@@ -51,7 +51,7 @@ impl Equinox {
         jd_tt: NOVAS_JD_J2000,
     };
 
-    /// Hipparcos catalog reference — mean equator and equinox of date at
+    /// Hipparcos catalog reference - mean equator and equinox of date at
     /// J1991.25.
     pub const HIPPARCOS: Equinox = Equinox {
         name: "HIP",
@@ -59,7 +59,7 @@ impl Equinox {
         jd_tt: NOVAS_JD_HIP,
     };
 
-    /// B1950 — mean equator and equinox at the 1950.0 Besselian epoch.
+    /// B1950 - mean equator and equinox at the 1950.0 Besselian epoch.
     /// Also known as FK4.
     pub const B1950: Equinox = Equinox {
         name: "B1950",
@@ -67,7 +67,7 @@ impl Equinox {
         jd_tt: NOVAS_JD_B1950,
     };
 
-    /// B1900 — mean equator and equinox at the 1900.0 Besselian epoch.
+    /// B1900 - mean equator and equinox at the 1900.0 Besselian epoch.
     pub const B1900: Equinox = Equinox {
         name: "B1900",
         system: ReferenceSystem::Mod,
@@ -90,7 +90,7 @@ impl Equinox {
     }
 
     /// General constructor with explicit name, system, and (TT-based) JD.
-    /// `name` must be a `'static` string — typically a literal.
+    /// `name` must be a `'static` string - typically a literal.
     pub fn at(name: &'static str, system: ReferenceSystem, jd_tt: f64) -> Result<Self> {
         if !jd_tt.is_finite() {
             return Err(Error::NotFinite);
@@ -141,7 +141,7 @@ impl Equinox {
         matches!(self.system, ReferenceSystem::Icrs | ReferenceSystem::Gcrs)
     }
 
-    /// `true` for mean-of-date systems (MOD, J2000 — both use the
+    /// `true` for mean-of-date systems (MOD, J2000 - both use the
     /// dynamical *mean* equator).
     #[must_use]
     pub fn is_mod(self) -> bool {
@@ -293,7 +293,7 @@ mod tests {
     fn equator_type_for_ecliptic_returns_none_for_unmappable_systems() {
         let cirs = Equinox::cirs_at(NOVAS_JD_J2000).unwrap();
         assert!(cirs.equator_type_for_ecliptic().is_none());
-        // Earth-rotating systems: no equator type can describe them — their
+        // Earth-rotating systems: no equator type can describe them - their
         // RA origin is offset from TOD by the Earth rotation angle.
         let tirs = Equinox::at("TIRS", ReferenceSystem::Tirs, NOVAS_JD_J2000).unwrap();
         assert!(tirs.equator_type_for_ecliptic().is_none());

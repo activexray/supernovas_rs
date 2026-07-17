@@ -24,10 +24,10 @@ use crate::{
 /// (~milliarcsecond, faster).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Accuracy {
-    /// Full precision — microarcsecond-level, suitable for radio/sub-mm
+    /// Full precision - microarcsecond-level, suitable for radio/sub-mm
     /// observatories and high-precision astrometry.
     Full,
-    /// Reduced precision — milliarcsecond-level, faster.
+    /// Reduced precision - milliarcsecond-level, faster.
     Reduced,
 }
 
@@ -87,7 +87,7 @@ impl Frame {
     ///
     /// Pass raw IERS Bulletin values if you supply them manually via
     /// [`with_polar_motion`](Self::with_polar_motion); do **not**
-    /// pre-apply libration or ocean-tide corrections — `novas_make_frame`
+    /// pre-apply libration or ocean-tide corrections - `novas_make_frame`
     /// handles those internally for `Accuracy::Full` frames.
     #[cfg(feature = "eop")]
     pub fn with_auto_polar_motion(
@@ -309,7 +309,7 @@ impl Frame {
     /// pass through unchanged (this is a pure rotation).
     ///
     /// For *sky-position* (RA/Dec) conversions prefer
-    /// [`crate::Equatorial::to_system`] or [`crate::Transform`] — this
+    /// [`crate::Equatorial::to_system`] or [`crate::Transform`] - this
     /// low-level rotation operates on bare 3-vectors and does not fold in
     /// aberration or gravitational deflection.
     ///
@@ -538,7 +538,7 @@ mod tests {
     /// Polaris sits ~0.74° from the true celestial pole, so from any
     /// northern-hemisphere site at geographic latitude L, its elevation is
     /// `L ± 0.74°`. This is the classic "Polaris altitude = your latitude"
-    /// trick — and a tight end-to-end smoke test for the whole ICRS → az/el
+    /// trick - and a tight end-to-end smoke test for the whole ICRS → az/el
     /// pipeline (`Frame::new` + `sky_pos` + `app_to_hor`).
     #[test]
     fn polaris_elevation_matches_observer_latitude() {

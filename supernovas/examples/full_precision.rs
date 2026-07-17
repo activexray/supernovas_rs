@@ -15,7 +15,7 @@
 //! Both [`Time::from_tt_jd_auto_eop`] and [`Frame::with_auto_polar_motion`]
 //! pass sentinel `NAN` values to the underlying `SuperNOVAS` C functions, which
 //! then query the IERS servers automatically. The library applies diurnal
-//! libration and ocean-tide corrections to the fetched xp/yp internally — you
+//! libration and ocean-tide corrections to the fetched xp/yp internally - you
 //! should never pre-apply those corrections yourself.
 //!
 //! ## Full vs Reduced accuracy
@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ── Frames ────────────────────────────────────────────────────────────
     // with_auto_polar_motion passes NAN/NAN for xp/yp; novas_make_frame
     // fetches and interpolates IERS polar offsets automatically.
-    // Do NOT pre-correct xp/yp for libration/tides — the C library handles
+    // Do NOT pre-correct xp/yp for libration/tides - the C library handles
     // that for Accuracy::Full frames.
     let frame_full = Frame::with_auto_polar_motion(Accuracy::Full, &observer, &time)?;
     let frame_red = Frame::new(Accuracy::Reduced, &observer, &time)?;

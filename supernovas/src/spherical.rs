@@ -2,8 +2,8 @@
 //! specific newtype wrappers.
 //!
 //! [`Spherical`] is the geometric base shape (longitude, latitude). The
-//! typed variants — [`Equatorial`], [`Ecliptic`], [`Galactic`],
-//! [`Horizontal`] — add domain accessors and prevent accidental mixing of
+//! typed variants - [`Equatorial`], [`Ecliptic`], [`Galactic`],
+//! [`Horizontal`] - add domain accessors and prevent accidental mixing of
 //! reference systems.
 
 mod base;

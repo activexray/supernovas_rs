@@ -86,7 +86,7 @@ impl Eop {
         self.0.jd
     }
 
-    /// Leap seconds — TAI − UTC in seconds.
+    /// Leap seconds - TAI − UTC in seconds.
     #[must_use]
     pub fn leap(&self) -> i32 {
         self.0.leap
@@ -195,7 +195,7 @@ pub fn is_auto_fetch_eop() -> bool {
 /// `itrf_year` is the ITRF reference year for the new URL (e.g. 2020).
 /// `url` must be a valid C string (no interior NUL bytes).
 ///
-/// Because CURL handles the URL, `file://` URLs work too — pass
+/// Because CURL handles the URL, `file://` URLs work too - pass
 /// `"file:///absolute/path/to/finals.all.iau2000.txt"` to use a
 /// pre-downloaded file instead of the network. See also
 /// [`set_eop_file`] for a `Path`-based convenience wrapper.
@@ -210,13 +210,13 @@ pub fn set_eop_url(series: EopSeries, itrf_year: i32, url: &str) -> Result<()> {
 /// Configure `series` to be read from a local pre-downloaded file.
 ///
 /// Equivalent to calling [`set_eop_url`] with a `file://` URL, so CURL is
-/// still used internally — the `eop` feature is required.
+/// still used internally - the `eop` feature is required.
 ///
 /// The file must be in the official IERS format for the given series:
 /// - [`EopSeries::RapidIau2000`][]: `finals.all.iau2000.txt`
 /// - [`EopSeries::C04Iau2000`][]: `EOP_20u24_C04_one_file_1962-now.txt`
 /// - [`EopSeries::C01Iau2000`][]: `EOP_C01_IAU2000_1846-now.txt`
-/// - [`EopSeries::LeapList`][]: `leap-seconds.list` (prefer [`set_leap_list`] — no CURL needed)
+/// - [`EopSeries::LeapList`][]: `leap-seconds.list` (prefer [`set_leap_list`] - no CURL needed)
 ///
 /// `SuperNOVAS` validates the file format on the first call and caches data
 /// across calls, so subsequent EOP lookups for nearby dates are fast.

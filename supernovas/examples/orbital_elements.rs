@@ -56,11 +56,11 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
     .into_source("1 Ceres", 2_000_001)?;
 
     // ── Two observation times ─────────────────────────────────────────────
-    // 1986-04-10 02:00 UTC — Halley ~1 month past perihelion, near opposition.
+    // 1986-04-10 02:00 UTC - Halley ~1 month past perihelion, near opposition.
     // JD 2 446 525.583 UTC; leap seconds = 24 (correct for 1986).
     let t_halley = Time::from_utc_jd(2_446_525.583, 24, 0.0)?;
 
-    // 2025-06-15 22:00 UTC — Ceres near opposition in 2025.
+    // 2025-06-15 22:00 UTC - Ceres near opposition in 2025.
     // JD 2 460 841.417 UTC; leap seconds = 37.
     let t_ceres = Time::from_utc_jd(2_460_841.417, 37, 0.0)?;
 

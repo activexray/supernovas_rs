@@ -68,12 +68,12 @@ struct Calceph {
 
 #[cfg(feature = "calceph")]
 fn find_calceph() -> Calceph {
-    // calceph itself is never vendored — it has to be system-installed.
+    // calceph itself is never vendored - it has to be system-installed.
     // Three search tiers:
     //
     // 1. Explicit override via CALCEPH_INCLUDE_DIR / CALCEPH_LIB_DIR.
     // 2. pkg-config (works on distros that ship a calceph.pc; not nixpkgs as
-    //    of calceph 4.0.5 — it's CMake-only there).
+    //    of calceph 4.0.5 - it's CMake-only there).
     // 3. Implicit: emit `-lcalceph` and trust the toolchain's native
     //    include path to find calceph.h. In the project's Nix dev shell
     //    that's populated by rustPlatform.bindgenHook from buildInputs.
@@ -103,7 +103,7 @@ fn find_calceph() -> Calceph {
 
 #[cfg(feature = "curl")]
 fn find_curl() {
-    // curl is never vendored — it must be system-installed.
+    // curl is never vendored - it must be system-installed.
     // Two search tiers:
     //
     // 1. pkg-config (libcurl.pc ships with curl on most systems).
@@ -127,7 +127,7 @@ fn find_library() -> Library {
     let vendor = manifest_dir.join("vendor").join("supernovas");
     assert!(
         vendor.join("CMakeLists.txt").exists(),
-        "vendor/supernovas is empty — run `git submodule update --init --recursive`"
+        "vendor/supernovas is empty - run `git submodule update --init --recursive`"
     );
 
     let mut config = cmake::Config::new(&vendor);

@@ -34,10 +34,10 @@ pub enum ReferenceSystem {
     Gcrs,
     /// True equator and equinox of date.
     Tod,
-    /// Celestial Intermediate Reference System — the modern IAU 2006
+    /// Celestial Intermediate Reference System - the modern IAU 2006
     /// equivalent of an equator-of-date system, with origin at the CIO.
     Cirs,
-    /// International Celestial Reference System — the fixed extragalactic
+    /// International Celestial Reference System - the fixed extragalactic
     /// frame.
     Icrs,
     /// Mean equator and equinox of J2000.0.
@@ -94,9 +94,7 @@ impl Apparent {
     /// apparent's [`ReferenceSystem`].
     ///
     /// This is the dimensionless unit vector `[x, y, z]` with
-    /// `x = cos(dec) cos(ra)`, `y = cos(dec) sin(ra)`, `z = sin(dec)`. Use
-    /// it as the phase-center direction for interferometric UVW projections
-    /// (see [`crate::Frame::source_gcrs_direction`]).
+    /// `x = cos(dec) cos(ra)`, `y = cos(dec) sin(ra)`, `z = sin(dec)`.
     #[must_use]
     pub fn r_hat(self) -> [f64; 3] {
         self.sky.r_hat
@@ -132,7 +130,7 @@ impl Apparent {
     /// Geometric distance to the source. Returns `0` (an unrepresentable
     /// distance) for sidereal sources, matching the `SuperNOVAS` convention.
     ///
-    /// For catalog stars, treat this as "not available" — the underlying C
+    /// For catalog stars, treat this as "not available" - the underlying C
     /// API doesn't carry parallax distance through `sky_pos`. Use
     /// `CatalogEntry`'s parallax accessor if you need the distance.
     #[must_use]
@@ -154,7 +152,7 @@ impl Apparent {
     /// For date-dependent systems (MOD, TOD, CIRS) the equinox carries the
     /// frame's TT Julian date. For date-independent systems (ICRS, J2000,
     /// GCRS) the equinox is the pre-built constant. The Earth-rotating
-    /// systems (TIRS, ITRS) keep their own tag — their longitudes differ
+    /// systems (TIRS, ITRS) keep their own tag - their longitudes differ
     /// from any equinox-based system by the Earth rotation angle, so
     /// re-labeling them would silently corrupt downstream conversions;
     /// instead, conversions that need an equinox-based system return
@@ -179,7 +177,7 @@ impl Apparent {
 
     /// View this apparent place as an [`Equatorial`] (RA, Dec, equinox).
     ///
-    /// No transformation happens — this is just re-tagging the underlying
+    /// No transformation happens - this is just re-tagging the underlying
     /// RA/Dec with a typed equinox derived from
     /// [`Self::reference_system`] and the frame's TT date.
     #[must_use]
@@ -337,7 +335,7 @@ mod tests {
         let icrs = vega.apparent_in(&frame, ReferenceSystem::Icrs).unwrap();
         let cirs = vega.apparent_in(&frame, ReferenceSystem::Cirs).unwrap();
         // Precession between ICRS and CIRS at 2026 differs by several
-        // arcminutes — definitely more than 1 arcsec.
+        // arcminutes - definitely more than 1 arcsec.
         assert!((icrs.ra().hours() - cirs.ra().hours()).abs() > 1e-4);
     }
 
@@ -394,7 +392,7 @@ mod tests {
         // RA/Dec round-trip through Equatorial without modification.
         assert_eq!(eq.ra().rad(), apparent.ra().rad());
         assert_eq!(eq.dec().rad(), apparent.dec().rad());
-        // CIRS at the frame's TT date — system tag should be a CIRS
+        // CIRS at the frame's TT date - system tag should be a CIRS
         // equinox at that JD.
         assert_eq!(eq.system().system(), ReferenceSystem::Cirs);
         assert!((eq.system().jd() - frame.tt_jd()).abs() < 1e-9);
@@ -648,7 +646,7 @@ mod tests {
             .unwrap();
         // Both apply refraction (so both elevations are above the
         // geometric), and both should be within a few arcsec of each other
-        // — but they need not be bit-identical because Standard ignores
+        // - but they need not be bit-identical because Standard ignores
         // weather entirely.
         let diff_arcsec = (optical.elevation().deg() - standard.elevation().deg()).abs() * 3600.0;
         assert!(

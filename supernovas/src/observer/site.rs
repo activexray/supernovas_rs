@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn as_on_surface_fills_missing_weather_with_location_defaults() {
         // Unset weather fields fall back to SuperNOVAS's mean annual
-        // estimate for the location — finite and physically plausible,
+        // estimate for the location - finite and physically plausible,
         // never NaN (which would poison the refraction models).
         let s = Site::from_degrees(34.0, -118.0, 100.0).unwrap();
         let raw = s.as_on_surface().unwrap();

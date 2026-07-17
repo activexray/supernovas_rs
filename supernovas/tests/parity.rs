@@ -5,7 +5,7 @@
 //! `Angle`/`TimeAngle` normalization round-trips, scalar wrapping) silently
 //! degrading a result relative to calling the C library directly. Every path
 //! here must agree with the equivalent raw FFI call to far below the C
-//! library's own accuracy floor — we assert sub-µas (1e-6 arcsec), while the
+//! library's own accuracy floor - we assert sub-µas (1e-6 arcsec), while the
 //! scalar round-trip noise is ~1e-10 arcsec.
 //!
 //! Note the wrapper folds longitudes/azimuth into (-180°, 180°] (via `Angle`)

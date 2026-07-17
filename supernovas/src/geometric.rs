@@ -1,6 +1,6 @@
 //! Geometric (astrometric) position and velocity of a source.
 //!
-//! A [`Geometric`] is the raw geometric place of a source — proper motion
+//! A [`Geometric`] is the raw geometric place of a source - proper motion
 //! and light-time are applied, but **no** stellar aberration and **no**
 //! gravitational deflection. It's the input to `novas_geom_to_app`; for the
 //! observed (apparent) place that includes those corrections, use
@@ -12,14 +12,13 @@ use crate::{
     Frame, Position, ReferenceSystem, Velocity,
     error::{Error, Result},
     source::Source,
-    unit,
 };
 
 /// The geometric place of a source: position and velocity in a chosen
 /// [`ReferenceSystem`], anchored to a [`Frame`].
 ///
 /// Produced by [`Source::geometric_in`]. Unlike [`crate::Apparent`], this
-/// carries no aberration or gravitational-deflection correction — it's the
+/// carries no aberration or gravitational-deflection correction - it's the
 /// "where the source physically is" vector, useful for interferometric
 /// baseline projections and for callers that want to apply their own
 /// aberration model.
@@ -83,29 +82,18 @@ pub(crate) fn geometric_of_source_in(
     if rc != 0 {
         return Err(Error::ffi(rc));
     }
-    // AU -> meters, AU/day -> m/s.
-    let pos_m = [
-        pos_au[0] * unit::AU,
-        pos_au[1] * unit::AU,
-        pos_au[2] * unit::AU,
-    ];
-    let vel_mps = [
-        vel_au_per_day[0] * unit::AU_PER_DAY,
-        vel_au_per_day[1] * unit::AU_PER_DAY,
-        vel_au_per_day[2] * unit::AU_PER_DAY,
-    ];
     Ok(Geometric {
         frame: *frame,
         system,
-        pos: Position::from_meters_array(pos_m)?,
-        vel: Velocity::from_mps_array(vel_mps)?,
+        pos: Position::from_au(pos_au[0], pos_au[1], pos_au[2])?,
+        vel: Velocity::from_au_per_day(vel_au_per_day[0], vel_au_per_day[1], vel_au_per_day[2])?,
     })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Accuracy, CatalogEntry, Observer, Planet, SolarBody, Time};
+    use crate::{Accuracy, CatalogEntry, Observer, Planet, SolarBody, Time, unit};
 
     fn frame() -> Frame {
         let obs = Observer::geodetic(37.234, -118.282, 1222.0).unwrap();

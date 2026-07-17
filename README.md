@@ -12,7 +12,7 @@ SuperNOVAS is a high-precision astrometry library based on NOVAS (Naval Observat
 
 ## Quick start
 
-### Example — ICRS to horizontal
+### Example - ICRS to horizontal
 
 Compute the az/el of Vega as seen from Owens Valley Radio Observatory:
 

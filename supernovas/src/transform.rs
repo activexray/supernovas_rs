@@ -3,7 +3,7 @@
 //! A [`Transform`] is a rotation matrix pre-computed by `SuperNOVAS` for a
 //! specific [`Frame`] and a pair of [`ReferenceSystem`]s. Building it once
 //! and re-applying it to many vectors or sky positions is cheaper than
-//! recomputing the rotation chain each time — useful when transforming a
+//! recomputing the rotation chain each time - useful when transforming a
 //! large catalog or a long time series through the same frame and system
 //! pair.
 //!

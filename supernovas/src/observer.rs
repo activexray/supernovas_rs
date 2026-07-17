@@ -50,7 +50,7 @@ impl Observer {
         let mut obs = MaybeUninit::<observer>::zeroed();
         let rc = match self {
             Observer::Geodetic(site) => {
-                // make_observer_at_site copies the whole on_surface struct —
+                // make_observer_at_site copies the whole on_surface struct -
                 // including humidity, which make_observer_on_surface has no
                 // parameter for and would silently replace with a location
                 // default.

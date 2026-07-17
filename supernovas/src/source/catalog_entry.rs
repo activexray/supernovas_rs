@@ -69,7 +69,7 @@ impl super::Source for CatalogEntry {
 }
 
 impl fmt::Debug for CatalogEntry {
-    /// Manual `Debug` impl — the underlying C `object` contains an `orbit`
+    /// Manual `Debug` impl - the underlying C `object` contains an `orbit`
     /// substructure that `make_cat_object` deliberately leaves
     /// uninitialised (see `SuperNOVAS` upstream `target.c` for the
     /// `memset(source, 0, offsetof(object, orbit))` choice). Reading

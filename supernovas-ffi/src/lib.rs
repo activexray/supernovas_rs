@@ -7,16 +7,16 @@
 //!
 //! # Feature flags
 //!
-//! - **`vendored`** — build the bundled SuperNOVAS v1.7 static library from
+//! - **`vendored`** - build the bundled SuperNOVAS v1.7 static library from
 //!   the git submodule at `vendor/supernovas`. Requires a C compiler and CMake.
 //!   The vendored build always sets `WITHOUT_CURL=ON` (no libcurl dependency)
 //!   and respects the `libc` feature (see below).
-//! - **`calceph`** — expose the CALCEPH ephemeris integration symbols.
+//! - **`calceph`** - expose the CALCEPH ephemeris integration symbols.
 //!   With `vendored`: the CMake build automatically enables `ENABLE_CALCEPH=ON`.
 //!   With a system library: the installed SuperNOVAS **must** have been compiled
 //!   with CALCEPH support (cmake `-DENABLE_CALCEPH=ON`); otherwise the
 //!   `libsolsys-calceph` symbols will be missing at link time.
-//! - **`libc`** — controls the `WITHOUT_LIBC` CMake flag for the **vendored**
+//! - **`libc`** - controls the `WITHOUT_LIBC` CMake flag for the **vendored**
 //!   build only. When absent, SuperNOVAS is compiled without any libc calls
 //!   (suitable for freestanding/embedded targets). Has no effect on system
 //!   library builds. Implied by the `std` feature of the `supernovas` wrapper.
@@ -28,7 +28,7 @@
 //!
 //! | Requirement | Detail |
 //! |---|---|
-//! | Version | `>= 1.7.0` — required for `novas_set_error_handler` (error capture) |
+//! | Version | `>= 1.7.0` - required for `novas_set_error_handler` (error capture) |
 //! | CALCEPH support | Only if the `calceph` feature is enabled: compiled with `-DENABLE_CALCEPH=ON` |
 //! | libc | Standard build (not `WITHOUT_LIBC`); the `libc` feature flag has no effect |
 //!

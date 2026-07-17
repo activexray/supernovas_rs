@@ -121,7 +121,7 @@ impl Equatorial {
     /// through correctly.
     ///
     /// Returns `self` unchanged when the source and target equinoxes
-    /// already agree (within ~1 s of TT — see [`Equinox`]'s `AbsDiffEq`).
+    /// already agree (within ~1 s of TT - see [`Equinox`]'s `AbsDiffEq`).
     pub fn to_system(self, target: Equinox, accuracy: Accuracy) -> Result<Equatorial> {
         if approx::AbsDiffEq::abs_diff_eq(
             &self.system,
@@ -283,9 +283,9 @@ impl Equatorial {
 
 /// Reject a declination that is finite but clearly outside `[-90°, 90°]`.
 ///
-/// A small slack absorbs floating-point boundary noise — e.g. `π/2` rad
+/// A small slack absorbs floating-point boundary noise - e.g. `π/2` rad
 /// converting to `90.0 ± 1 ulp`, or a pole-grazing result from an internal
-/// vector→RA/Dec conversion — without letting through a genuine mistake like
+/// vector→RA/Dec conversion - without letting through a genuine mistake like
 /// a swapped RA/Dec pair (`95°`). Non-finite inputs are left for the angle
 /// constructors to reject as [`Error::NotFinite`].
 fn validate_dec_deg(dec_deg: f64) -> Result<()> {
@@ -324,7 +324,7 @@ impl approx::AbsDiffEq for Equatorial {
 
     /// Treats two [`Equatorial`] as equal when their great-circle
     /// separation is within `epsilon` radians. Equinox tags are **not**
-    /// compared — combine with an explicit equinox check if that matters.
+    /// compared - combine with an explicit equinox check if that matters.
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         self.sph.abs_diff_eq(&other.sph, epsilon)
     }
@@ -436,7 +436,7 @@ mod tests {
     #[test]
     fn ra_lifts_negative_angles_into_24h() {
         // Construct via radians with a longitude that Spherical would
-        // store as negative — RA should still come out in [0, 24).
+        // store as negative - RA should still come out in [0, 24).
         let e = Equatorial::from_degrees(350.0, 0.0, Equinox::ICRS).unwrap();
         let h = e.ra().hours();
         assert!((0.0..24.0).contains(&h), "RA out of range: {h}");

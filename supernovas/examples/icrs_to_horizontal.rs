@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn core::error::Error>> {
     println!("Weather    {}", site.weather());
 
     // ── Time ──────────────────────────────────────────────────────────────
-    // 2026-07-15 06:00:00 UTC (≈ 23:00 local on Jul 14) — Vega is high
+    // 2026-07-15 06:00:00 UTC (≈ 23:00 local on Jul 14) - Vega is high
     // overhead at OVRO.  JD 2461236.75 UTC.
     // Current leap seconds (Jul 2026): TAI − UTC = 37 s.
     let time = Time::from_utc_jd(2_461_236.75, 37, 0.0)?;

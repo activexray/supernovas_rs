@@ -74,7 +74,7 @@ impl EquatorialTrack {
     /// position and distance.
     ///
     /// The position is in the **true equator and equinox of date** (TOD)
-    /// system — that is what `novas_equ_track` computes — so the returned
+    /// system - that is what `novas_equ_track` computes - so the returned
     /// [`Equatorial`] is tagged with a TOD equinox at the evaluation time.
     ///
     /// # Errors
@@ -217,7 +217,7 @@ mod tests {
     }
 
     /// `novas_equ_track` works in TOD internally; the evaluated position
-    /// must match the apparent TOD place and carry a TOD equinox tag —
+    /// must match the apparent TOD place and carry a TOD equinox tag -
     /// not ICRS, which is ~10 arcmin away at this epoch.
     #[test]
     fn equatorial_track_is_tagged_and_positioned_in_tod() {

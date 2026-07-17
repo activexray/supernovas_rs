@@ -1,4 +1,4 @@
-//! Spherical coordinates (longitude, latitude) — direction on a sphere.
+//! Spherical coordinates (longitude, latitude) - direction on a sphere.
 
 use core::fmt;
 

@@ -1,7 +1,7 @@
 //! 3-D vector quantities.
 //!
 //! These types share a common storage shape (`[f64; 3]`) but are distinct
-//! Rust types — `Position` cannot be implicitly used where a `Velocity` is
+//! Rust types - `Position` cannot be implicitly used where a `Velocity` is
 //! expected, and vice versa. Cross-type operations are explicit:
 //!
 //! - `Position / Interval -> Velocity`

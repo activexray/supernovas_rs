@@ -2,7 +2,7 @@
 //!
 //! Observe the Sun, Moon, and outer planets from a ground-based site.
 //! The ANISE ephemeris (DE440s) is installed once at startup, enabling
-//! `Accuracy::Reduced` planet positions — good to roughly an arcminute,
+//! `Accuracy::Reduced` planet positions - good to roughly an arcminute,
 //! with no setup beyond the bundled BSP file.
 //!
 //! Run with:
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let observer = Observer::Geodetic(site);
 
     // ── Time ──────────────────────────────────────────────────────────────
-    // 2026-07-15 04:00 UTC — local midnight at Kitt Peak (UTC−7).
+    // 2026-07-15 04:00 UTC - local midnight at Kitt Peak (UTC−7).
     // JD 2 461 236.667 UTC; TAI − UTC = 37 s (current leap-second count).
     let time = Time::from_utc_jd(2_461_236.667, 37, 0.0)?;
     println!(

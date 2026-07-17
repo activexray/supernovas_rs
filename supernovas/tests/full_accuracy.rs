@@ -9,7 +9,7 @@
 //!     http://public-data.nyxspace.com/anise/de440s.bsp
 //! ```
 //!
-//! `de440s.bsp` is the "small" DE440 — sufficient for Sun/Moon/major
+//! `de440s.bsp` is the "small" DE440 - sufficient for Sun/Moon/major
 //! planets, ~32 MB. The file is gitignored.
 //!
 //! These tests **install a process-global ephemeris provider**, so we
@@ -74,7 +74,7 @@ fn full_accuracy_matches_reduced_within_mas() {
     let sep_mas = eq_reduced.distance_to(eq_full).mas();
     assert!(
         sep_mas < 50.0,
-        "Reduced vs Full apparent positions disagree by {sep_mas} mas — \
+        "Reduced vs Full apparent positions disagree by {sep_mas} mas - \
          expected sub-mas to ~tens of mas for a sidereal source"
     );
 

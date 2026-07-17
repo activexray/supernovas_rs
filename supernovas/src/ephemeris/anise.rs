@@ -89,7 +89,7 @@ impl EphemerisProvider for AniseEphemeris {
     /// Keeping the two interfaces separate (rather than funneling planet
     /// calls through the generic provider via the `planet_ephem_provider`
     /// built-ins) means the generic provider never has to guess whether a
-    /// small integer is a `novas_planet` discriminant or a NAIF ID — e.g.
+    /// small integer is a `novas_planet` discriminant or a NAIF ID - e.g.
     /// NAIF 3 (Earth–Moon barycenter) resolves correctly instead of being
     /// remapped to Earth.
     fn install(self) -> Result<()> {
@@ -244,7 +244,7 @@ unsafe extern "C" fn planet_provider_hp(
 /// `id` is the NAIF body ID the object was constructed with (e.g. −31 for
 /// Voyager 1, 3 for the Earth–Moon barycenter). The NOVAS convention of
 /// `id == -1` meaning "look the body up by name" is not supported by this
-/// backend — ANISE SPK lookups are ID-based — so it returns an error with a
+/// backend - ANISE SPK lookups are ID-based - so it returns an error with a
 /// message saying as much. The state is always returned relative to the
 /// Solar System Barycenter and `*origin` is set accordingly.
 unsafe extern "C" fn ephem_provider(

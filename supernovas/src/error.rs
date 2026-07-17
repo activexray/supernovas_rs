@@ -12,7 +12,7 @@ pub const FFI_MSG_CAP: usize = 128;
 /// An inline, heap-free error description stored directly inside [`Error`].
 ///
 /// Backed by a fixed-capacity [`heapless::String`] so an [`Error`] carries its
-/// message without allocating — identical under `std` and `no_std`.
+/// message without allocating - identical under `std` and `no_std`.
 pub type FfiMessage = heapless::String<FFI_MSG_CAP>;
 
 /// Render a `Display` value into a fresh [`FfiMessage`], truncating at a UTF-8
@@ -69,7 +69,7 @@ std::thread_local! {
 /// into a fixed-capacity inline buffer (truncated past [`FFI_MSG_CAP`] bytes),
 /// so it never allocates; retrieve it via [`take_provider_error`].
 ///
-/// Accepts any [`Display`] value — including [`format_args!`] output — so
+/// Accepts any [`Display`] value - including [`format_args!`] output - so
 /// callers can attach runtime context without building a `String`.
 ///
 /// Effective only under the `std` feature. On `no_std` targets this is a no-op
@@ -142,7 +142,7 @@ pub enum Error {
     UnsupportedSystem,
 
     /// The requested operation requires an Earth-bound (geodetic or
-    /// airborne) observer but the frame's observer is not — for example
+    /// airborne) observer but the frame's observer is not - for example
     /// [`crate::Observer::Geocenter`] has no local horizon or sidereal
     /// time, so [`crate::Frame::lst`], [`crate::Frame::itrs_to_horizontal`],
     /// and [`crate::Frame::site_gcrs_posvel`] all refuse it.
@@ -194,7 +194,7 @@ mod tests {
         set_provider_error("bad ephemeris call");
         let err = Error::ffi(3);
         assert!(format!("{err}").contains("bad ephemeris call"));
-        // Slot is now empty — next ffi() falls back to numeric.
+        // Slot is now empty - next ffi() falls back to numeric.
         let err2 = Error::ffi(7);
         assert!(format!("{err2}").contains('7'));
     }

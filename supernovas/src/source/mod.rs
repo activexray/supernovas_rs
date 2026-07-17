@@ -5,11 +5,11 @@ pub(crate) mod sealed {
 /// A sky source that can be observed via [`crate::Frame`].
 ///
 /// Implemented by all concrete source types:
-/// - [`CatalogEntry`] — ICRS sidereal source (fixed star, quasar, …)
-/// - [`Planet`] — major solar-system body via the installed planet provider
-/// - [`EphemObject`] — arbitrary body by name/NAIF ID from the installed
+/// - [`CatalogEntry`] - ICRS sidereal source (fixed star, quasar, …)
+/// - [`Planet`] - major solar-system body via the installed planet provider
+/// - [`EphemObject`] - arbitrary body by name/NAIF ID from the installed
 ///   ephemeris provider
-/// - [`OrbitalObject`] — Keplerian orbital-elements source (no external
+/// - [`OrbitalObject`] - Keplerian orbital-elements source (no external
 ///   provider required)
 ///
 /// The trait is sealed; you cannot implement it outside this crate.

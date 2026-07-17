@@ -5,7 +5,7 @@
 //! site location, so the weather-dependent refraction models
 //! ([`crate::Refraction::Optical`] and [`crate::Refraction::Radio`]) always
 //! see a complete, finite weather state. Weather only matters for those two
-//! models — refraction itself is enabled or disabled by the
+//! models - refraction itself is enabled or disabled by the
 //! [`crate::Refraction`] choice at the conversion call site, not here.
 
 use core::fmt;

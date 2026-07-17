@@ -24,7 +24,7 @@ pub enum Refraction {
     None,
 
     /// `SuperNOVAS`' standard-atmosphere model. Independent of any per-site
-    /// weather supplied through the [`crate::Frame`]'s observer — useful as
+    /// weather supplied through the [`crate::Frame`]'s observer - useful as
     /// a quick approximation when you don't have local measurements.
     Standard,
 

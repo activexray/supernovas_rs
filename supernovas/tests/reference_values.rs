@@ -1,8 +1,8 @@
 //! Absolute-accuracy tests against implementation-independent ground truth.
 //!
 //! Unlike the parity tests (wrapper vs raw FFI) and the `full_accuracy` tests
-//! (Reduced vs Full, backend vs backend) — both of which are *self-consistency*
-//! checks — these pin the wrapper's output to values defined outside any C
+//! (Reduced vs Full, backend vs backend) - both of which are *self-consistency*
+//! checks - these pin the wrapper's output to values defined outside any C
 //! computation:
 //!
 //!   * the IAU galactic-coordinate definition (the north galactic pole and the

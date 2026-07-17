@@ -34,8 +34,8 @@ use crate::{
 /// `SuperNOVAS` can render it in any supported timescale via [`Self::jd`]
 /// and [`Self::split_jd`].
 ///
-/// `PartialEq` and `Ord` compare by Terrestrial Time Julian date — the
-/// internal canonical representation — ignoring any difference in `dut1`.
+/// `PartialEq` and `Ord` compare by Terrestrial Time Julian date - the
+/// internal canonical representation - ignoring any difference in `dut1`.
 #[derive(Debug, Clone, Copy)]
 pub struct Time(novas_timespec);
 
@@ -76,7 +76,7 @@ impl Time {
     /// - `leap_seconds`: the current count of leap seconds (`TAI − UTC`). As
     ///   of mid-2026 this is **37**.
     /// - `dut1`: UT1 − UTC in seconds, typically `|dut1| < 0.9` s. Pass
-    ///   `0.0` if you don't have a precise value — the error contribution
+    ///   `0.0` if you don't have a precise value - the error contribution
     ///   to az/el is well under an arc-second.
     pub fn from_jd(scale: Timescale, jd: f64, leap_seconds: i32, dut1: f64) -> Result<Self> {
         if !jd.is_finite() || !dut1.is_finite() {
@@ -171,7 +171,7 @@ impl Time {
     ///
     /// Pass the raw interpolated IERS Bulletin values for `dut1` if you supply
     /// them manually; do **not** pre-apply diurnal libration or ocean-tide
-    /// corrections — `novas_set_time` applies those internally.
+    /// corrections - `novas_set_time` applies those internally.
     #[cfg(feature = "eop")]
     pub fn from_jd_auto_eop(scale: Timescale, jd: f64) -> Result<Self> {
         if !jd.is_finite() {
@@ -389,7 +389,7 @@ impl Time {
     /// Convert from a hifitime [`Epoch`] with an explicit UT1−UTC offset.
     ///
     /// The leap-second count (`TAI − UTC`) is derived from hifitime's built-in
-    /// IERS table. Use [`From<hifitime::Epoch>`] when `dut1` is unavailable —
+    /// IERS table. Use [`From<hifitime::Epoch>`] when `dut1` is unavailable -
     /// it defaults to `0.0`, which introduces at most ~0.9 s of error in
     /// UT1-dependent quantities (negligible for az/el at arcsecond accuracy).
     pub fn from_epoch_with_dut1(epoch: hifitime::Epoch, dut1: f64) -> Result<Self> {
@@ -505,7 +505,7 @@ mod tests {
 
     #[test]
     fn from_unix_non_zero() {
-        // 1000 seconds past Unix epoch — larger gap to avoid leap-second
+        // 1000 seconds past Unix epoch - larger gap to avoid leap-second
         // edge effects near the epoch (leap count was 0 before 1972).
         let t0 = Time::from_unix(0, 0, 0, 0.0).unwrap();
         let t1 = Time::from_unix(1_000, 0, 0, 0.0).unwrap();
@@ -638,7 +638,7 @@ mod tests {
         // Same instant: within tolerance.
         let b = Time::from_split_jd(Timescale::Tt, 2_451_545, 0.0, 37, 0.0).unwrap();
         assert!(a.abs_diff_eq(&b, Time::default_epsilon()));
-        // 2 µs offset — outside 1 µs tolerance.
+        // 2 µs offset - outside 1 µs tolerance.
         let c = Time::from_split_jd(Timescale::Tt, 2_451_545, 2e-6 / 86_400.0, 37, 0.0).unwrap();
         assert!(!a.abs_diff_eq(&c, Time::default_epsilon()));
     }
@@ -708,7 +708,7 @@ mod hifitime_tests {
     #[test]
     fn round_trip_preserves_ns_across_dates_and_fractions() {
         // The only lossy step in to_epoch() is a single round-to-nearest-ns,
-        // so the full round-trip must close to <= 1 ns for every instant —
+        // so the full round-trip must close to <= 1 ns for every instant -
         // across a wide span of dates and every part of the day.
         for &ijd in &[2_400_001_i64, 2_451_545, 2_460_000, 2_500_000] {
             for k in 0..=20 {

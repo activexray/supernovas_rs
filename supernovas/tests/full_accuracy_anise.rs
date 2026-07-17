@@ -68,7 +68,7 @@ fn full_accuracy_matches_reduced_within_mas() {
     let sep_mas = eq_reduced.distance_to(eq_full).mas();
     assert!(
         sep_mas < 50.0,
-        "Reduced vs Full apparent positions disagree by {sep_mas} mas — \
+        "Reduced vs Full apparent positions disagree by {sep_mas} mas - \
          expected sub-mas to ~tens of mas for a sidereal source"
     );
 
@@ -104,7 +104,7 @@ fn full_accuracy_matches_reduced_within_mas() {
         .mas();
     assert!(
         sep_mas < 1.0,
-        "EphemObject(NAIF 3) is {sep_mas} mas from Planet(EMB) — \
+        "EphemObject(NAIF 3) is {sep_mas} mas from Planet(EMB) - \
          NAIF id was not honored literally"
     );
 

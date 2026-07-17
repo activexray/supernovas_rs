@@ -4,8 +4,8 @@
 //! routes every `novas_error()` / `novas_set_errno()` description through a
 //! custom handler.  The default behavior is to write to `stderr`; this crate
 //! replaces that with silent capture into the same thread-local slot used by
-//! [`crate::take_provider_error`], so all error context — whether from a Rust
-//! ephemeris callback or from deep inside the C library — is retrievable with
+//! [`crate::take_provider_error`], so all error context - whether from a Rust
+//! ephemeris callback or from deep inside the C library - is retrievable with
 //! a single call.
 //!
 //! Note: trace lines (`@ func [=> code]`) are printed via `fprintf(stderr,…)`
@@ -17,7 +17,7 @@ use supernovas_ffi::novas_debug_mode;
 /// Verbosity level for `SuperNOVAS`'s built-in error reporter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DebugMode {
-    /// Silent — no error output, no captures (default).
+    /// Silent - no error output, no captures (default).
     Off,
     /// Capture error descriptions via [`crate::take_provider_error`]; trace
     /// lines still appear on `stderr`.
@@ -49,10 +49,10 @@ impl DebugMode {
 /// the thread-local slot returned by [`crate::take_provider_error`].
 ///
 /// `SuperNOVAS` routes four kinds of lines through the handler:
-///   1. `"\n  ERROR! %s: "` (error prefix) — starts with `'\n'`, skipped
-///   2. The actual description string — captured
-///   3. `" [=> %d]\n"` (code suffix) — starts with `" [=>"`, skipped
-///   4. `"       @ %s [=> %d]\n"` (`novas_trace` lines) — starts with
+///   1. `"\n  ERROR! %s: "` (error prefix) - starts with `'\n'`, skipped
+///   2. The actual description string - captured
+///   3. `" [=> %d]\n"` (code suffix) - starts with `" [=>"`, skipped
+///   4. `"       @ %s [=> %d]\n"` (`novas_trace` lines) - starts with
 ///      `"       @"`, skipped
 ///
 /// All four forms pass the raw format string as `fmt`; the handler cannot

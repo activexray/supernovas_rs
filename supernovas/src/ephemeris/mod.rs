@@ -2,9 +2,9 @@
 //!
 //! Two built-in backends are available as optional features:
 //!
-//! - `calceph` — wraps the C CALCEPH library; fast, mature, requires a
+//! - `calceph` - wraps the C CALCEPH library; fast, mature, requires a
 //!   system `libcalceph`. Exposes `CalcephEphemeris`.
-//! - `anise` — pure-Rust ANISE/SPK reader ([nyx-space/anise]); no C
+//! - `anise` - pure-Rust ANISE/SPK reader ([nyx-space/anise]); no C
 //!   dependency beyond `SuperNOVAS` itself. Exposes [`AniseEphemeris`].
 //!
 //! Both features may be enabled simultaneously; each backend is an
@@ -28,7 +28,7 @@
 //! SPK binary, but as independent C and Rust implementations they accumulate
 //! floating-point rounding differently. For a typical stellar pointing
 //! (de440s.bsp, ~50–100 polynomial terms per body), the two backends agree to
-//! within **~2 µas** in azimuth and **~0.05 µas** in elevation — well inside
+//! within **~2 µas** in azimuth and **~0.05 µas** in elevation - well inside
 //! `SuperNOVAS`'s sub-µas full-accuracy guarantee and negligible for mm-wave
 //! pointing. The residual divergence is irreducible rounding noise, not a bug.
 //!
@@ -90,7 +90,7 @@ use crate::error::{Error, Result};
 ///
 /// # Return value
 ///
-/// Return `None` if `body` is not covered by your ephemeris — `SuperNOVAS` will
+/// Return `None` if `body` is not covered by your ephemeris - `SuperNOVAS` will
 /// surface this as an ephemeris error. Return `Some(([x, y, z], [vx, vy, vz]))`.
 ///
 /// # Panics
@@ -222,7 +222,7 @@ impl<T: PlanetProvider> EphemerisProvider for T {
 /// A planetary ephemeris backend that can be installed as the process-global
 /// `SuperNOVAS` planet provider.
 ///
-/// Most users should implement [`PlanetProvider`] instead — it exposes the
+/// Most users should implement [`PlanetProvider`] instead - it exposes the
 /// natural Rust interface (return a state vector) and the blanket impl here
 /// handles all C callback wiring automatically.
 ///
@@ -260,7 +260,7 @@ pub struct Ephemeris {
 impl Ephemeris {
     /// Wrap any [`EphemerisProvider`] in an [`Ephemeris`].
     ///
-    /// Use this when you need to name the backend explicitly — either because
+    /// Use this when you need to name the backend explicitly - either because
     /// both `calceph` and `anise` features are enabled, or to use a custom
     /// provider.
     pub fn from_provider(provider: impl EphemerisProvider) -> Self {
