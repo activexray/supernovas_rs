@@ -60,7 +60,7 @@ impl DebugMode {
 /// descriptions (form 2) are plain strings without format specifiers, so
 /// capturing `fmt` directly gives the correct text.
 #[cfg(feature = "std")]
-#[cfg(all(target_vendor = "apple", target_arch = "aarch64"))]
+#[cfg(target_arch = "aarch64")]
 unsafe extern "C" fn capture_handler(
     fmt: *const ::std::os::raw::c_char,
     _args: supernovas_ffi::va_list,
@@ -69,7 +69,7 @@ unsafe extern "C" fn capture_handler(
 }
 
 #[cfg(feature = "std")]
-#[cfg(not(all(target_vendor = "apple", target_arch = "aarch64")))]
+#[cfg(not(target_arch = "aarch64"))]
 unsafe extern "C" fn capture_handler(
     fmt: *const ::std::os::raw::c_char,
     _args: *mut supernovas_ffi::__va_list_tag,
