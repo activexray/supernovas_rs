@@ -7,6 +7,35 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-14
+
+### Changed
+
+- **`heapless` bumped from 0.8 to 0.9** - `FfiMessage` (`heapless::String<FFI_MSG_CAP>`,
+  used by `Error`) is now backed by `heapless` 0.9. Downstream code that
+  names `heapless::String` directly against `Error`/`FfiMessage` needs
+  `heapless = "0.9"` too.
+
+### Fixed
+
+- **Apple arm64 and Linux aarch64: `va_list` callback signature mismatch**
+  - the `std` debug-capture handler installed via `novas_set_error_handler`
+  declared its varargs parameter as `*mut __va_list_tag` (the x86_64 ABI
+  shape) on every target. On aarch64 that doesn't match `SuperNOVAS`'s C
+  calling convention, so calling through the mismatched function-pointer
+  type is undefined behavior once `DebugMode::On`/`DebugMode::Extra`
+  triggers the handler. `capture_handler` is now split per
+  `target_arch = "aarch64"`, using `supernovas_ffi::va_list`.
+- Vendored `SuperNOVAS` C library bumped v1.7.0 -> v1.7.2: fixes a memory
+  leak in `parse_leaps`, a swapped `gmtime_s` parameter order on Windows,
+  and a missing `WITHOUT_CURL` define for test builds.
+
+### Docs
+
+- README's "remaining work" list updated - `source_gcrs_direction` for
+  interferometry, `novas_site_uvw`, and the ITRS transform functions are
+  implemented and no longer listed as gaps.
+
 ## [0.7.0] - 2026-07-17
 
 ### Added
@@ -400,7 +429,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - System-library path via `pkg-config` or `SUPERNOVAS_INCLUDE_DIR` /
   `SUPERNOVAS_LIB_DIR` env vars (default, when `vendored` is not enabled).
 
-[Unreleased]: https://github.com/activexray/supernovas_rs/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/activexray/supernovas_rs/compare/supernovas-v0.8.0...HEAD
+[0.8.0]: https://github.com/activexray/supernovas_rs/compare/supernovas-v0.7.0...supernovas-v0.8.0
 [0.7.0]: https://github.com/activexray/supernovas_rs/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/activexray/supernovas_rs/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/activexray/supernovas_rs/compare/v0.4.0...v0.5.0

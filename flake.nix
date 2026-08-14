@@ -164,6 +164,7 @@
             rust-analyzer-nightly
             cargo-msrv
 	    cargo-release
+            cargo-outdated
           ];
 
           RUST_BACKTRACE = 1;
